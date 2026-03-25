@@ -29,7 +29,6 @@ export default function BottomNav() {
           background: 'rgba(255,255,255,0.75)',
           backdropFilter: 'blur(24px) saturate(160%)',
           WebkitBackdropFilter: 'blur(24px) saturate(160%)',
-          border: '1px solid rgba(255,255,255,0.92)',
           boxShadow: '0 4px 24px rgba(139,115,85,0.10)',
         }}
       >
@@ -61,12 +60,11 @@ export default function BottomNav() {
           background: 'rgba(255,255,255,0.75)',
           backdropFilter: 'blur(24px) saturate(160%)',
           WebkitBackdropFilter: 'blur(24px) saturate(160%)',
-          borderRight: '1px solid rgba(255,255,255,0.80)',
           boxShadow: '1px 0 24px rgba(139,115,85,0.06)',
         }}
       >
         {/* Logo */}
-        <div className="p-6" style={{ borderBottom: '1px solid rgba(217,201,184,0.3)' }}>
+        <div className="p-6">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm"
               style={{ background: 'linear-gradient(135deg, #C4A882 0%, #8FAE8B 100%)' }}>
@@ -91,7 +89,6 @@ export default function BottomNav() {
                 style={isActive ? {
                   background: 'linear-gradient(135deg, rgba(196,168,130,0.25) 0%, rgba(143,174,139,0.25) 100%)',
                   color: '#6B5844',
-                  border: '1px solid rgba(196,168,130,0.3)',
                 } : {
                   color: '#B4A494',
                 }}
@@ -104,7 +101,7 @@ export default function BottomNav() {
         </nav>
 
         {/* Footer del sidebar */}
-        <div className="p-5" style={{ borderTop: '1px solid rgba(217,201,184,0.3)' }}>
+        <div className="p-5">
           <p className="text-xs text-center tracking-widest" style={{ color: '#D4C4B4' }}>
             🌿 Lu Assistant
           </p>

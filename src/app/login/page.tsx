@@ -84,7 +84,7 @@ export default function LoginPage() {
         <form
           onSubmit={handleLogin}
           className="glass rounded-3xl p-7 space-y-5"
-          style={{ boxShadow: '0 8px 48px rgba(139, 115, 85, 0.20)' }}
+          style={{ boxShadow: '0 8px 48px rgba(139, 115, 85, 0.12)' }}
         >
           <div>
             <label className="block text-xs font-medium tracking-widest uppercase mb-2"
@@ -97,14 +97,8 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="hola@email.com"
               required
-              className="w-full px-4 py-3.5 rounded-2xl text-base focus:outline-none transition-all"
-              style={{
-                background: 'rgba(255,255,255,0.6)',
-                border: '1.5px solid rgba(217,201,184,0.6)',
-                color: '#2D2520',
-              }}
-              onFocus={e => e.target.style.border = '1.5px solid #C4A882'}
-              onBlur={e => e.target.style.border = '1.5px solid rgba(217,201,184,0.6)'}
+              className="w-full px-4 py-3.5 rounded-2xl text-base transition-all"
+              style={{ color: '#2D2520' }}
             />
           </div>
 
@@ -119,14 +113,8 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="w-full px-4 py-3.5 rounded-2xl text-base focus:outline-none transition-all"
-              style={{
-                background: 'rgba(255,255,255,0.6)',
-                border: '1.5px solid rgba(217,201,184,0.6)',
-                color: '#2D2520',
-              }}
-              onFocus={e => e.target.style.border = '1.5px solid #C4A882'}
-              onBlur={e => e.target.style.border = '1.5px solid rgba(217,201,184,0.6)'}
+              className="w-full px-4 py-3.5 rounded-2xl text-base transition-all"
+              style={{ color: '#2D2520' }}
             />
           </div>
 

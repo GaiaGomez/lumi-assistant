@@ -67,11 +67,10 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
   }, [])
 
   return (
-    <div className="glass rounded-2xl overflow-hidden"
-      style={{ border: '1px solid rgba(217,201,184,0.35)' }}>
+    <div className="glass rounded-2xl overflow-hidden">
 
       {/* Selector de vista — glassmorphism pill */}
-      <div className="flex gap-2 p-4" style={{ borderBottom: '1px solid rgba(217,201,184,0.25)' }}>
+      <div className="flex gap-2 p-4">
         {(['day', 'week', 'month'] as View[]).map((view) => (
           <button
             key={view}

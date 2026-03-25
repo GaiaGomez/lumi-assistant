@@ -55,7 +55,7 @@ export default async function HistoriaPage({ params }: Props) {
         {/* Canvas manuscrito */}
         {clinicalNote.canvas_url && (
           <div className="glass rounded-2xl p-4"
-            style={{ border: '1px solid rgba(217,201,184,0.35)' }}>
+>
             <p className="text-xs font-medium tracking-widest uppercase mb-3" style={{ color: '#9C8878' }}>
               ✏️ Nota manuscrita
             </p>
@@ -64,15 +64,14 @@ export default async function HistoriaPage({ params }: Props) {
               src={clinicalNote.canvas_url}
               alt="Nota manuscrita"
               className="w-full rounded-2xl"
-              style={{ border: '1px solid rgba(217,201,184,0.3)' }}
-            />
+              />
           </div>
         )}
 
         {/* Texto */}
         {clinicalNote.texto && (
           <div className="glass rounded-2xl p-4"
-            style={{ border: '1px solid rgba(217,201,184,0.35)' }}>
+>
             <p className="text-xs font-medium tracking-widest uppercase mb-3" style={{ color: '#9C8878' }}>
               ⌨️ Notas de teclado
             </p>

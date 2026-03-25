@@ -55,7 +55,6 @@ export default async function PacientesPage() {
             key={patient.id}
             href={`/pacientes/${patient.id}`}
             className="flex items-center justify-between p-4 glass rounded-2xl transition-all"
-            style={{ border: '1px solid rgba(217,201,184,0.35)' }}
           >
             <div className="flex items-center gap-3">
               {/* Avatar con iniciales y gradiente tierra→sage */}

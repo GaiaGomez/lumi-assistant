@@ -40,8 +40,6 @@ export default function NuevoPacientePage() {
 
   // Estilos reutilizables para inputs — glassmorphism cálido
   const inputStyle = {
-    background: 'rgba(255,255,255,0.55)',
-    border: '1.5px solid rgba(217,201,184,0.6)',
     color: '#2D2520',
   }
   const labelStyle = {
@@ -65,8 +63,7 @@ export default function NuevoPacientePage() {
         </h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="glass rounded-3xl p-6 space-y-4"
-        style={{ border: '1px solid rgba(217,201,184,0.35)', boxShadow: '0 4px 30px rgba(139,115,85,0.08)' }}>
+      <form onSubmit={handleSubmit} className="glass rounded-3xl p-6 space-y-4">
 
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -74,8 +71,6 @@ export default function NuevoPacientePage() {
             <input name="nombre" value={form.nombre} onChange={handleChange} required
               className="w-full px-4 py-3 rounded-2xl text-base focus:outline-none transition-all"
               style={inputStyle}
-              onFocus={e => e.target.style.border = '1.5px solid #C4A882'}
-              onBlur={e => e.target.style.border = '1.5px solid rgba(217,201,184,0.6)'}
             />
           </div>
           <div>
@@ -83,8 +78,6 @@ export default function NuevoPacientePage() {
             <input name="apellido" value={form.apellido} onChange={handleChange} required
               className="w-full px-4 py-3 rounded-2xl text-base focus:outline-none transition-all"
               style={inputStyle}
-              onFocus={e => e.target.style.border = '1.5px solid #C4A882'}
-              onBlur={e => e.target.style.border = '1.5px solid rgba(217,201,184,0.6)'}
             />
           </div>
         </div>

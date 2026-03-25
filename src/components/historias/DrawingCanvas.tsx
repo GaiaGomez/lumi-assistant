@@ -45,10 +45,7 @@ export default function DrawingCanvas({ onChange, initialImage }: DrawingCanvasP
       {/* ── Barra de herramientas — glassmorphism tierra ── */}
       <div
         className="flex items-center gap-2 rounded-xl p-2"
-        style={{
-          background: 'rgba(237,224,212,0.45)',
-          border: '1px solid rgba(217,201,184,0.4)',
-        }}
+        style={{ background: 'rgba(248,243,238,0.60)' }}
       >
         {/* Lápiz */}
         <button
@@ -136,9 +133,9 @@ export default function DrawingCanvas({ onChange, initialImage }: DrawingCanvasP
       <div
         className="rounded-xl overflow-hidden cursor-crosshair"
         style={{
-          border: '1.5px solid rgba(217,201,184,0.55)',
           touchAction: 'none',
-          boxShadow: '0 2px 12px rgba(139,115,85,0.07)',
+          boxShadow: '0 2px 16px rgba(139,115,85,0.08)',
+          overflow: 'hidden',
         }}
       >
         <ReactSketchCanvas

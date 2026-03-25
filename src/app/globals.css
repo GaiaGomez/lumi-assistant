@@ -23,15 +23,26 @@ body {
   min-height: 100vh;
 }
 
-/* ── Glassmorphism minimal — limpio, mucho aire, sombra en lugar de borde ── */
-/* La clave: card casi blanca, blur suave, sombra muy difusa */
-/* El color lo aportan los 2 blobs grandes detrás de todo */
+/* ── Glassmorphism minimal — sin bordes, solo sombra difusa ── */
 .glass {
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.90);
-  box-shadow: 0 2px 24px rgba(139, 115, 85, 0.07);
+  border: none;
+  box-shadow: 0 4px 32px rgba(139, 115, 85, 0.09);
+}
+
+/* ── Inputs sin borde — fill suave, focus con ring de sombra ── */
+/* Sin línea visible: el input se distingue del card por el fill más oscuro */
+input, textarea {
+  border: none !important;
+  outline: none !important;
+  background: rgba(248, 243, 238, 0.75);
+  transition: box-shadow 0.2s;
+}
+input:focus, textarea:focus {
+  background: rgba(248, 243, 238, 0.95);
+  box-shadow: 0 0 0 2.5px rgba(196, 168, 130, 0.28) !important;
 }
 
 /* Botón primario con gradiente */

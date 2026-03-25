@@ -66,7 +66,7 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
       >
         {/* Header */}
         <div className="flex items-start justify-between p-5"
-          style={{ borderBottom: '1px solid rgba(217,201,184,0.3)' }}>
+>
           <div>
             <h2 className="font-semibold text-lg" style={{ color: '#2D2520' }}>
               {appointment.patient?.nombre} {appointment.patient?.apellido}
@@ -103,11 +103,9 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
                     style={isActive ? {
                       background: activeStyles[value].bg,
                       color: activeStyles[value].color,
-                      border: `1.5px solid ${activeStyles[value].color}40`,
-                    } : {
+                      } : {
                       background: 'rgba(255,255,255,0.4)',
                       color: '#C4B4A4',
-                      border: '1.5px solid rgba(217,201,184,0.3)',
                     }}
                   >
                     {label}
@@ -135,11 +133,9 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
                     style={isActive ? {
                       background: bg,
                       color,
-                      border: `1.5px solid ${color}40`,
                     } : {
                       background: 'rgba(255,255,255,0.4)',
                       color: '#C4B4A4',
-                      border: '1.5px solid rgba(217,201,184,0.3)',
                     }}
                   >
                     {label}
@@ -155,7 +151,7 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
             <button
               onClick={() => router.push(`/pacientes/${appointment.patient_id}`)}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl text-sm font-medium transition-all"
-              style={{ background: 'rgba(217,201,184,0.25)', color: '#8B7355', border: '1px solid rgba(196,168,130,0.3)' }}
+              style={{ background: 'rgba(217,201,184,0.25)', color: '#8B7355' }}
             >
               <FileText size={16} />
               Historia clínica

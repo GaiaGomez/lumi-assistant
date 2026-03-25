@@ -104,7 +104,7 @@ export default function NuevaHistoriaPage() {
       <div className="space-y-4">
         {/* Canvas de escritura — la estrella del show para el iPad */}
         <div className="glass rounded-2xl p-4"
-          style={{ border: '1px solid rgba(217,201,184,0.35)' }}>
+>
           <p className="text-xs font-medium tracking-widest uppercase mb-3"
             style={{ color: '#9C8878' }}>
             ✏️ Nota manuscrita
@@ -116,7 +116,7 @@ export default function NuevaHistoriaPage() {
 
         {/* Área de texto — para notas rápidas con teclado */}
         <div className="glass rounded-2xl p-4"
-          style={{ border: '1px solid rgba(217,201,184,0.35)' }}>
+>
           <p className="text-xs font-medium tracking-widest uppercase mb-3"
             style={{ color: '#9C8878' }}>
             ⌨️ Notas con teclado
@@ -127,13 +127,7 @@ export default function NuevaHistoriaPage() {
             rows={5}
             placeholder="Observaciones de la sesión, intervenciones, acuerdos para la próxima cita..."
             className="w-full px-4 py-3 rounded-2xl text-base focus:outline-none transition-all resize-none"
-            style={{
-              background: 'rgba(255,255,255,0.55)',
-              border: '1.5px solid rgba(217,201,184,0.5)',
-              color: '#2D2520',
-            }}
-            onFocus={e => e.target.style.border = '1.5px solid #C4A882'}
-            onBlur={e => e.target.style.border = '1.5px solid rgba(217,201,184,0.5)'}
+            style={{ color: '#2D2520' }}
           />
         </div>
       </div>

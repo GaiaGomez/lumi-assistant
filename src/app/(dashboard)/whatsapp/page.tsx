@@ -167,11 +167,9 @@ function Section({ icon, title, subtitle, iconBg, iconColor, children }: {
   children: React.ReactNode
 }) {
   return (
-    <div className="glass rounded-2xl overflow-hidden"
-      style={{ border: '1px solid rgba(217,201,184,0.35)' }}>
+    <div className="glass rounded-2xl overflow-hidden">
       {/* Header de la sección */}
-      <div className="flex items-center gap-3 px-4 py-3"
-        style={{ borderBottom: '1px solid rgba(217,201,184,0.25)' }}>
+      <div className="flex items-center gap-3 px-4 py-3">
         <span className="p-2 rounded-xl" style={{ background: iconBg, color: iconColor }}>
           {icon}
         </span>
@@ -193,8 +191,7 @@ function AlertCard({ nombre, detalle, link, tieneWhatsApp }: {
   tieneWhatsApp: boolean
 }) {
   return (
-    <div className="flex items-center justify-between px-4 py-3"
-      style={{ borderBottom: '1px solid rgba(217,201,184,0.15)' }}>
+    <div className="flex items-center justify-between px-4 py-3">
       <div>
         <p className="font-medium text-sm" style={{ color: '#2D2520' }}>{nombre}</p>
         <p className="text-xs mt-0.5" style={{ color: '#B4A494' }}>{detalle}</p>

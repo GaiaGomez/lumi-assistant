@@ -107,7 +107,6 @@ export default async function PatientProfilePage({ params }: Props) {
               key={note.id}
               href={`/historias/${note.id}`}
               className="block p-4 glass rounded-2xl transition-all"
-              style={{ border: '1px solid rgba(217,201,184,0.35)' }}
             >
               <p className="text-xs mb-1.5 capitalize" style={{ color: '#B4A494' }}>
                 {new Date(note.created_at).toLocaleDateString('es-CO', {
@@ -136,8 +135,7 @@ export default async function PatientProfilePage({ params }: Props) {
           )}
           {(appointments as Appointment[])?.map((apt) => (
             <div key={apt.id}
-              className="flex items-center justify-between p-4 glass rounded-2xl"
-              style={{ border: '1px solid rgba(217,201,184,0.3)' }}>
+              className="flex items-center justify-between p-4 glass rounded-2xl">
               <p className="text-sm" style={{ color: '#5C4A3A' }}>
                 {new Date(apt.fecha_inicio).toLocaleDateString('es-CO', {
                   day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
