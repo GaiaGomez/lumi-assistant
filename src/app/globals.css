@@ -60,20 +60,78 @@ input:focus, textarea:focus {
 /* Quitar el outline feo en iOS */
 input, textarea, button { -webkit-tap-highlight-color: transparent; }
 
-/* react-big-calendar — override de colores al tema tierra */
-.rbc-calendar { font-family: inherit; }
-.rbc-toolbar button {
-  color: #5C4A3A;
-  border-color: #D9C9B8;
-  border-radius: 10px;
+/* ══════════════════════════════════════════════════════
+   react-big-calendar — overrides minimal, sin líneas
+   El objetivo: que parezca el referente con cards
+   flotantes y cero grid lines visibles
+   ══════════════════════════════════════════════════════ */
+
+/* Ocultar el toolbar default — usamos el nuestro en AgendaClient */
+.rbc-toolbar { display: none !important; }
+
+/* Quitar TODOS los bordes del contenedor principal */
+.rbc-calendar { font-family: inherit; background: transparent; }
+.rbc-time-view,
+.rbc-month-view { border: none !important; }
+
+/* Quitar líneas del time view */
+.rbc-time-content        { border-top: none !important; }
+.rbc-time-header         { border-bottom: none !important; }
+.rbc-time-header-content { border-left: none !important; }
+
+/* Líneas horizontales entre time slots — muy sutiles, casi invisibles */
+.rbc-timeslot-group { border-bottom: 1px solid rgba(237,224,212,0.20) !important; }
+.rbc-day-slot .rbc-time-slot { border-top: none !important; }
+
+/* Quitar líneas verticales entre días */
+.rbc-header              { border-bottom: none !important; border-left: none !important; }
+.rbc-header + .rbc-header { border-left: none !important; }
+.rbc-day-bg + .rbc-day-bg { border-left: none !important; }
+.rbc-month-row + .rbc-month-row { border-top: 1px solid rgba(237,224,212,0.20) !important; }
+.rbc-month-view .rbc-day-bg { border: none !important; }
+
+/* Etiquetas de hora — pequeñas y discretas */
+.rbc-label {
+  font-size: 10px !important;
+  color: #C4B4A4 !important;
+  padding-right: 8px !important;
+  letter-spacing: 0.02em;
 }
-.rbc-toolbar button.rbc-active {
-  background: #8B7355;
-  color: white;
-  border-color: #8B7355;
+.rbc-time-gutter .rbc-timeslot-group { border-bottom: none !important; }
+
+/* Cabecera de días — minimal, sin subrayado */
+.rbc-header {
+  color: #9C8878 !important;
+  font-weight: 500 !important;
+  font-size: 0.72rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  padding: 10px 0 6px !important;
 }
-.rbc-today { background-color: rgba(196, 212, 192, 0.2) !important; }
-.rbc-header { color: #8B7355; font-weight: 500; font-size: 0.8rem; }
-.rbc-time-slot { border-color: rgba(217, 201, 184, 0.3) !important; }
-.rbc-day-bg + .rbc-day-bg { border-color: rgba(217, 201, 184, 0.3) !important; }
+
+/* Día actual — toque de sage muy suave */
+.rbc-today { background: rgba(168,196,164,0.10) !important; }
+
+/* ── Eventos: cards redondeadas, sin borde ── */
+.rbc-event {
+  border-radius: 10px !important;
+  border: none !important;
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10) !important;
+}
+.rbc-event:focus { outline: none !important; }
+.rbc-event-label { font-size: 10px !important; opacity: 0.85; }
+
+/* Eventos en vista mes */
+.rbc-event.rbc-selected { box-shadow: 0 2px 12px rgba(0,0,0,0.15) !important; }
+
+/* Month view — celdas sin borde */
+.rbc-date-cell { padding: 4px 6px !important; font-size: 11px !important; color: #9C8878 !important; }
+.rbc-off-range .rbc-date-cell { color: #D4C4B4 !important; }
+.rbc-off-range-bg { background: transparent !important; }
+
+/* Quitar el outline azul de selección */
+.rbc-slot-selection { background: rgba(196,168,130,0.15) !important; border: none !important; }
 
