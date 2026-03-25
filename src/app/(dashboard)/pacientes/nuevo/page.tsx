@@ -38,12 +38,12 @@ export default function NuevoPacientePage() {
     router.refresh()
   }
 
-  // Estilos reutilizables para inputs — glassmorphism cálido
+  // Estilos reutilizables para inputs
   const inputStyle = {
-    color: '#2D2520',
+    color: '#111111',
   }
   const labelStyle = {
-    color: '#9C8878',
+    color: '#777777',
     fontSize: '11px',
     fontWeight: '500' as const,
     letterSpacing: '0.08em',
@@ -55,10 +55,10 @@ export default function NuevoPacientePage() {
       <div className="flex items-center gap-3 mb-6">
         <button onClick={() => router.back()}
           className="p-2.5 rounded-2xl transition-colors"
-          style={{ background: 'rgba(217,201,184,0.2)' }}>
-          <ArrowLeft size={20} style={{ color: '#8B7355' }} />
+          style={{ background: 'rgba(200,198,208,0.35)' }}>
+          <ArrowLeft size={20} style={{ color: '#555555' }} />
         </button>
-        <h1 className="text-2xl font-light tracking-tight" style={{ color: '#2D2520' }}>
+        <h1 className="text-2xl font-light tracking-tight" style={{ color: '#111111' }}>
           Nuevo paciente
         </h1>
       </div>
@@ -84,14 +84,12 @@ export default function NuevoPacientePage() {
 
         <div>
           <label className="block mb-1.5" style={labelStyle}>
-            WhatsApp <span style={{ textTransform: 'none', fontWeight: 400, color: '#C4B4A4' }}>(formato: 573001234567)</span>
+            WhatsApp <span style={{ textTransform: 'none', fontWeight: 400, color: '#BBBBBB' }}>(formato: 573001234567)</span>
           </label>
           <input name="whatsapp" value={form.whatsapp} onChange={handleChange}
             placeholder="573001234567"
             className="w-full px-4 py-3 rounded-2xl text-base focus:outline-none transition-all"
             style={inputStyle}
-            onFocus={e => e.target.style.border = '1.5px solid #C4A882'}
-            onBlur={e => e.target.style.border = '1.5px solid rgba(217,201,184,0.6)'}
           />
         </div>
 
@@ -100,8 +98,6 @@ export default function NuevoPacientePage() {
           <input name="telefono" value={form.telefono} onChange={handleChange}
             className="w-full px-4 py-3 rounded-2xl text-base focus:outline-none transition-all"
             style={inputStyle}
-            onFocus={e => e.target.style.border = '1.5px solid #C4A882'}
-            onBlur={e => e.target.style.border = '1.5px solid rgba(217,201,184,0.6)'}
           />
         </div>
 
@@ -110,8 +106,6 @@ export default function NuevoPacientePage() {
           <input name="email" type="email" value={form.email} onChange={handleChange}
             className="w-full px-4 py-3 rounded-2xl text-base focus:outline-none transition-all"
             style={inputStyle}
-            onFocus={e => e.target.style.border = '1.5px solid #C4A882'}
-            onBlur={e => e.target.style.border = '1.5px solid rgba(217,201,184,0.6)'}
           />
         </div>
 
@@ -121,14 +115,13 @@ export default function NuevoPacientePage() {
             rows={3} placeholder="Motivo de consulta, antecedentes..."
             className="w-full px-4 py-3 rounded-2xl text-base focus:outline-none transition-all resize-none"
             style={inputStyle}
-            onFocus={e => e.target.style.border = '1.5px solid #C4A882'}
-            onBlur={e => e.target.style.border = '1.5px solid rgba(217,201,184,0.6)'}
           />
         </div>
 
+        {/* Botón guardar — glass gris con toque rose */}
         <button type="submit" disabled={saving}
           className="w-full py-3.5 rounded-2xl text-white font-medium transition-opacity disabled:opacity-50 mt-2"
-          style={{ background: 'linear-gradient(135deg, #8B7355 0%, #6B8F6B 100%)' }}>
+          style={{ background: 'rgba(155, 142, 160, 0.90)' }}>
           {saving ? 'Guardando...' : 'Guardar paciente'}
         </button>
       </form>

@@ -27,8 +27,8 @@ export default async function AgendaPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-light tracking-tight" style={{ color: '#2D2520' }}>Agenda</h1>
-        <p className="text-sm mt-1" style={{ color: '#9C8878' }}>Tus citas y sesiones</p>
+        <h1 className="text-2xl font-light tracking-tight" style={{ color: '#111111' }}>Agenda</h1>
+        <p className="text-sm mt-1" style={{ color: '#666666' }}>Tus citas y sesiones</p>
       </div>
 
       {/* AgendaClient es el componente interactivo del calendario */}

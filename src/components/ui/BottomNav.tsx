@@ -29,7 +29,7 @@ export default function BottomNav() {
           background: 'rgba(255,255,255,0.75)',
           backdropFilter: 'blur(24px) saturate(160%)',
           WebkitBackdropFilter: 'blur(24px) saturate(160%)',
-          boxShadow: '0 4px 24px rgba(139,115,85,0.10)',
+          boxShadow: '0 4px 24px rgba(120,110,130,0.10)',
         }}
       >
         {navItems.map(({ href, label, icon: Icon }) => {
@@ -39,12 +39,12 @@ export default function BottomNav() {
               key={href}
               href={href}
               className="flex-1 flex flex-col items-center justify-center py-3.5 gap-1 transition-all"
-              style={{ color: isActive ? '#8B7355' : '#C4B4A4' }}
+              style={{ color: isActive ? '#333333' : '#AAAAAA' }}
             >
               {/* Indicador activo — bolita sobre el ícono */}
               {isActive && (
                 <span className="absolute top-2 w-1 h-1 rounded-full"
-                  style={{ background: '#8B7355' }} />
+                  style={{ background: '#888888' }} />
               )}
               <Icon size={21} strokeWidth={isActive ? 2.2 : 1.5} />
               <span className="text-xs font-medium tracking-wide">{label}</span>
@@ -60,19 +60,19 @@ export default function BottomNav() {
           background: 'rgba(255,255,255,0.75)',
           backdropFilter: 'blur(24px) saturate(160%)',
           WebkitBackdropFilter: 'blur(24px) saturate(160%)',
-          boxShadow: '1px 0 24px rgba(139,115,85,0.06)',
+          boxShadow: '1px 0 24px rgba(120,110,130,0.06)',
         }}
       >
         {/* Logo */}
         <div className="p-6">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm"
-              style={{ background: 'linear-gradient(135deg, #C4A882 0%, #8FAE8B 100%)' }}>
+              style={{ background: 'linear-gradient(135deg, #C4B0C8 0%, #9A9AB8 100%)' }}>
               <span className="text-white text-base font-light">L</span>
             </div>
             <div>
-              <p className="font-medium text-sm" style={{ color: '#2D2520' }}>Lu Assistant</p>
-              <p className="text-xs tracking-wide" style={{ color: '#C4B4A4' }}>Consultorio privado</p>
+              <p className="font-medium text-sm" style={{ color: '#111111' }}>Lu Assistant</p>
+              <p className="text-xs tracking-wide" style={{ color: '#AAAAAA' }}>Consultorio privado</p>
             </div>
           </div>
         </div>
@@ -87,10 +87,10 @@ export default function BottomNav() {
                 href={href}
                 className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
                 style={isActive ? {
-                  background: 'linear-gradient(135deg, rgba(196,168,130,0.25) 0%, rgba(143,174,139,0.25) 100%)',
-                  color: '#6B5844',
+                  background: 'rgba(200, 188, 205, 0.30)',
+                  color: '#333333',
                 } : {
-                  color: '#B4A494',
+                  color: '#AAAAAA',
                 }}
               >
                 <Icon size={17} strokeWidth={isActive ? 2.2 : 1.5} />
@@ -102,7 +102,7 @@ export default function BottomNav() {
 
         {/* Footer del sidebar */}
         <div className="p-5">
-          <p className="text-xs text-center tracking-widest" style={{ color: '#D4C4B4' }}>
+          <p className="text-xs text-center tracking-widest" style={{ color: '#CCCCCC' }}>
             🌿 Lu Assistant
           </p>
         </div>

@@ -20,13 +20,13 @@ interface AgendaClientProps {
   appointments: Appointment[]
 }
 
-// Paleta de colores tierra para los estados — consistent con el resto de la app
+// Paleta neutral con toque rose para los estados — semántica clara, sin café/verde
 const COLORES_ESTADO: Record<string, string> = {
-  pendiente:  '#C4A882',  // arena cálido
-  asistio:    '#7FA882',  // sage verde
-  cancelo:    '#C48882',  // rose dusty
-  no_asistio: '#C4A066',  // ámbar tierra
-  pago_pend:  '#B8956A',  // terracota — asistió pero debe
+  pendiente:  '#A8A0AA',  // gris-mauve — neutro
+  asistio:    '#8AAAA8',  // teal-gris — asistió (color funcional, no acento de marca)
+  cancelo:    '#C09090',  // rose-gris — canceló
+  no_asistio: '#B0A870',  // khaki — no asistió
+  pago_pend:  '#AE8898',  // rose-gris oscuro — asistió pero debe
 }
 
 export default function AgendaClient({ appointments }: AgendaClientProps) {
@@ -108,25 +108,25 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
           <button
             onClick={() => navegar('prev')}
             className="p-2 rounded-xl transition-all"
-            style={{ background: 'rgba(248,243,238,0.80)', color: '#9C8878' }}
+            style={{ background: 'rgba(235,232,238,0.75)', color: '#777777' }}
           >
             <ChevronLeft size={16} />
           </button>
           <button
             onClick={() => navegar('next')}
             className="p-2 rounded-xl transition-all"
-            style={{ background: 'rgba(248,243,238,0.80)', color: '#9C8878' }}
+            style={{ background: 'rgba(235,232,238,0.75)', color: '#777777' }}
           >
             <ChevronRight size={16} />
           </button>
           {/* Nombre del período */}
-          <h2 className="text-base font-medium capitalize ml-1" style={{ color: '#2D2520' }}>
+          <h2 className="text-base font-medium capitalize ml-1" style={{ color: '#111111' }}>
             {periodoLabel()}
           </h2>
         </div>
 
-        {/* View picker — pill flotante como el referente */}
-        <div className="flex gap-0.5 p-1 rounded-2xl" style={{ background: 'rgba(248,243,238,0.80)' }}>
+        {/* View picker — pill flotante */}
+        <div className="flex gap-0.5 p-1 rounded-2xl" style={{ background: 'rgba(238,235,242,0.80)' }}>
           {(['day', 'week', 'month'] as View[]).map((view) => (
             <button
               key={view}
@@ -134,10 +134,10 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
               className="px-4 py-1.5 rounded-xl text-sm font-medium transition-all"
               style={currentView === view ? {
                 background: 'white',
-                color: '#6B5844',
-                boxShadow: '0 1px 8px rgba(139,115,85,0.10)',
+                color: '#333333',
+                boxShadow: '0 1px 8px rgba(120,110,130,0.10)',
               } : {
-                color: '#B4A494',
+                color: '#AAAAAA',
                 background: 'transparent',
               }}
             >
@@ -148,7 +148,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
           <button
             onClick={() => navegar('today')}
             className="px-4 py-1.5 rounded-xl text-sm font-medium transition-all ml-1"
-            style={{ color: '#C4A882', background: 'transparent' }}
+            style={{ color: '#999999', background: 'transparent' }}
           >
             Hoy
           </button>
@@ -181,8 +181,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
               showMore: (total) => `+${total} más`,
             }}
             culture="es"
-            // Estas props hacen que la navegación interna del toolbar no interfiera
-            // (ocultamos el toolbar via CSS y usamos nuestra propia navegación)
+            // Ocultamos el toolbar via CSS y usamos nuestra propia navegación
             toolbar={false}
           />
         </div>

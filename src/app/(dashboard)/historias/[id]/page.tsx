@@ -34,15 +34,15 @@ export default async function HistoriaPage({ params }: Props) {
         <Link
           href={`/pacientes/${clinicalNote.patient_id}`}
           className="p-2.5 rounded-2xl transition-colors"
-          style={{ background: 'rgba(217,201,184,0.2)' }}
+          style={{ background: 'rgba(200,198,208,0.35)' }}
         >
-          <ArrowLeft size={20} style={{ color: '#8B7355' }} />
+          <ArrowLeft size={20} style={{ color: '#555555' }} />
         </Link>
         <div>
-          <h1 className="text-xl font-light tracking-tight" style={{ color: '#2D2520' }}>
+          <h1 className="text-xl font-light tracking-tight" style={{ color: '#111111' }}>
             {clinicalNote.patient.nombre} {clinicalNote.patient.apellido}
           </h1>
-          <p className="text-sm capitalize mt-0.5" style={{ color: '#9C8878' }}>
+          <p className="text-sm capitalize mt-0.5" style={{ color: '#666666' }}>
             {new Date(clinicalNote.created_at).toLocaleDateString('es-CO', {
               weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
               hour: '2-digit', minute: '2-digit'
@@ -54,28 +54,25 @@ export default async function HistoriaPage({ params }: Props) {
       <div className="space-y-4">
         {/* Canvas manuscrito */}
         {clinicalNote.canvas_url && (
-          <div className="glass rounded-2xl p-4"
->
-            <p className="text-xs font-medium tracking-widest uppercase mb-3" style={{ color: '#9C8878' }}>
+          <div className="glass rounded-2xl p-4">
+            <p className="text-xs font-medium tracking-widest uppercase mb-3" style={{ color: '#888888' }}>
               ✏️ Nota manuscrita
             </p>
-            {/* Mostramos la imagen del canvas guardada en Supabase Storage */}
             <img
               src={clinicalNote.canvas_url}
               alt="Nota manuscrita"
               className="w-full rounded-2xl"
-              />
+            />
           </div>
         )}
 
         {/* Texto */}
         {clinicalNote.texto && (
-          <div className="glass rounded-2xl p-4"
->
-            <p className="text-xs font-medium tracking-widest uppercase mb-3" style={{ color: '#9C8878' }}>
+          <div className="glass rounded-2xl p-4">
+            <p className="text-xs font-medium tracking-widest uppercase mb-3" style={{ color: '#888888' }}>
               ⌨️ Notas de teclado
             </p>
-            <p className="whitespace-pre-wrap leading-relaxed" style={{ color: '#2D2520' }}>
+            <p className="whitespace-pre-wrap leading-relaxed" style={{ color: '#111111' }}>
               {clinicalNote.texto}
             </p>
           </div>

@@ -1,12 +1,10 @@
 'use client'
 // force-dynamic: evita que Next.js intente pre-renderizar esta página en build time
-// sin las variables de entorno de Supabase disponibles
 export const dynamic = 'force-dynamic'
 
 // ============================================================
 // LOGIN PAGE — única página pública de la app
 // Usa Supabase Auth con email/contraseña
-// "use client" porque maneja eventos del formulario (onClick, onChange)
 // ============================================================
 
 import { useState } from 'react'
@@ -23,11 +21,10 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
 
   async function handleLogin(e: React.FormEvent) {
-    e.preventDefault()  // evita que el form recargue la página
+    e.preventDefault()
     setLoading(true)
     setError(null)
 
-    // signInWithPassword: método de Supabase Auth para login con email y contraseña
     const { error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
@@ -36,46 +33,44 @@ export default function LoginPage() {
       return
     }
 
-    // Si el login fue exitoso → redirigimos a la agenda
     router.push('/agenda')
-    router.refresh() // fuerza al middleware a re-verificar la sesión
+    router.refresh()
   }
 
   return (
-    // Fondo con gradiente tierra-sage (viene del globals.css)
     <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
 
-      {/* ── 2 blobs suaves — misma lógica minimal que el dashboard ── */}
-      {/* Blob terracota — top right */}
+      {/* ── 2 blobs suaves — rose + lavender ── */}
+      {/* Blob rose — top right */}
       <div className="absolute pointer-events-none" style={{
         top: '-30%', right: '-25%',
         width: '800px', height: '800px',
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(210,155,120,0.34) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(215,175,195,0.28) 0%, transparent 70%)',
       }} />
-      {/* Blob sage — bottom left */}
+      {/* Blob lavender — bottom left */}
       <div className="absolute pointer-events-none" style={{
         bottom: '-35%', left: '-25%',
         width: '900px', height: '900px',
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(130,185,145,0.28) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(175,175,210,0.22) 0%, transparent 70%)',
       }} />
 
       <div className="w-full max-w-sm relative z-10">
 
         {/* ── Logo + título ── */}
         <div className="text-center mb-8">
-          {/* Círculo con gradiente tierra → sage */}
+          {/* Círculo con gradiente rose → lavender */}
           <div className="w-20 h-20 mx-auto mb-5 rounded-3xl flex items-center justify-center shadow-lg"
-            style={{ background: 'linear-gradient(135deg, #C4A882 0%, #8FAE8B 100%)' }}>
+            style={{ background: 'linear-gradient(135deg, #C4B0C8 0%, #9A9AB8 100%)' }}>
             <span className="text-white text-3xl font-light tracking-tight">L</span>
           </div>
           <h1 className="text-3xl font-light tracking-tight"
-            style={{ color: '#2D2520' }}>
+            style={{ color: '#111111' }}>
             Lu Assistant
           </h1>
           <p className="text-sm mt-2 tracking-wide"
-            style={{ color: '#9C8878' }}>
+            style={{ color: '#666666' }}>
             Tu espacio clínico privado
           </p>
         </div>
@@ -84,11 +79,11 @@ export default function LoginPage() {
         <form
           onSubmit={handleLogin}
           className="glass rounded-3xl p-7 space-y-5"
-          style={{ boxShadow: '0 8px 48px rgba(139, 115, 85, 0.12)' }}
+          style={{ boxShadow: '0 8px 48px rgba(120, 110, 140, 0.12)' }}
         >
           <div>
             <label className="block text-xs font-medium tracking-widest uppercase mb-2"
-              style={{ color: '#9C8878' }}>
+              style={{ color: '#777777' }}>
               Email
             </label>
             <input
@@ -98,13 +93,13 @@ export default function LoginPage() {
               placeholder="hola@email.com"
               required
               className="w-full px-4 py-3.5 rounded-2xl text-base transition-all"
-              style={{ color: '#2D2520' }}
+              style={{ color: '#111111' }}
             />
           </div>
 
           <div>
             <label className="block text-xs font-medium tracking-widest uppercase mb-2"
-              style={{ color: '#9C8878' }}>
+              style={{ color: '#777777' }}>
               Contraseña
             </label>
             <input
@@ -114,29 +109,29 @@ export default function LoginPage() {
               placeholder="••••••••"
               required
               className="w-full px-4 py-3.5 rounded-2xl text-base transition-all"
-              style={{ color: '#2D2520' }}
+              style={{ color: '#111111' }}
             />
           </div>
 
           {error && (
             <p className="text-sm text-center py-2.5 px-4 rounded-xl"
-              style={{ background: 'rgba(223,197,192,0.4)', color: '#8B4A42' }}>
+              style={{ background: 'rgba(195,155,155,0.25)', color: '#7A2E2E' }}>
               {error}
             </p>
           )}
 
-          {/* Botón con gradiente tierra → sage */}
+          {/* Botón — glass gris con toque rose sutil */}
           <button
             type="submit"
             disabled={loading}
             className="w-full py-4 rounded-2xl text-white font-medium tracking-wide transition-opacity disabled:opacity-50 mt-2"
-            style={{ background: 'linear-gradient(135deg, #8B7355 0%, #6B8F6B 100%)' }}
+            style={{ background: 'rgba(155, 142, 160, 0.92)' }}
           >
             {loading ? 'Entrando...' : 'Entrar →'}
           </button>
         </form>
 
-        <p className="text-center text-xs mt-6 tracking-wide" style={{ color: '#C4B4A4' }}>
+        <p className="text-center text-xs mt-6 tracking-wide" style={{ color: '#CCCCCC' }}>
           Acceso privado · Solo para Lu 🌿
         </p>
       </div>

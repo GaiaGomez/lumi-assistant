@@ -42,10 +42,10 @@ export default function DrawingCanvas({ onChange, initialImage }: DrawingCanvasP
   return (
     <div className="space-y-3">
 
-      {/* ── Barra de herramientas — glassmorphism tierra ── */}
+      {/* ── Barra de herramientas — glass neutro ── */}
       <div
         className="flex items-center gap-2 rounded-xl p-2"
-        style={{ background: 'rgba(248,243,238,0.60)' }}
+        style={{ background: 'rgba(235,232,240,0.60)' }}
       >
         {/* Lápiz */}
         <button
@@ -53,10 +53,10 @@ export default function DrawingCanvas({ onChange, initialImage }: DrawingCanvasP
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all"
           style={tool === 'pen' ? {
             background: 'rgba(255,255,255,0.85)',
-            color: '#6B5844',
-            boxShadow: '0 1px 6px rgba(139,115,85,0.12)',
+            color: '#444444',
+            boxShadow: '0 1px 6px rgba(120,110,130,0.12)',
           } : {
-            color: '#B4A494',
+            color: '#AAAAAA',
           }}
         >
           <Pen size={16} />
@@ -69,10 +69,10 @@ export default function DrawingCanvas({ onChange, initialImage }: DrawingCanvasP
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all"
           style={tool === 'eraser' ? {
             background: 'rgba(255,255,255,0.85)',
-            color: '#6B5844',
-            boxShadow: '0 1px 6px rgba(139,115,85,0.12)',
+            color: '#444444',
+            boxShadow: '0 1px 6px rgba(120,110,130,0.12)',
           } : {
-            color: '#B4A494',
+            color: '#AAAAAA',
           }}
         >
           <Eraser size={16} />
@@ -81,24 +81,24 @@ export default function DrawingCanvas({ onChange, initialImage }: DrawingCanvasP
 
         {/* Grosor del trazo */}
         <div className="flex items-center gap-2 ml-2">
-          <span className="text-xs" style={{ color: '#B4A494' }}>Grosor:</span>
+          <span className="text-xs" style={{ color: '#AAAAAA' }}>Grosor:</span>
           {[2, 4, 8].map((w) => (
             <button
               key={w}
               onClick={() => setStrokeWidth(w)}
               className="w-6 h-6 rounded-full flex items-center justify-center transition-all"
               style={strokeWidth === w ? {
-                background: 'rgba(139,115,85,0.18)',
-                outline: '2px solid #C4A882',
+                background: 'rgba(150,140,165,0.18)',
+                outline: '2px solid #B0A0BC',
                 outlineOffset: '1px',
               } : {
-                background: 'rgba(196,168,130,0.2)',
+                background: 'rgba(180,175,190,0.20)',
               }}
             >
-              {/* Punto visual que escala con el grosor — color tierra */}
+              {/* Punto visual que escala con el grosor */}
               <span
                 className="rounded-full"
-                style={{ width: w * 1.5, height: w * 1.5, background: '#8B7355' }}
+                style={{ width: w * 1.5, height: w * 1.5, background: '#666666' }}
               />
             </button>
           ))}
@@ -109,7 +109,7 @@ export default function DrawingCanvas({ onChange, initialImage }: DrawingCanvasP
           <button
             onClick={handleUndo}
             className="p-2 rounded-lg transition-all"
-            style={{ color: '#B4A494' }}
+            style={{ color: '#AAAAAA' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.7)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
@@ -119,7 +119,7 @@ export default function DrawingCanvas({ onChange, initialImage }: DrawingCanvasP
           <button
             onClick={handleClear}
             className="p-2 rounded-lg transition-all"
-            style={{ color: '#B4A494' }}
+            style={{ color: '#AAAAAA' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.7)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
@@ -128,13 +128,13 @@ export default function DrawingCanvas({ onChange, initialImage }: DrawingCanvasP
         </div>
       </div>
 
-      {/* ── El canvas en sí — fondo crema cálido, borde nude ── */}
+      {/* ── El canvas — fondo blanco cálido ── */}
       {/* touchAction="none" — crucial para que el iPad no haga scroll mientras escribe */}
       <div
         className="rounded-xl overflow-hidden cursor-crosshair"
         style={{
           touchAction: 'none',
-          boxShadow: '0 2px 16px rgba(139,115,85,0.08)',
+          boxShadow: '0 2px 16px rgba(120,110,130,0.08)',
           overflow: 'hidden',
         }}
       >
@@ -145,14 +145,14 @@ export default function DrawingCanvas({ onChange, initialImage }: DrawingCanvasP
           strokeWidth={tool === 'eraser' ? strokeWidth * 4 : strokeWidth}
           strokeColor={tool === 'eraser' ? '#FAF8F5' : '#3D2E22'}
           eraserWidth={strokeWidth * 4}
-          canvasColor="#FAF8F5"   // warm-white en lugar de blanco puro — más suave a la vista
+          canvasColor="#FAF8F5"   // warm-white — más suave a la vista que blanco puro
           onStroke={handleStrokeEnd}
           allowOnlyPointerType="all"
           style={{ borderRadius: '10px' }}
         />
       </div>
 
-      <p className="text-xs text-center" style={{ color: '#C4B4A4' }}>
+      <p className="text-xs text-center" style={{ color: '#AAAAAA' }}>
         Escribe con Apple Pencil • Usa el dedo para hacer scroll
       </p>
     </div>

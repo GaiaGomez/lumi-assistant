@@ -54,7 +54,6 @@ export default async function WhatsAppPage() {
     .select('*')
     .eq('user_id', user!.id)
 
-  // Para cada paciente, buscamos su última cita
   const pacientesInactivos: { patient: Patient; dias: number }[] = []
 
   for (const patient of (allPatients ?? [])) {
@@ -81,10 +80,10 @@ export default async function WhatsAppPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-light tracking-tight" style={{ color: '#2D2520' }}>WhatsApp</h1>
-        <p className="text-sm mt-1" style={{ color: '#9C8878' }}>
+        <h1 className="text-2xl font-light tracking-tight" style={{ color: '#111111' }}>WhatsApp</h1>
+        <p className="text-sm mt-1" style={{ color: '#666666' }}>
           {totalAlertas === 0
-            ? 'Todo al día — no hay alertas pendientes 🌿'
+            ? 'Todo al día — no hay alertas pendientes ✓'
             : `${totalAlertas} mensajes sugeridos hoy`}
         </p>
       </div>
@@ -96,8 +95,8 @@ export default async function WhatsAppPage() {
           icon={<Clock size={17} />}
           title="Recordatorio de cita"
           subtitle="Citas para mañana"
-          iconBg="rgba(196,168,130,0.2)"
-          iconColor="#8B7355"
+          iconBg="rgba(175,165,185,0.25)"
+          iconColor="#666666"
         >
           {citasManana?.length === 0 && <EmptyState text="No hay citas mañana" />}
           {(citasManana as (Appointment & { patient: Patient })[])?.map((apt) => (
@@ -116,8 +115,8 @@ export default async function WhatsAppPage() {
           icon={<CreditCard size={17} />}
           title="Pago pendiente"
           subtitle="Más de 3 días sin confirmar"
-          iconBg="rgba(220,180,100,0.2)"
-          iconColor="#8B6914"
+          iconBg="rgba(185,172,135,0.22)"
+          iconColor="#7A6020"
         >
           {pagosPendientes?.length === 0 && <EmptyState text="Sin pagos pendientes" />}
           {(pagosPendientes as (Appointment & { patient: Patient })[])?.map((apt) => (
@@ -136,8 +135,8 @@ export default async function WhatsAppPage() {
           icon={<UserX size={17} />}
           title="Paciente inactivo"
           subtitle="Más de 20 días sin cita"
-          iconBg="rgba(220,160,120,0.2)"
-          iconColor="#8B5E2A"
+          iconBg="rgba(195,155,155,0.22)"
+          iconColor="#7A3535"
         >
           {pacientesInactivos.length === 0 && <EmptyState text="Todos los pacientes activos" />}
           {pacientesInactivos.map(({ patient, dias }) => (
@@ -156,7 +155,7 @@ export default async function WhatsAppPage() {
   )
 }
 
-// --- Componentes auxiliares de UI — glassmorphism tierra/sage ---
+// --- Componentes auxiliares de UI ---
 
 function Section({ icon, title, subtitle, iconBg, iconColor, children }: {
   icon: React.ReactNode
@@ -174,11 +173,11 @@ function Section({ icon, title, subtitle, iconBg, iconColor, children }: {
           {icon}
         </span>
         <div>
-          <p className="font-medium text-sm" style={{ color: '#2D2520' }}>{title}</p>
-          <p className="text-xs" style={{ color: '#B4A494' }}>{subtitle}</p>
+          <p className="font-medium text-sm" style={{ color: '#111111' }}>{title}</p>
+          <p className="text-xs" style={{ color: '#888888' }}>{subtitle}</p>
         </div>
       </div>
-      {/* Items de la sección — separados por línea sutil */}
+      {/* Items de la sección */}
       <div>{children}</div>
     </div>
   )
@@ -193,11 +192,11 @@ function AlertCard({ nombre, detalle, link, tieneWhatsApp }: {
   return (
     <div className="flex items-center justify-between px-4 py-3">
       <div>
-        <p className="font-medium text-sm" style={{ color: '#2D2520' }}>{nombre}</p>
-        <p className="text-xs mt-0.5" style={{ color: '#B4A494' }}>{detalle}</p>
+        <p className="font-medium text-sm" style={{ color: '#111111' }}>{nombre}</p>
+        <p className="text-xs mt-0.5" style={{ color: '#888888' }}>{detalle}</p>
       </div>
       {tieneWhatsApp ? (
-        // El link abre WhatsApp con el mensaje ya escrito — un solo tap para enviar
+        // El link abre WhatsApp con el mensaje ya escrito — verde WA por branding
         <a
           href={link}
           target="_blank"
@@ -209,12 +208,12 @@ function AlertCard({ nombre, detalle, link, tieneWhatsApp }: {
           Enviar
         </a>
       ) : (
-        <span className="text-xs italic" style={{ color: '#C4B4A4' }}>Sin WhatsApp</span>
+        <span className="text-xs italic" style={{ color: '#AAAAAA' }}>Sin WhatsApp</span>
       )}
     </div>
   )
 }
 
 function EmptyState({ text }: { text: string }) {
-  return <p className="text-center text-sm py-4" style={{ color: '#C4B4A4' }}>{text} ✓</p>
+  return <p className="text-center text-sm py-4" style={{ color: '#AAAAAA' }}>{text} ✓</p>
 }

@@ -28,23 +28,23 @@ export default async function DashboardLayout({
           y el panel glass solo parece blanco.
           Estos blobs son position:fixed y z-index:0, están detrás
           de todo el contenido pero SE VEN a través de los paneles glass. */}
-      {/* ── Solo 2 blobs, grandes y muy difusos — como el referente minimal ──
-          Opacidad baja (~0.28) y radio amplio (80%) = mancha suave de acuarela
+      {/* ── Solo 2 blobs, grandes y muy difusos — rose + lavender ──
+          Sin café/tierra/sage. Opacidad baja = mancha suave de acuarela.
           La card glass con 72% de blanco los filtra suavemente → minimal elegante */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
-        {/* Blob terracota — arriba a la derecha, el protagonista */}
+        {/* Blob rose — arriba a la derecha */}
         <div className="absolute" style={{
           top: '-30%', right: '-20%',
           width: '900px', height: '900px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(210,155,120,0.32) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(215,175,195,0.28) 0%, transparent 70%)',
         }} />
-        {/* Blob sage — abajo a la izquierda */}
+        {/* Blob lavender — abajo a la izquierda */}
         <div className="absolute" style={{
           bottom: '-35%', left: '-20%',
           width: '1000px', height: '1000px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(130,185,145,0.26) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(175,175,210,0.22) 0%, transparent 70%)',
         }} />
       </div>
 
