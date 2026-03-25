@@ -67,18 +67,22 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
   }, [])
 
   return (
-    <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
-      {/* Selector de vista */}
-      <div className="flex gap-2 p-4 border-b border-stone-100">
+    <div className="glass rounded-2xl overflow-hidden"
+      style={{ border: '1px solid rgba(217,201,184,0.35)' }}>
+
+      {/* Selector de vista — glassmorphism pill */}
+      <div className="flex gap-2 p-4" style={{ borderBottom: '1px solid rgba(217,201,184,0.25)' }}>
         {(['day', 'week', 'month'] as View[]).map((view) => (
           <button
             key={view}
             onClick={() => setCurrentView(view)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              currentView === view
-                ? 'bg-stone-800 text-white'
-                : 'text-stone-500 hover:bg-stone-100'
-            }`}
+            className="px-4 py-1.5 rounded-xl text-sm font-medium transition-all"
+            style={currentView === view ? {
+              background: 'linear-gradient(135deg, #8B7355 0%, #6B8F6B 100%)',
+              color: 'white',
+            } : {
+              color: '#9C8878',
+            }}
           >
             {view === 'day' ? 'Día' : view === 'week' ? 'Semana' : 'Mes'}
           </button>

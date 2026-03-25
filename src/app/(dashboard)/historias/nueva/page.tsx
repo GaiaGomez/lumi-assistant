@@ -75,13 +75,17 @@ export default function NuevaHistoriaPage() {
     <div>
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => router.back()} className="p-2 hover:bg-stone-100 rounded-lg">
-          <ArrowLeft size={20} className="text-stone-600" />
+        <button onClick={() => router.back()}
+          className="p-2.5 rounded-2xl transition-colors"
+          style={{ background: 'rgba(217,201,184,0.2)' }}>
+          <ArrowLeft size={20} style={{ color: '#8B7355' }} />
         </button>
         <div className="flex-1">
-          <h1 className="text-2xl font-semibold text-stone-800">Nueva nota clínica</h1>
+          <h1 className="text-xl font-light tracking-tight" style={{ color: '#2D2520' }}>
+            Nueva nota clínica
+          </h1>
           {patient && (
-            <p className="text-stone-500 text-sm mt-0.5">
+            <p className="text-sm mt-0.5" style={{ color: '#9C8878' }}>
               {patient.nombre} {patient.apellido}
             </p>
           )}
@@ -89,18 +93,21 @@ export default function NuevaHistoriaPage() {
         <button
           onClick={handleSave}
           disabled={saving || (!texto && !canvasDataUrl)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-stone-800 hover:bg-stone-900 disabled:bg-stone-300 text-white rounded-xl text-sm font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-opacity disabled:opacity-40"
+          style={{ background: 'linear-gradient(135deg, #8B7355 0%, #6B8F6B 100%)', color: 'white' }}
         >
           <Save size={16} />
           {saving ? 'Guardando...' : 'Guardar'}
         </button>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Canvas de escritura — la estrella del show para el iPad */}
-        <div className="bg-white rounded-2xl border border-stone-200 p-4">
-          <p className="text-sm font-medium text-stone-700 mb-3">
-            ✏️ Escrito a mano
+        <div className="glass rounded-2xl p-4"
+          style={{ border: '1px solid rgba(217,201,184,0.35)' }}>
+          <p className="text-xs font-medium tracking-widest uppercase mb-3"
+            style={{ color: '#9C8878' }}>
+            ✏️ Nota manuscrita
           </p>
           <DrawingCanvas
             onChange={setCanvasDataUrl}
@@ -108,8 +115,10 @@ export default function NuevaHistoriaPage() {
         </div>
 
         {/* Área de texto — para notas rápidas con teclado */}
-        <div className="bg-white rounded-2xl border border-stone-200 p-4">
-          <p className="text-sm font-medium text-stone-700 mb-3">
+        <div className="glass rounded-2xl p-4"
+          style={{ border: '1px solid rgba(217,201,184,0.35)' }}>
+          <p className="text-xs font-medium tracking-widest uppercase mb-3"
+            style={{ color: '#9C8878' }}>
             ⌨️ Notas con teclado
           </p>
           <textarea
@@ -117,7 +126,14 @@ export default function NuevaHistoriaPage() {
             onChange={(e) => setTexto(e.target.value)}
             rows={5}
             placeholder="Observaciones de la sesión, intervenciones, acuerdos para la próxima cita..."
-            className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-400 text-base resize-none"
+            className="w-full px-4 py-3 rounded-2xl text-base focus:outline-none transition-all resize-none"
+            style={{
+              background: 'rgba(255,255,255,0.55)',
+              border: '1.5px solid rgba(217,201,184,0.5)',
+              color: '#2D2520',
+            }}
+            onFocus={e => e.target.style.border = '1.5px solid #C4A882'}
+            onBlur={e => e.target.style.border = '1.5px solid rgba(217,201,184,0.5)'}
           />
         </div>
       </div>

@@ -42,37 +42,70 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-stone-100 px-4">
-      <div className="w-full max-w-sm">
+    // Fondo con gradiente tierra-sage (viene del globals.css)
+    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
 
-        {/* Header */}
+      {/* ── Blobs de color de fondo — decorativos, no funcionales ── */}
+      {/* Blob nude/rosa */}
+      <div className="absolute top-[-10%] right-[-5%] w-80 h-80 rounded-full opacity-40 pointer-events-none"
+        style={{ background: 'radial-gradient(circle, #DFC5C0 0%, transparent 70%)' }} />
+      {/* Blob sage */}
+      <div className="absolute bottom-[-5%] left-[-5%] w-96 h-96 rounded-full opacity-35 pointer-events-none"
+        style={{ background: 'radial-gradient(circle, #C4D4C0 0%, transparent 70%)' }} />
+      {/* Blob arena pequeño */}
+      <div className="absolute top-[40%] left-[10%] w-48 h-48 rounded-full opacity-25 pointer-events-none"
+        style={{ background: 'radial-gradient(circle, #D9C9B8 0%, transparent 70%)' }} />
+
+      <div className="w-full max-w-sm relative z-10">
+
+        {/* ── Logo + título ── */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-stone-700 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-            <span className="text-white text-2xl font-bold">L</span>
+          {/* Círculo con gradiente tierra → sage */}
+          <div className="w-20 h-20 mx-auto mb-5 rounded-3xl flex items-center justify-center shadow-lg"
+            style={{ background: 'linear-gradient(135deg, #C4A882 0%, #8FAE8B 100%)' }}>
+            <span className="text-white text-3xl font-light tracking-tight">L</span>
           </div>
-          <h1 className="text-2xl font-semibold text-stone-800">Lu Assistant</h1>
-          <p className="text-stone-500 text-sm mt-1">Tu espacio clínico privado</p>
+          <h1 className="text-3xl font-light tracking-tight"
+            style={{ color: '#2D2520' }}>
+            Lu Assistant
+          </h1>
+          <p className="text-sm mt-2 tracking-wide"
+            style={{ color: '#9C8878' }}>
+            Tu espacio clínico privado
+          </p>
         </div>
 
-        {/* Formulario */}
-        <form onSubmit={handleLogin} className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6 space-y-4">
-
+        {/* ── Card glassmorphism ── */}
+        <form
+          onSubmit={handleLogin}
+          className="glass rounded-3xl p-7 space-y-5 shadow-xl"
+          style={{ boxShadow: '0 8px 40px rgba(139, 115, 85, 0.12)' }}
+        >
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1">
+            <label className="block text-xs font-medium tracking-widest uppercase mb-2"
+              style={{ color: '#9C8878' }}>
               Email
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="lu@email.com"
+              placeholder="hola@email.com"
               required
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-400 text-base"
+              className="w-full px-4 py-3.5 rounded-2xl text-base focus:outline-none transition-all"
+              style={{
+                background: 'rgba(255,255,255,0.6)',
+                border: '1.5px solid rgba(217,201,184,0.6)',
+                color: '#2D2520',
+              }}
+              onFocus={e => e.target.style.border = '1.5px solid #C4A882'}
+              onBlur={e => e.target.style.border = '1.5px solid rgba(217,201,184,0.6)'}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1">
+            <label className="block text-xs font-medium tracking-widest uppercase mb-2"
+              style={{ color: '#9C8878' }}>
               Contraseña
             </label>
             <input
@@ -81,26 +114,38 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-400 text-base"
+              className="w-full px-4 py-3.5 rounded-2xl text-base focus:outline-none transition-all"
+              style={{
+                background: 'rgba(255,255,255,0.6)',
+                border: '1.5px solid rgba(217,201,184,0.6)',
+                color: '#2D2520',
+              }}
+              onFocus={e => e.target.style.border = '1.5px solid #C4A882'}
+              onBlur={e => e.target.style.border = '1.5px solid rgba(217,201,184,0.6)'}
             />
           </div>
 
-          {/* Mensaje de error */}
           {error && (
-            <p className="text-red-500 text-sm text-center bg-red-50 py-2 px-3 rounded-lg">
+            <p className="text-sm text-center py-2.5 px-4 rounded-xl"
+              style={{ background: 'rgba(223,197,192,0.4)', color: '#8B4A42' }}>
               {error}
             </p>
           )}
 
+          {/* Botón con gradiente tierra → sage */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-stone-700 hover:bg-stone-800 disabled:bg-stone-400 text-white font-medium rounded-xl transition-colors text-base"
+            className="w-full py-4 rounded-2xl text-white font-medium tracking-wide transition-opacity disabled:opacity-50 mt-2"
+            style={{ background: 'linear-gradient(135deg, #8B7355 0%, #6B8F6B 100%)' }}
           >
-            {loading ? 'Entrando...' : 'Entrar'}
+            {loading ? 'Entrando...' : 'Entrar →'}
           </button>
         </form>
 
+        <p className="text-center text-xs mt-6 tracking-wide" style={{ color: '#C4B4A4' }}>
+          Acceso privado · Solo para Lu 🌿
+        </p>
       </div>
     </div>
   )

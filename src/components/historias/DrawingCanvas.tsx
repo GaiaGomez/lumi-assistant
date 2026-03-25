@@ -41,14 +41,26 @@ export default function DrawingCanvas({ onChange, initialImage }: DrawingCanvasP
 
   return (
     <div className="space-y-3">
-      {/* Barra de herramientas */}
-      <div className="flex items-center gap-2 bg-stone-100 rounded-xl p-2">
+
+      {/* ── Barra de herramientas — glassmorphism tierra ── */}
+      <div
+        className="flex items-center gap-2 rounded-xl p-2"
+        style={{
+          background: 'rgba(237,224,212,0.45)',
+          border: '1px solid rgba(217,201,184,0.4)',
+        }}
+      >
         {/* Lápiz */}
         <button
           onClick={() => setTool('pen')}
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-            tool === 'pen' ? 'bg-white text-stone-800 shadow-sm' : 'text-stone-500'
-          }`}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all"
+          style={tool === 'pen' ? {
+            background: 'rgba(255,255,255,0.85)',
+            color: '#6B5844',
+            boxShadow: '0 1px 6px rgba(139,115,85,0.12)',
+          } : {
+            color: '#B4A494',
+          }}
         >
           <Pen size={16} />
           Lápiz
@@ -57,9 +69,14 @@ export default function DrawingCanvas({ onChange, initialImage }: DrawingCanvasP
         {/* Borrador */}
         <button
           onClick={() => setTool('eraser')}
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-            tool === 'eraser' ? 'bg-white text-stone-800 shadow-sm' : 'text-stone-500'
-          }`}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all"
+          style={tool === 'eraser' ? {
+            background: 'rgba(255,255,255,0.85)',
+            color: '#6B5844',
+            boxShadow: '0 1px 6px rgba(139,115,85,0.12)',
+          } : {
+            color: '#B4A494',
+          }}
         >
           <Eraser size={16} />
           Borrador
@@ -67,18 +84,24 @@ export default function DrawingCanvas({ onChange, initialImage }: DrawingCanvasP
 
         {/* Grosor del trazo */}
         <div className="flex items-center gap-2 ml-2">
-          <span className="text-xs text-stone-500">Grosor:</span>
+          <span className="text-xs" style={{ color: '#B4A494' }}>Grosor:</span>
           {[2, 4, 8].map((w) => (
             <button
               key={w}
               onClick={() => setStrokeWidth(w)}
-              className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
-                strokeWidth === w ? 'ring-2 ring-stone-600 bg-stone-200' : 'bg-stone-300'
-              }`}
+              className="w-6 h-6 rounded-full flex items-center justify-center transition-all"
+              style={strokeWidth === w ? {
+                background: 'rgba(139,115,85,0.18)',
+                outline: '2px solid #C4A882',
+                outlineOffset: '1px',
+              } : {
+                background: 'rgba(196,168,130,0.2)',
+              }}
             >
+              {/* Punto visual que escala con el grosor — color tierra */}
               <span
-                className="rounded-full bg-stone-700"
-                style={{ width: w * 1.5, height: w * 1.5 }}
+                className="rounded-full"
+                style={{ width: w * 1.5, height: w * 1.5, background: '#8B7355' }}
               />
             </button>
           ))}
@@ -86,42 +109,53 @@ export default function DrawingCanvas({ onChange, initialImage }: DrawingCanvasP
 
         <div className="ml-auto flex gap-1">
           {/* Deshacer */}
-          <button onClick={handleUndo}
-            className="p-2 hover:bg-white rounded-lg transition-colors text-stone-500">
+          <button
+            onClick={handleUndo}
+            className="p-2 rounded-lg transition-all"
+            style={{ color: '#B4A494' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.7)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          >
             <Undo2 size={16} />
           </button>
           {/* Limpiar todo */}
-          <button onClick={handleClear}
-            className="p-2 hover:bg-white rounded-lg transition-colors text-stone-500">
+          <button
+            onClick={handleClear}
+            className="p-2 rounded-lg transition-all"
+            style={{ color: '#B4A494' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.7)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          >
             <Trash2 size={16} />
           </button>
         </div>
       </div>
 
-      {/* El canvas en sí */}
+      {/* ── El canvas en sí — fondo crema cálido, borde nude ── */}
       {/* touchAction="none" — crucial para que el iPad no haga scroll mientras escribe */}
       <div
-        className="border-2 border-stone-200 rounded-xl overflow-hidden bg-white cursor-crosshair"
-        style={{ touchAction: 'none' }}
+        className="rounded-xl overflow-hidden cursor-crosshair"
+        style={{
+          border: '1.5px solid rgba(217,201,184,0.55)',
+          touchAction: 'none',
+          boxShadow: '0 2px 12px rgba(139,115,85,0.07)',
+        }}
       >
         <ReactSketchCanvas
           ref={canvasRef}
           width="100%"
           height="400px"
           strokeWidth={tool === 'eraser' ? strokeWidth * 4 : strokeWidth}
-          strokeColor={tool === 'eraser' ? 'white' : '#1c1917'}
-          // eraserWidth: en modo borrador el "trazo" es blanco
+          strokeColor={tool === 'eraser' ? '#FAF8F5' : '#3D2E22'}
           eraserWidth={strokeWidth * 4}
-          canvasColor="white"
+          canvasColor="#FAF8F5"   // warm-white en lugar de blanco puro — más suave a la vista
           onStroke={handleStrokeEnd}
-          // allowOnlyPointerType="pen" hace que SOLO el Apple Pencil dibuje
-          // y el dedo pueda hacer scroll — fundamental para la experiencia iPad
           allowOnlyPointerType="all"
-          style={{ borderRadius: '12px' }}
+          style={{ borderRadius: '10px' }}
         />
       </div>
 
-      <p className="text-xs text-stone-400 text-center">
+      <p className="text-xs text-center" style={{ color: '#C4B4A4' }}>
         Escribe con Apple Pencil • Usa el dedo para hacer scroll
       </p>
     </div>

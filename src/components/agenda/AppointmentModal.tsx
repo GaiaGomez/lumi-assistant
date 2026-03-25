@@ -52,79 +52,110 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
   }
 
   return (
-    // Overlay oscuro — al tocar fuera del modal se cierra
+    // Overlay con blur suave — al tocar fuera del modal se cierra
     <div
-      className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+      style={{ background: 'rgba(45,37,32,0.35)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
-      {/* Contenido del modal — stopPropagation evita que el click cierre el modal */}
+      {/* Contenido del modal glassmorphism — stopPropagation evita que el click cierre el modal */}
       <div
-        className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden"
+        className="glass w-full max-w-md rounded-3xl overflow-hidden"
+        style={{ boxShadow: '0 8px 40px rgba(139,115,85,0.18)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between p-5 border-b border-stone-100">
+        <div className="flex items-start justify-between p-5"
+          style={{ borderBottom: '1px solid rgba(217,201,184,0.3)' }}>
           <div>
-            <h2 className="font-semibold text-stone-800 text-lg">
+            <h2 className="font-semibold text-lg" style={{ color: '#2D2520' }}>
               {appointment.patient?.nombre} {appointment.patient?.apellido}
             </h2>
-            <p className="text-stone-500 text-sm mt-0.5 capitalize">{fechaFormateada}</p>
+            <p className="text-sm mt-0.5 capitalize" style={{ color: '#9C8878' }}>{fechaFormateada}</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-stone-100 rounded-lg transition-colors">
-            <X size={18} className="text-stone-500" />
+          <button onClick={onClose}
+            className="p-2 rounded-xl transition-colors"
+            style={{ background: 'rgba(217,201,184,0.2)' }}>
+            <X size={18} style={{ color: '#9C8878' }} />
           </button>
         </div>
 
         <div className="p-5 space-y-5">
           {/* Estado de la sesión */}
           <div>
-            <p className="text-sm font-medium text-stone-700 mb-2">Estado de la sesión</p>
+            <p className="text-xs font-medium tracking-widest uppercase mb-2.5"
+              style={{ color: '#9C8878' }}>Estado de la sesión</p>
             <div className="grid grid-cols-2 gap-2">
-              {ESTADOS_SESION.map(({ value, label, color }) => (
-                <button
-                  key={value}
-                  onClick={() => setEstadoSesion(value as typeof estadoSesion)}
-                  className={`py-2 px-3 rounded-xl text-sm font-medium transition-all border-2 ${
-                    estadoSesion === value
-                      ? `${color} border-current`
-                      : 'bg-stone-50 text-stone-400 border-transparent hover:border-stone-200'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+              {ESTADOS_SESION.map(({ value, label }) => {
+                const isActive = estadoSesion === value
+                // Colores tierra/pastel para cada estado
+                const activeStyles: Record<string, { bg: string; color: string }> = {
+                  pendiente:  { bg: 'rgba(196,180,164,0.25)', color: '#8B7355' },
+                  asistio:    { bg: 'rgba(143,174,139,0.25)', color: '#4A7A46' },
+                  cancelo:    { bg: 'rgba(223,197,192,0.35)', color: '#8B4A42' },
+                  no_asistio: { bg: 'rgba(220,180,140,0.3)',  color: '#8B5E2A' },
+                }
+                return (
+                  <button
+                    key={value}
+                    onClick={() => setEstadoSesion(value as typeof estadoSesion)}
+                    className="py-2.5 px-3 rounded-2xl text-sm font-medium transition-all"
+                    style={isActive ? {
+                      background: activeStyles[value].bg,
+                      color: activeStyles[value].color,
+                      border: `1.5px solid ${activeStyles[value].color}40`,
+                    } : {
+                      background: 'rgba(255,255,255,0.4)',
+                      color: '#C4B4A4',
+                      border: '1.5px solid rgba(217,201,184,0.3)',
+                    }}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
           {/* Estado del pago */}
           <div>
-            <p className="text-sm font-medium text-stone-700 mb-2">Estado del pago</p>
+            <p className="text-xs font-medium tracking-widest uppercase mb-2.5"
+              style={{ color: '#9C8878' }}>Estado del pago</p>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { value: 'pendiente', label: '⏳ Pendiente', color: 'bg-yellow-100 text-yellow-700' },
-                { value: 'pagado',    label: '✓ Pagado',     color: 'bg-green-100 text-green-700' },
-              ].map(({ value, label, color }) => (
-                <button
-                  key={value}
-                  onClick={() => setEstadoPago(value as typeof estadoPago)}
-                  className={`py-2 px-3 rounded-xl text-sm font-medium transition-all border-2 ${
-                    estadoPago === value
-                      ? `${color} border-current`
-                      : 'bg-stone-50 text-stone-400 border-transparent hover:border-stone-200'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+                { value: 'pendiente', label: '⏳ Pendiente', bg: 'rgba(220,180,100,0.25)', color: '#8B6914' },
+                { value: 'pagado',    label: '✓ Pagado',     bg: 'rgba(143,174,139,0.25)', color: '#4A7A46' },
+              ].map(({ value, label, bg, color }) => {
+                const isActive = estadoPago === value
+                return (
+                  <button
+                    key={value}
+                    onClick={() => setEstadoPago(value as typeof estadoPago)}
+                    className="py-2.5 px-3 rounded-2xl text-sm font-medium transition-all"
+                    style={isActive ? {
+                      background: bg,
+                      color,
+                      border: `1.5px solid ${color}40`,
+                    } : {
+                      background: 'rgba(255,255,255,0.4)',
+                      color: '#C4B4A4',
+                      border: '1.5px solid rgba(217,201,184,0.3)',
+                    }}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
-          {/* Acciones */}
-          <div className="flex gap-2 pt-2">
+          {/* Acciones secundarias */}
+          <div className="flex gap-2 pt-1">
             {/* Ir a la historia clínica de este paciente */}
             <button
               onClick={() => router.push(`/pacientes/${appointment.patient_id}`)}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-sm font-medium transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl text-sm font-medium transition-all"
+              style={{ background: 'rgba(217,201,184,0.25)', color: '#8B7355', border: '1px solid rgba(196,168,130,0.3)' }}
             >
               <FileText size={16} />
               Historia clínica
@@ -136,7 +167,8 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
                 href={linkRecordatorioCita(appointment.patient, appointment)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-medium transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl text-sm font-medium transition-opacity hover:opacity-90"
+                style={{ background: 'linear-gradient(135deg, #4CAF6B 0%, #3D9E59 100%)', color: 'white' }}
               >
                 <MessageCircle size={16} />
                 WhatsApp
@@ -148,7 +180,8 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
           <button
             onClick={guardarCambios}
             disabled={saving}
-            className="w-full py-3 bg-stone-800 hover:bg-stone-900 disabled:bg-stone-400 text-white font-medium rounded-xl transition-colors"
+            className="w-full py-3.5 rounded-2xl text-white font-medium transition-opacity disabled:opacity-50"
+            style={{ background: 'linear-gradient(135deg, #8B7355 0%, #6B8F6B 100%)' }}
           >
             {saving ? 'Guardando...' : 'Guardar cambios'}
           </button>

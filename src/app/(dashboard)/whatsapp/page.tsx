@@ -81,22 +81,23 @@ export default async function WhatsAppPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-stone-800">WhatsApp</h1>
-        <p className="text-stone-500 text-sm mt-1">
+        <h1 className="text-2xl font-light tracking-tight" style={{ color: '#2D2520' }}>WhatsApp</h1>
+        <p className="text-sm mt-1" style={{ color: '#9C8878' }}>
           {totalAlertas === 0
-            ? 'Todo al día — no hay alertas pendientes ✓'
+            ? 'Todo al día — no hay alertas pendientes 🌿'
             : `${totalAlertas} mensajes sugeridos hoy`}
         </p>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
 
         {/* SECCIÓN 1: Recordatorios de citas de mañana */}
         <Section
-          icon={<Clock size={18} />}
+          icon={<Clock size={17} />}
           title="Recordatorio de cita"
           subtitle="Citas para mañana"
-          color="blue"
+          iconBg="rgba(196,168,130,0.2)"
+          iconColor="#8B7355"
         >
           {citasManana?.length === 0 && <EmptyState text="No hay citas mañana" />}
           {(citasManana as (Appointment & { patient: Patient })[])?.map((apt) => (
@@ -112,10 +113,11 @@ export default async function WhatsAppPage() {
 
         {/* SECCIÓN 2: Pagos pendientes */}
         <Section
-          icon={<CreditCard size={18} />}
+          icon={<CreditCard size={17} />}
           title="Pago pendiente"
           subtitle="Más de 3 días sin confirmar"
-          color="yellow"
+          iconBg="rgba(220,180,100,0.2)"
+          iconColor="#8B6914"
         >
           {pagosPendientes?.length === 0 && <EmptyState text="Sin pagos pendientes" />}
           {(pagosPendientes as (Appointment & { patient: Patient })[])?.map((apt) => (
@@ -131,10 +133,11 @@ export default async function WhatsAppPage() {
 
         {/* SECCIÓN 3: Pacientes inactivos */}
         <Section
-          icon={<UserX size={18} />}
+          icon={<UserX size={17} />}
           title="Paciente inactivo"
           subtitle="Más de 20 días sin cita"
-          color="orange"
+          iconBg="rgba(220,160,120,0.2)"
+          iconColor="#8B5E2A"
         >
           {pacientesInactivos.length === 0 && <EmptyState text="Todos los pacientes activos" />}
           {pacientesInactivos.map(({ patient, dias }) => (
@@ -153,30 +156,32 @@ export default async function WhatsAppPage() {
   )
 }
 
-// --- Componentes auxiliares de UI ---
+// --- Componentes auxiliares de UI — glassmorphism tierra/sage ---
 
-function Section({ icon, title, subtitle, color, children }: {
+function Section({ icon, title, subtitle, iconBg, iconColor, children }: {
   icon: React.ReactNode
   title: string
   subtitle: string
-  color: 'blue' | 'yellow' | 'orange'
+  iconBg: string
+  iconColor: string
   children: React.ReactNode
 }) {
-  const colors = {
-    blue:   'bg-blue-50 text-blue-600',
-    yellow: 'bg-yellow-50 text-yellow-600',
-    orange: 'bg-orange-50 text-orange-600',
-  }
   return (
-    <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-stone-100">
-        <span className={`p-2 rounded-lg ${colors[color]}`}>{icon}</span>
+    <div className="glass rounded-2xl overflow-hidden"
+      style={{ border: '1px solid rgba(217,201,184,0.35)' }}>
+      {/* Header de la sección */}
+      <div className="flex items-center gap-3 px-4 py-3"
+        style={{ borderBottom: '1px solid rgba(217,201,184,0.25)' }}>
+        <span className="p-2 rounded-xl" style={{ background: iconBg, color: iconColor }}>
+          {icon}
+        </span>
         <div>
-          <p className="font-medium text-stone-800 text-sm">{title}</p>
-          <p className="text-xs text-stone-400">{subtitle}</p>
+          <p className="font-medium text-sm" style={{ color: '#2D2520' }}>{title}</p>
+          <p className="text-xs" style={{ color: '#B4A494' }}>{subtitle}</p>
         </div>
       </div>
-      <div className="divide-y divide-stone-50">{children}</div>
+      {/* Items de la sección — separados por línea sutil */}
+      <div>{children}</div>
     </div>
   )
 }
@@ -188,10 +193,11 @@ function AlertCard({ nombre, detalle, link, tieneWhatsApp }: {
   tieneWhatsApp: boolean
 }) {
   return (
-    <div className="flex items-center justify-between px-4 py-3">
+    <div className="flex items-center justify-between px-4 py-3"
+      style={{ borderBottom: '1px solid rgba(217,201,184,0.15)' }}>
       <div>
-        <p className="font-medium text-stone-800 text-sm">{nombre}</p>
-        <p className="text-xs text-stone-400 mt-0.5">{detalle}</p>
+        <p className="font-medium text-sm" style={{ color: '#2D2520' }}>{nombre}</p>
+        <p className="text-xs mt-0.5" style={{ color: '#B4A494' }}>{detalle}</p>
       </div>
       {tieneWhatsApp ? (
         // El link abre WhatsApp con el mensaje ya escrito — un solo tap para enviar
@@ -199,18 +205,19 @@ function AlertCard({ nombre, detalle, link, tieneWhatsApp }: {
           href={link}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-xl text-xs font-medium transition-colors"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-opacity hover:opacity-90"
+          style={{ background: 'linear-gradient(135deg, #4CAF6B 0%, #3D9E59 100%)', color: 'white' }}
         >
-          <MessageCircle size={14} />
+          <MessageCircle size={13} />
           Enviar
         </a>
       ) : (
-        <span className="text-xs text-stone-400 italic">Sin WhatsApp</span>
+        <span className="text-xs italic" style={{ color: '#C4B4A4' }}>Sin WhatsApp</span>
       )}
     </div>
   )
 }
 
 function EmptyState({ text }: { text: string }) {
-  return <p className="text-center text-stone-400 text-sm py-4">{text} ✓</p>
+  return <p className="text-center text-sm py-4" style={{ color: '#C4B4A4' }}>{text} ✓</p>
 }

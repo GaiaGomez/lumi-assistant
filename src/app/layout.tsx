@@ -43,7 +43,8 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
       </head>
-      <body className={`${geist.className} h-full antialiased bg-stone-50 text-stone-800`}>
+      {/* bg y color vienen del globals.css — no ponemos clases Tailwind que las pisen */}
+      <body className={`${geist.className} h-full antialiased`}>
         {children}
       </body>
     </html>

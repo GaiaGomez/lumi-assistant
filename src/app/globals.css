@@ -1,26 +1,70 @@
 @import "tailwindcss";
 
+/* ============================================================
+   PALETA LU ASSISTANT — tierra, nude, sage, pastel
+   ============================================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --nude:       #EDE0D4;
+  --sand:       #D9C9B8;
+  --sage:       #C4D4C0;
+  --rose-dust:  #DFC5C0;
+  --warm-white: #FAF8F5;
+  --warm-dark:  #2D2520;
+  --glass-bg:   rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.75);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Fondo general: gradiente cálido tierra-sage */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(145deg,
+    #FAF8F5 0%,
+    #F2EAE2 25%,
+    #EAF0E8 55%,
+    #F5EEF0 80%,
+    #FAF8F5 100%
+  );
+  background-attachment: fixed;
+  color: var(--warm-dark);
+  min-height: 100vh;
 }
+
+/* Glassmorphism utility */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Botón primario con gradiente */
+.btn-primary {
+  background: linear-gradient(135deg, #8B7355 0%, #6B8F6B 100%);
+  color: white;
+  border-radius: 14px;
+  transition: opacity 0.2s;
+}
+.btn-primary:hover { opacity: 0.9; }
+
+/* Scroll suave */
+* { scroll-behavior: smooth; }
+
+/* Quitar el outline feo en iOS */
+input, textarea, button { -webkit-tap-highlight-color: transparent; }
+
+/* react-big-calendar — override de colores al tema tierra */
+.rbc-calendar { font-family: inherit; }
+.rbc-toolbar button {
+  color: #5C4A3A;
+  border-color: #D9C9B8;
+  border-radius: 10px;
+}
+.rbc-toolbar button.rbc-active {
+  background: #8B7355;
+  color: white;
+  border-color: #8B7355;
+}
+.rbc-today { background-color: rgba(196, 212, 192, 0.2) !important; }
+.rbc-header { color: #8B7355; font-weight: 500; font-size: 0.8rem; }
+.rbc-time-slot { border-color: rgba(217, 201, 184, 0.3) !important; }
+.rbc-day-bg + .rbc-day-bg { border-color: rgba(217, 201, 184, 0.3) !important; }
+
