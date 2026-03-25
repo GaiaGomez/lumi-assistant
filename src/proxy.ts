@@ -8,7 +8,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+// Next.js 16: el archivo se llama proxy.ts y la función se llama proxy
+export async function proxy(request: NextRequest) {
   // Creamos una respuesta mutable para poder modificar las cookies
   let supabaseResponse = NextResponse.next({ request })
 
