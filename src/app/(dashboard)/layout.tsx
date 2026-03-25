@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // ============================================================
 // DASHBOARD LAYOUT — envuelve todas las páginas protegidas
 // (agenda, pacientes, historias, whatsapp)

@@ -1,4 +1,8 @@
 'use client'
+// force-dynamic: evita que Next.js intente pre-renderizar esta página en build time
+// sin las variables de entorno de Supabase disponibles
+export const dynamic = 'force-dynamic'
+
 // ============================================================
 // LOGIN PAGE — única página pública de la app
 // Usa Supabase Auth con email/contraseña

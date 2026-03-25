@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // ============================================================
 // PERFIL DE PACIENTE — historial de citas y notas clínicas
 // [id] = parámetro dinámico de la URL: /pacientes/uuid-del-paciente

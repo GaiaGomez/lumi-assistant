@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // ============================================================
 // PACIENTES PAGE — lista de todos los pacientes
 // Server Component: carga datos antes de renderizar

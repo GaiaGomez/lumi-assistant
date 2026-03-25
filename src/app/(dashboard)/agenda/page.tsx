@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // ============================================================
 // AGENDA PAGE — muestra el calendario con las citas
 // Server Component: carga las citas desde Supabase antes de renderizar

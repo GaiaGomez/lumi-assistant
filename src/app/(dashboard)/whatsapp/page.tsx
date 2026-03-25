@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // ============================================================
 // WHATSAPP PAGE — panel de alertas automáticas
 // Detecta: citas mañana, pagos pendientes, pacientes inactivos

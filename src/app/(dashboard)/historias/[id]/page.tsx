@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // ============================================================
 // VER HISTORIA CLÍNICA — muestra una nota existente
 // ============================================================
