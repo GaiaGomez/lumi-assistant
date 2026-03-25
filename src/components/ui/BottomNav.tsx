@@ -26,11 +26,11 @@ export default function BottomNav() {
       <nav
         className="fixed bottom-4 left-4 right-4 flex lg:hidden z-50 rounded-2xl overflow-hidden"
         style={{
-          background: 'rgba(255,255,255,0.72)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          border: '1px solid rgba(255,255,255,0.8)',
-          boxShadow: '0 4px 30px rgba(139,115,85,0.12)',
+          background: 'rgba(255,255,255,0.22)',
+          backdropFilter: 'blur(40px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+          border: '1px solid rgba(255,255,255,0.70)',
+          boxShadow: '0 8px 32px rgba(139,115,85,0.18)',
         }}
       >
         {navItems.map(({ href, label, icon: Icon }) => {
@@ -58,10 +58,10 @@ export default function BottomNav() {
       <aside
         className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-64 z-50"
         style={{
-          background: 'rgba(255,255,255,0.65)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          borderRight: '1px solid rgba(217,201,184,0.4)',
+          background: 'rgba(255,255,255,0.22)',
+          backdropFilter: 'blur(40px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+          borderRight: '1px solid rgba(255,255,255,0.55)',
         }}
       >
         {/* Logo */}

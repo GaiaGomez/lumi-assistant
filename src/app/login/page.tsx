@@ -45,16 +45,35 @@ export default function LoginPage() {
     // Fondo con gradiente tierra-sage (viene del globals.css)
     <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
 
-      {/* ── Blobs de color de fondo — decorativos, no funcionales ── */}
-      {/* Blob nude/rosa */}
-      <div className="absolute top-[-10%] right-[-5%] w-80 h-80 rounded-full opacity-40 pointer-events-none"
-        style={{ background: 'radial-gradient(circle, #DFC5C0 0%, transparent 70%)' }} />
-      {/* Blob sage */}
-      <div className="absolute bottom-[-5%] left-[-5%] w-96 h-96 rounded-full opacity-35 pointer-events-none"
-        style={{ background: 'radial-gradient(circle, #C4D4C0 0%, transparent 70%)' }} />
-      {/* Blob arena pequeño */}
-      <div className="absolute top-[40%] left-[10%] w-48 h-48 rounded-full opacity-25 pointer-events-none"
-        style={{ background: 'radial-gradient(circle, #D9C9B8 0%, transparent 70%)' }} />
+      {/* ── Blobs de color — más grandes y saturados para que el glass se note ── */}
+      {/* Blob terracota — top right, el más grande */}
+      <div className="absolute pointer-events-none" style={{
+        top: '-25%', right: '-20%',
+        width: '650px', height: '650px',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(214,128,98,0.62) 0%, transparent 65%)',
+      }} />
+      {/* Blob sage — bottom left */}
+      <div className="absolute pointer-events-none" style={{
+        bottom: '-30%', left: '-20%',
+        width: '750px', height: '750px',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(100,170,118,0.55) 0%, transparent 65%)',
+      }} />
+      {/* Blob rose — centro izquierda */}
+      <div className="absolute pointer-events-none" style={{
+        top: '35%', left: '5%',
+        width: '380px', height: '380px',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(210,148,148,0.48) 0%, transparent 65%)',
+      }} />
+      {/* Blob arena pequeño — top left */}
+      <div className="absolute pointer-events-none" style={{
+        top: '-5%', left: '15%',
+        width: '280px', height: '280px',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(200,160,110,0.40) 0%, transparent 65%)',
+      }} />
 
       <div className="w-full max-w-sm relative z-10">
 
@@ -78,8 +97,8 @@ export default function LoginPage() {
         {/* ── Card glassmorphism ── */}
         <form
           onSubmit={handleLogin}
-          className="glass rounded-3xl p-7 space-y-5 shadow-xl"
-          style={{ boxShadow: '0 8px 40px rgba(139, 115, 85, 0.12)' }}
+          className="glass rounded-3xl p-7 space-y-5"
+          style={{ boxShadow: '0 8px 48px rgba(139, 115, 85, 0.20)' }}
         >
           <div>
             <label className="block text-xs font-medium tracking-widest uppercase mb-2"
