@@ -8,36 +8,30 @@
   --sand:       #D4B896;
   --sage:       #A8C4A4;
   --rose-dust:  #D4A8A4;
-  --warm-white: #FAF6F0;
+  --warm-white: #FAFAF8;
   --warm-dark:  #2D2520;
-  /* glass muy transparente — el color viene de los blobs detrás */
-  --glass-bg:   rgba(255, 255, 255, 0.18);
-  --glass-border: rgba(255, 255, 255, 0.70);
+  /* glass minimal: casi blanco, limpio, solo un toque de transparencia */
+  --glass-bg:   rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.90);
 }
 
-/* Fondo general: gradiente saturado para que el glass se note */
-/* El truco: sin color detrás, el frosted glass parece blanco vacío */
+/* Fondo: casi blanco cálido — los blobs del layout aportan el color */
 body {
-  background: linear-gradient(145deg,
-    #FAF6F0 0%,
-    #EDD5BE 18%,
-    #C4DFC6 48%,
-    #E8C4C0 78%,
-    #FAF6F0 100%
-  );
+  background: #FAFAF8;
   background-attachment: fixed;
   color: var(--warm-dark);
   min-height: 100vh;
 }
 
-/* ── Glassmorphism — más transparente + más blur = efecto más notorio ── */
-/* backdrop-filter: blur(40px) desenfoca el fondo detrás del panel */
-/* saturate(180%) intensifica los colores del fondo que se ven a través */
+/* ── Glassmorphism minimal — limpio, mucho aire, sombra en lugar de borde ── */
+/* La clave: card casi blanca, blur suave, sombra muy difusa */
+/* El color lo aportan los 2 blobs grandes detrás de todo */
 .glass {
-  background: rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(40px) saturate(180%);
-  -webkit-backdrop-filter: blur(40px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.70);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.90);
+  box-shadow: 0 2px 24px rgba(139, 115, 85, 0.07);
 }
 
 /* Botón primario con gradiente */

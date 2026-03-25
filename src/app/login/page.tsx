@@ -45,34 +45,20 @@ export default function LoginPage() {
     // Fondo con gradiente tierra-sage (viene del globals.css)
     <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
 
-      {/* ── Blobs de color — más grandes y saturados para que el glass se note ── */}
-      {/* Blob terracota — top right, el más grande */}
+      {/* ── 2 blobs suaves — misma lógica minimal que el dashboard ── */}
+      {/* Blob terracota — top right */}
       <div className="absolute pointer-events-none" style={{
-        top: '-25%', right: '-20%',
-        width: '650px', height: '650px',
+        top: '-30%', right: '-25%',
+        width: '800px', height: '800px',
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(214,128,98,0.62) 0%, transparent 65%)',
+        background: 'radial-gradient(circle, rgba(210,155,120,0.34) 0%, transparent 70%)',
       }} />
       {/* Blob sage — bottom left */}
       <div className="absolute pointer-events-none" style={{
-        bottom: '-30%', left: '-20%',
-        width: '750px', height: '750px',
+        bottom: '-35%', left: '-25%',
+        width: '900px', height: '900px',
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(100,170,118,0.55) 0%, transparent 65%)',
-      }} />
-      {/* Blob rose — centro izquierda */}
-      <div className="absolute pointer-events-none" style={{
-        top: '35%', left: '5%',
-        width: '380px', height: '380px',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(210,148,148,0.48) 0%, transparent 65%)',
-      }} />
-      {/* Blob arena pequeño — top left */}
-      <div className="absolute pointer-events-none" style={{
-        top: '-5%', left: '15%',
-        width: '280px', height: '280px',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(200,160,110,0.40) 0%, transparent 65%)',
+        background: 'radial-gradient(circle, rgba(130,185,145,0.28) 0%, transparent 70%)',
       }} />
 
       <div className="w-full max-w-sm relative z-10">

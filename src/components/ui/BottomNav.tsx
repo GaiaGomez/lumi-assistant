@@ -26,11 +26,11 @@ export default function BottomNav() {
       <nav
         className="fixed bottom-4 left-4 right-4 flex lg:hidden z-50 rounded-2xl overflow-hidden"
         style={{
-          background: 'rgba(255,255,255,0.22)',
-          backdropFilter: 'blur(40px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-          border: '1px solid rgba(255,255,255,0.70)',
-          boxShadow: '0 8px 32px rgba(139,115,85,0.18)',
+          background: 'rgba(255,255,255,0.75)',
+          backdropFilter: 'blur(24px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(160%)',
+          border: '1px solid rgba(255,255,255,0.92)',
+          boxShadow: '0 4px 24px rgba(139,115,85,0.10)',
         }}
       >
         {navItems.map(({ href, label, icon: Icon }) => {
@@ -58,10 +58,11 @@ export default function BottomNav() {
       <aside
         className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-64 z-50"
         style={{
-          background: 'rgba(255,255,255,0.22)',
-          backdropFilter: 'blur(40px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-          borderRight: '1px solid rgba(255,255,255,0.55)',
+          background: 'rgba(255,255,255,0.75)',
+          backdropFilter: 'blur(24px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(160%)',
+          borderRight: '1px solid rgba(255,255,255,0.80)',
+          boxShadow: '1px 0 24px rgba(139,115,85,0.06)',
         }}
       >
         {/* Logo */}

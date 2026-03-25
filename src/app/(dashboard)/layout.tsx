@@ -28,34 +28,23 @@ export default async function DashboardLayout({
           y el panel glass solo parece blanco.
           Estos blobs son position:fixed y z-index:0, están detrás
           de todo el contenido pero SE VEN a través de los paneles glass. */}
+      {/* ── Solo 2 blobs, grandes y muy difusos — como el referente minimal ──
+          Opacidad baja (~0.28) y radio amplio (80%) = mancha suave de acuarela
+          La card glass con 72% de blanco los filtra suavemente → minimal elegante */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
-        {/* Blob terracota — arriba a la derecha */}
+        {/* Blob terracota — arriba a la derecha, el protagonista */}
         <div className="absolute" style={{
-          top: '-20%', right: '-15%',
-          width: '680px', height: '680px',
+          top: '-30%', right: '-20%',
+          width: '900px', height: '900px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(214,138,108,0.60) 0%, transparent 65%)',
+          background: 'radial-gradient(circle, rgba(210,155,120,0.32) 0%, transparent 70%)',
         }} />
         {/* Blob sage — abajo a la izquierda */}
         <div className="absolute" style={{
-          bottom: '-25%', left: '-15%',
-          width: '780px', height: '780px',
+          bottom: '-35%', left: '-20%',
+          width: '1000px', height: '1000px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(110,175,125,0.52) 0%, transparent 65%)',
-        }} />
-        {/* Blob nude/arena — centro */}
-        <div className="absolute" style={{
-          top: '30%', left: '20%',
-          width: '520px', height: '520px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(205,165,125,0.42) 0%, transparent 65%)',
-        }} />
-        {/* Blob rose — arriba a la izquierda */}
-        <div className="absolute" style={{
-          top: '5%', left: '-8%',
-          width: '420px', height: '420px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(210,155,155,0.45) 0%, transparent 65%)',
+          background: 'radial-gradient(circle, rgba(130,185,145,0.26) 0%, transparent 70%)',
         }} />
       </div>
 
