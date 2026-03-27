@@ -18,9 +18,9 @@ moment.locale('es')
 const localizer = momentLocalizer(moment)
 
 // ─────────────────────────────────────────────────────────────
-// FESTIVOS COLOMBIANOS
-// Cálculo completo según la Ley Emiliani y días de Semana Santa
-// Se pre-computa fuera del componente (carga única al importar el módulo)
+// FESTIVOS COLOMBIANOS 2026 — fuente explícita y verificada
+// Fechas oficiales según el calendario colombiano 2026.
+// Map: 'YYYY-MM-DD' → nombre del festivo
 // ─────────────────────────────────────────────────────────────
 
 function toDateKey(date: Date): string {
@@ -31,72 +31,25 @@ function toDateKey(date: Date): string {
   )
 }
 
-function calcularPascua(year: number): Date {
-  const a = year % 19
-  const b = Math.floor(year / 100)
-  const c = year % 100
-  const d = Math.floor(b / 4)
-  const e = b % 4
-  const f = Math.floor((b + 8) / 25)
-  const g = Math.floor((b - f + 1) / 3)
-  const h = (19 * a + b - d - g + 15) % 30
-  const i = Math.floor(c / 4)
-  const k = c % 4
-  const l = (32 + 2 * e + 2 * i - h - k) % 7
-  const m = Math.floor((a + 11 * h + 22 * l) / 451)
-  const month = Math.floor((h + l - 7 * m + 114) / 31)
-  const day = ((h + l - 7 * m + 114) % 31) + 1
-  return new Date(year, month - 1, day)
-}
-
-function nextMonday(d: Date): Date {
-  const r = new Date(d)
-  const dow = r.getDay()
-  if (dow === 1) return r
-  r.setDate(r.getDate() + (dow === 0 ? 1 : 8 - dow))
-  return r
-}
-
-function addDays(d: Date, n: number): Date {
-  const r = new Date(d)
-  r.setDate(r.getDate() + n)
-  return r
-}
-
-function getFestivosYear(year: number): string[] {
-  const pascua = calcularPascua(year)
-  const todos: Date[] = [
-    // ── Fijos
-    new Date(year, 0, 1),    // Año Nuevo
-    new Date(year, 4, 1),    // Día del Trabajo
-    new Date(year, 6, 20),   // Independencia
-    new Date(year, 7, 7),    // Batalla de Boyacá
-    new Date(year, 11, 8),   // Inmaculada Concepción
-    new Date(year, 11, 25),  // Navidad
-    // ── Ley Emiliani (→ lunes siguiente)
-    nextMonday(new Date(year, 0, 6)),    // Reyes Magos
-    nextMonday(new Date(year, 2, 19)),   // San José
-    nextMonday(new Date(year, 5, 29)),   // San Pedro y San Pablo
-    nextMonday(new Date(year, 7, 15)),   // Asunción de la Virgen
-    nextMonday(new Date(year, 9, 12)),   // Día de la Raza
-    nextMonday(new Date(year, 10, 1)),   // Todos los Santos
-    nextMonday(new Date(year, 10, 11)),  // Independencia de Cartagena
-    // ── Semana Santa (fijos relativos a Pascua)
-    addDays(pascua, -3),     // Jueves Santo
-    addDays(pascua, -2),     // Viernes Santo
-    // ── Post-Pascua + Emiliani
-    nextMonday(addDays(pascua, 39)),  // Ascensión del Señor
-    nextMonday(addDays(pascua, 60)),  // Corpus Christi
-    nextMonday(addDays(pascua, 68)),  // Sagrado Corazón de Jesús
-  ]
-  return todos.map(toDateKey)
-}
-
-const thisYear = new Date().getFullYear()
-const FESTIVOS = new Set<string>([
-  ...getFestivosYear(thisYear - 1),
-  ...getFestivosYear(thisYear),
-  ...getFestivosYear(thisYear + 1),
+const FESTIVOS_CO: Map<string, string> = new Map([
+  ['2026-01-01', 'Año Nuevo'],
+  ['2026-01-12', 'Reyes Magos'],
+  ['2026-03-23', 'Día de San José'],
+  ['2026-04-02', 'Jueves Santo'],
+  ['2026-04-03', 'Viernes Santo'],
+  ['2026-05-01', 'Día del Trabajo'],
+  ['2026-05-18', 'Ascensión de Jesús'],
+  ['2026-06-08', 'Corpus Christi'],
+  ['2026-06-15', 'Sagrado Corazón'],
+  ['2026-06-29', 'San Pedro y San Pablo'],
+  ['2026-07-20', 'Día de la Independencia'],
+  ['2026-08-07', 'Batalla de Boyacá'],
+  ['2026-08-17', 'Asunción de la Virgen'],
+  ['2026-10-12', 'Día de la Raza'],
+  ['2026-11-02', 'Todos los Santos'],
+  ['2026-11-16', 'Independencia de Cartagena'],
+  ['2026-12-08', 'Inmaculada Concepción'],
+  ['2026-12-25', 'Navidad'],
 ])
 
 // ─────────────────────────────────────────────────────────────
@@ -169,7 +122,7 @@ function EventoCalendario({ event }: { event: CalendarEvent }) {
 
 // Cabecera de fecha en vista Mes: número + etiqueta "festivo"
 function CabechaFecha({ date, label }: { date: Date; label: string }) {
-  const esFestivo = FESTIVOS.has(toDateKey(date))
+  const esFestivo = FESTIVOS_CO.has(toDateKey(date))
   return (
     <div style={{ textAlign: 'right', lineHeight: 1.2 }}>
       <span>{label}</span>
@@ -188,7 +141,7 @@ function CabechaFecha({ date, label }: { date: Date; label: string }) {
 
 // Cabecera de columna en vista Semana/Día: día + etiqueta "Festivo"
 function ColumnaHeader({ date, label }: { date: Date; label: string }) {
-  const esFestivo = FESTIVOS.has(toDateKey(date))
+  const esFestivo = FESTIVOS_CO.has(toDateKey(date))
   return (
     <div style={{ textAlign: 'center', lineHeight: 1.3 }}>
       <span>{label}</span>
@@ -267,7 +220,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
   // Fondo de cada día: festivos (rosa suave) + fines de semana (mauve muy sutil)
   const dayPropGetter = useCallback((date: Date) => {
     const dow = date.getDay()
-    const isFestivo = FESTIVOS.has(toDateKey(date))
+    const isFestivo = FESTIVOS_CO.has(toDateKey(date))
     const isWeekend = dow === 0 || dow === 6
     const className =
       isFestivo ? 'rbc-festivo'

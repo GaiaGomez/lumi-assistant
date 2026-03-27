@@ -441,16 +441,18 @@ textarea:focus {
 .rbc-header + .rbc-header { border-left: none !important; }
 
 /* ── Festivos colombianos ─────────────────────────────────────
-   Debe ir ANTES de .rbc-today para que hoy gane en cascada.
-   El box-shadow inset actúa como borde superior sin afectar layout. ── */
+   Va ANTES de .rbc-today para que hoy gane en background (cascada).
+   inset box-shadow = línea de acento superior sin romper layout.
+   Cuando un día es HOY + FESTIVO: bg mauve de hoy gana,
+   pero la línea rosa del festivo sigue visible (today no define shadow). ── */
 .rbc-festivo {
-  background: rgba(185, 143, 149, 0.13) !important;
-  box-shadow: inset 0 2px 0 rgba(185, 143, 149, 0.42) !important;
+  background: rgba(185, 143, 149, 0.18) !important;
+  box-shadow: inset 0 3px 0 rgba(185, 143, 149, 0.55) !important;
 }
 
-/* ── Hoy — tinte mauve sutil (va después de festivo → bg de hoy gana) ── */
-.rbc-today { background: rgba(148, 136, 176, 0.09) !important; }
-.rbc-header.rbc-today { color: var(--ink-cool-strong) !important; background: rgba(148, 136, 176, 0.06) !important; }
+/* ── Hoy — tinte mauve (va después de festivo → bg de hoy gana) ── */
+.rbc-today { background: rgba(148, 136, 176, 0.11) !important; }
+.rbc-header.rbc-today { color: var(--ink-cool-strong) !important; background: rgba(148, 136, 176, 0.08) !important; }
 
 /* Número de hoy con círculo (vista Mes) */
 .rbc-now.rbc-date-cell .rbc-button-link {
@@ -461,9 +463,9 @@ textarea:focus {
   font-weight: 700 !important;
 }
 
-/* ── Días fuera del mes actual — más tenues ── */
-.rbc-off-range-bg { background: rgba(0,0,0,0.022) !important; }
-.rbc-off-range.rbc-date-cell .rbc-button-link { color: var(--ink-cool-muted) !important; opacity: 0.5; }
+/* ── Días fuera del mes actual — claramente más tenues ── */
+.rbc-off-range-bg { background: rgba(0,0,0,0.04) !important; }
+.rbc-off-range.rbc-date-cell .rbc-button-link { color: var(--ink-cool-muted) !important; opacity: 0.38; }
 
 /* (la regla principal de festivos está antes de .rbc-today — ver arriba) */
 
