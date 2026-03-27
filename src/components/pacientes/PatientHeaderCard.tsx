@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ArrowLeft, Plus } from 'lucide-react'
 import { Patient } from '@/types'
 import PatientInactivityStatus from '@/components/pacientes/PatientInactivityStatus'
+import Avatar from '@/components/ui/Avatar'
 
 interface PatientHeaderCardProps {
   patient: Patient
@@ -53,20 +54,7 @@ export default function PatientHeaderCard({
               <ArrowLeft size={15} />
             </Link>
 
-            <div
-              className="rounded-full flex items-center justify-center shrink-0"
-              style={{
-                width: '36px',
-                height: '36px',
-                background: 'linear-gradient(145deg, var(--accent-lavender-soft) 0%, var(--accent-lilac) 100%)',
-                boxShadow: 'var(--shadow-glass)',
-                border: '1px solid var(--border-glass-white)',
-              }}
-            >
-              <span className="text-[10px] font-medium tracking-[0.02em]" style={{ color: 'var(--ink-cool-strong)' }}>
-                {patient.nombre[0]}{patient.apellido[0]}
-              </span>
-            </div>
+            <Avatar nombre={patient.nombre} apellido={patient.apellido} size="md" />
 
             <div className="min-w-0 pt-2.5">
               <h1
@@ -85,16 +73,8 @@ export default function PatientHeaderCard({
 
           <Link
             href={newNoteHref}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full font-medium"
-            style={{
-              height: '34px',
-              padding: '0 14px',
-              fontSize: '13px',
-              background: 'linear-gradient(145deg, var(--accent-lilac) 0%, var(--accent-mauve) 100%)',
-              color: 'var(--ink-cool-strong)',
-              border: '1px solid rgba(255,255,255,0.32)',
-              boxShadow: 'var(--shadow-glass)',
-            }}
+            className="btn-action shrink-0 gap-1.5"
+            style={{ height: '34px', padding: '0 14px', fontSize: '13px' }}
           >
             <Plus size={12} />
             Nueva nota

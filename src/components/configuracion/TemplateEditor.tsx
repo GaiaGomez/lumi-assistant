@@ -9,6 +9,11 @@ import type { ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Check, AlertCircle } from 'lucide-react'
 import { interpolate, type SettingsMap } from '@/lib/settings'
+import Button from '@/components/ui/Button'
+import Card from '@/components/ui/Card'
+import Input from '@/components/ui/Input'
+import Textarea from '@/components/ui/Textarea'
+import SectionHeader from '@/components/ui/SectionHeader'
 
 interface Props {
   settings: SettingsMap
@@ -90,46 +95,44 @@ export default function TemplateEditor({ settings, userId }: Props) {
     <div className="space-y-3">
 
       {/* ── URL de agenda ── */}
-      <FieldCard>
+      <Card className="p-4 space-y-3">
         <div>
           <h2 className="editorial-panel-title text-[1.05rem] mb-0.5" style={{ color: 'var(--ink-cool-strong)' }}>
             Link de agenda
           </h2>
-          <p className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>
+          <p className="text-[12px]" style={{ color: 'var(--ink-cool-soft)' }}>
             Se usa como <VarChip name="booking_url" /> en las plantillas.
           </p>
         </div>
 
-        <input
+        <Input
           type="url"
           value={doctoraliaUrl}
           onChange={e => setDoctoraliaUrl(e.target.value)}
           placeholder="https://www.doctoralia.co/tu-perfil"
-          className="w-full rounded-[14px] px-3.5 py-3 text-[13px]"
         />
 
         <FieldActions
           state={saveStates['doctoralia_url'] ?? 'idle'}
           onSave={() => saveField('doctoralia_url', doctoraliaUrl)}
         />
-      </FieldCard>
+      </Card>
 
       {/* ── Plantillas ── */}
       {TEMPLATES.map((tpl) => {
         const currentValue = values[tpl.key] ?? ''
-        // Para la vista previa, {booking_url} usa el valor real del campo de arriba
         const previewVars: Record<string, string> = {
           ...tpl.previewVars,
           booking_url: doctoraliaUrl || tpl.previewVars['booking_url'] || 'tu-enlace',
         }
 
         return (
-          <FieldCard key={tpl.key}>
+          <Card key={tpl.key} className="p-4 space-y-3">
             <div>
               <h2 className="editorial-panel-title text-[1.05rem] mb-0.5" style={{ color: 'var(--ink-cool-strong)' }}>
                 {tpl.label}
               </h2>
-              <p className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>
+              <p className="text-[12px]" style={{ color: 'var(--ink-cool-soft)' }}>
                 {tpl.description}
               </p>
             </div>
@@ -141,11 +144,10 @@ export default function TemplateEditor({ settings, userId }: Props) {
               ))}
             </div>
 
-            <textarea
+            <Textarea
               value={currentValue}
               onChange={e => setValues(prev => ({ ...prev, [tpl.key]: e.target.value }))}
               rows={4}
-              className="w-full rounded-[14px] px-3.5 py-3 text-[13px] leading-relaxed resize-none"
             />
 
             {/* Vista previa en vivo */}
@@ -157,10 +159,8 @@ export default function TemplateEditor({ settings, userId }: Props) {
                   border: '1px solid var(--border-soft)',
                 }}
               >
-                <p className="card-label mb-1.5" style={{ color: 'var(--ink-faint)' }}>
-                  Vista previa
-                </p>
-                <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
+                <SectionHeader label="Vista previa" className="mb-1.5" />
+                <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink-cool-soft)' }}>
                   {interpolate(currentValue, previewVars)}
                 </p>
               </div>
@@ -170,7 +170,7 @@ export default function TemplateEditor({ settings, userId }: Props) {
               state={saveStates[tpl.key] ?? 'idle'}
               onSave={() => saveField(tpl.key, currentValue)}
             />
-          </FieldCard>
+          </Card>
         )
       })}
     </div>
@@ -178,23 +178,6 @@ export default function TemplateEditor({ settings, userId }: Props) {
 }
 
 // ── Sub-componentes ─────────────────────────────────────────────────────────
-
-function FieldCard({ children }: { children: ReactNode }) {
-  return (
-    <section
-      className="rounded-[18px] p-4 space-y-3"
-      style={{
-        background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
-        border: '1px solid var(--border-glass-white)',
-        boxShadow: 'var(--shadow-glass)',
-        backdropFilter: 'blur(22px) saturate(140%)',
-        WebkitBackdropFilter: 'blur(22px) saturate(140%)',
-      }}
-    >
-      {children}
-    </section>
-  )
-}
 
 function VarChip({ name, hint }: { name: string; hint?: string }) {
   return (
@@ -228,13 +211,14 @@ function FieldActions({ state, onSave }: { state: SaveState; onSave: () => void 
         </span>
       )}
       {(state === 'idle' || state === 'saving') && (
-        <button
+        <Button
+          variant="action"
           onClick={onSave}
           disabled={state === 'saving'}
-          className="btn-action px-5 py-2.5 text-xs font-medium tracking-[0.06em] uppercase disabled:opacity-50"
+          className="px-5 py-2.5 text-xs tracking-[0.06em] uppercase"
         >
           {state === 'saving' ? 'Guardando…' : 'Guardar'}
-        </button>
+        </Button>
       )}
     </div>
   )

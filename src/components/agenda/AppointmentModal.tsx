@@ -11,13 +11,14 @@ import { X, FileText, MessageCircle } from 'lucide-react'
 import { Appointment } from '@/types'
 import { createClient } from '@/lib/supabase/client'
 import { linkRecordatorioCita } from '@/lib/whatsapp'
+import Button from '@/components/ui/Button'
+import SectionHeader from '@/components/ui/SectionHeader'
 
 interface AppointmentModalProps {
   appointment: Appointment
   onClose: () => void
 }
 
-// Opciones de estado de la sesión
 const ESTADOS_SESION = [
   { value: 'pendiente',   label: 'Pendiente' },
   { value: 'asistio',     label: 'Asistió' },
@@ -25,7 +26,6 @@ const ESTADOS_SESION = [
   { value: 'no_asistio',  label: 'No asistió' },
 ]
 
-// Estilos activos para estado sesión — usa tokens semánticos del sistema
 const ACTIVE_SESSION_STYLES: Record<string, { bg: string; color: string }> = {
   pendiente:  { bg: 'var(--state-inactive-bg)',  color: 'var(--ink-cool)' },
   asistio:    { bg: 'var(--state-success-bg)',   color: 'var(--state-success-text)' },
@@ -38,7 +38,6 @@ const ACTIVE_PAYMENT_STYLES: Record<string, { bg: string; color: string }> = {
   pagado:    { bg: 'var(--state-success-bg)', color: 'var(--state-success-text)' },
 }
 
-// Estilo inactivo compartido para todos los toggles
 const inactiveToggle = {
   background: 'rgba(255,255,255,0.42)',
   color: 'var(--ink-cool-muted)',
@@ -49,7 +48,6 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
   const router = useRouter()
   const supabase = createClient()
 
-  // Estado local: copiamos los valores actuales para modificarlos sin afectar el padre
   const [estadoSesion, setEstadoSesion] = useState(appointment.estado_sesion)
   const [estadoPago, setEstadoPago] = useState(appointment.estado_pago)
   const [saving, setSaving] = useState(false)
@@ -59,7 +57,6 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
     weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
   })
 
-  // Guarda los cambios en Supabase y actualiza la UI
   async function guardarCambios() {
     setSaving(true)
     setSaveError(null)
@@ -71,7 +68,7 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
 
       if (error) throw error
 
-      router.refresh()  // hace que la página recargue los datos del servidor
+      router.refresh()
       onClose()
     } catch {
       setSaveError('No se pudo guardar. Intenta de nuevo.')
@@ -81,7 +78,6 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
   }
 
   return (
-    // Overlay con blur suave — al tocar fuera del modal se cierra
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
       style={{ background: 'var(--overlay-modal)', backdropFilter: 'blur(8px)' }}
@@ -94,25 +90,21 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
       >
         <div className="flex items-start justify-between p-5">
           <div>
-            <p className="card-label mb-2" style={{ color: 'var(--ink-cool-faint)' }}>Detalle de cita</p>
+            <SectionHeader label="Detalle de cita" className="mb-2" />
             <h2 className="editorial-title text-[1.4rem]" style={{ color: 'var(--ink-cool-strong)' }}>
               {appointment.patient?.nombre} {appointment.patient?.apellido}
             </h2>
             <p className="text-sm mt-1 capitalize" style={{ color: 'var(--ink-cool-soft)' }}>{fechaFormateada}</p>
           </div>
-          <button
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="btn-subtle p-2.5"
-          >
+          <Button variant="subtle" onClick={onClose} aria-label="Cerrar" className="p-2.5">
             <X size={18} />
-          </button>
+          </Button>
         </div>
 
         <div className="px-5 pb-5 space-y-4">
           {/* ── Estado de sesión ── */}
           <div>
-            <p className="card-label mb-2.5" style={{ color: 'var(--ink-cool-faint)' }}>Estado de la sesión</p>
+            <SectionHeader label="Estado de la sesión" className="mb-2.5" />
             <div className="grid grid-cols-2 gap-1.5">
               {ESTADOS_SESION.map(({ value, label }) => {
                 const isActive = estadoSesion === value
@@ -137,7 +129,7 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
 
           {/* ── Estado de pago ── */}
           <div>
-            <p className="card-label mb-2.5" style={{ color: 'var(--ink-cool-faint)' }}>Estado del pago</p>
+            <SectionHeader label="Estado del pago" className="mb-2.5" />
             <div className="grid grid-cols-2 gap-1.5">
               {(['pendiente', 'pagado'] as const).map((value) => {
                 const isActive = estadoPago === value
@@ -163,13 +155,14 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
 
           {/* ── Acciones secundarias ── */}
           <div className="flex gap-2 pt-1">
-            <button
+            <Button
+              variant="subtle"
               onClick={() => router.push(`/pacientes/${appointment.patient_id}`)}
-              className="btn-subtle flex-1 gap-2 py-3 text-[13px]"
+              className="flex-1 gap-2 py-3 text-[13px]"
             >
               <FileText size={15} />
               Historia clínica
-            </button>
+            </Button>
 
             {appointment.patient?.whatsapp && (
               <a
@@ -191,13 +184,14 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
           )}
 
           {/* ── Acción principal ── */}
-          <button
+          <Button
+            variant="action"
             onClick={guardarCambios}
             disabled={saving}
-            className="btn-action w-full py-3 text-xs tracking-[0.06em] uppercase disabled:opacity-50"
+            className="w-full py-3 text-xs tracking-[0.06em] uppercase"
           >
             {saving ? 'Guardando…' : 'Guardar cambios'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
