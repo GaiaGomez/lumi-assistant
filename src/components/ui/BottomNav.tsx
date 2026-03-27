@@ -7,12 +7,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Calendar, Users, FileText, MessageCircle, Settings } from 'lucide-react'
+import { Calendar, Users, MessageCircle, Settings } from 'lucide-react'
 
 const navItems = [
   { href: '/agenda',        label: 'Agenda',     icon: Calendar },
   { href: '/pacientes',     label: 'Pacientes',  icon: Users },
-  { href: '/historias',     label: 'Notas',      icon: FileText },
   { href: '/whatsapp',      label: 'Pendientes', icon: MessageCircle },
   { href: '/configuracion', label: 'Ajustes',    icon: Settings },
 ]
