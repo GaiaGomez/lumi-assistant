@@ -52,7 +52,7 @@ export async function proxy(request: NextRequest) {
 }
 
 // Le decimos a Next.js en qué rutas ejecutar el middleware
-// Excluimos archivos estáticos, imágenes y APIs
+// Excluimos archivos estáticos, imágenes y APIs para no bloquear Route Handlers
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|icons|manifest.json|sw.js).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|icons|manifest.json|sw.js).*)'],
 }

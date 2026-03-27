@@ -1,219 +1,364 @@
 export const dynamic = 'force-dynamic'
-// ============================================================
-// WHATSAPP PAGE — panel de alertas automáticas
-// Detecta: citas mañana, pagos pendientes, pacientes inactivos
-// Genera links wa.me con mensajes listos para enviar
-// ============================================================
 
+import Link from 'next/link'
+import { ArrowUpRight, MessageCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { MessageCircle, Clock, CreditCard, UserX } from 'lucide-react'
-import { Patient, Appointment } from '@/types'
+import { Appointment, Patient } from '@/types'
+import { formatDateTimeFull } from '@/lib/format'
+import PageBlobs from '@/components/ui/PageBlobs'
 import {
-  linkRecordatorioCita,
-  linkPagoPendiente,
   linkPacienteInactivo,
+  linkPagoPendiente,
+  linkRecordatorioCita,
+  linkVerAgenda,
+  mensajePacienteInactivo,
+  mensajePagoPendiente,
+  mensajeRecordatorioCita,
+  mensajeVerAgenda,
 } from '@/lib/whatsapp'
 
-export default async function WhatsAppPage() {
+type AppointmentWithPatient = Appointment & { patient: Patient | null }
+
+type PendingItem = {
+  id: string
+  patient: Patient
+  reason: string
+  context: string
+  preview: string
+  primaryLabel: 'Enviar WhatsApp'
+  primaryHref: string
+  patientHref: string
+}
+
+const palette = {
+  inkStrong: '#3F3941',
+  ink: '#5A535D',
+  inkSoft: '#635965',
+  inkFaint: '#7E7381',
+  lavenderSmoke: '#BEB3C2',
+  mauveFog: '#C7BCC8',
+  glass: 'rgba(255,255,255,0.38)',
+  glassStrong: 'rgba(255,255,255,0.52)',
+  borderGlass: 'rgba(255,255,255,0.42)',
+  borderSoft: 'rgba(185,174,189,0.28)',
+  shadowGlass: '0 10px 40px rgba(124, 108, 128, 0.10)',
+  shadowSoft: '0 18px 50px rgba(140, 122, 145, 0.10)',
+}
+
+function previewMessage(message: string) {
+  return message.length > 84 ? `${message.slice(0, 84)}...` : message
+}
+
+function countSummary(items: {
+  urgent: PendingItem[]
+  cobros: PendingItem[]
+  noNext: PendingItem[]
+  retomar: PendingItem[]
+}) {
+  return items.urgent.length + items.cobros.length + items.noNext.length + items.retomar.length
+}
+
+function SummaryMiniCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div
+      className="rounded-[16px]"
+      style={{
+        minHeight: value === 0 ? '68px' : '76px',
+        padding: value === 0 ? '10px 12px' : '12px 14px',
+        background: value === 0
+          ? 'linear-gradient(180deg, rgba(255,255,255,0.42) 0%, rgba(255,255,255,0.28) 100%)'
+          : `linear-gradient(180deg, ${palette.glassStrong} 0%, ${palette.glass} 100%)`,
+        border: `1px solid ${value === 0 ? 'rgba(255,255,255,0.32)' : palette.borderGlass}`,
+        boxShadow: value === 0 ? '0 8px 24px rgba(124, 108, 128, 0.06)' : palette.shadowGlass,
+        backdropFilter: 'blur(22px) saturate(140%)',
+        WebkitBackdropFilter: 'blur(22px) saturate(140%)',
+        opacity: value === 0 ? 0.72 : 1,
+      }}
+    >
+      <p className="mb-1 font-semibold uppercase" style={{ color: palette.inkFaint, fontSize: '9px', letterSpacing: '0.08em' }}>
+        {label}
+      </p>
+      <p className="font-medium leading-none" style={{ color: value === 0 ? palette.inkSoft : palette.inkStrong, fontSize: value === 0 ? '20px' : '24px' }}>
+        {value}
+      </p>
+    </div>
+  )
+}
+
+function PendingCard({ item }: { item: PendingItem }) {
+  return (
+    <div
+      className="rounded-[16px]"
+      style={{
+        padding: '11px 13px',
+        background: `linear-gradient(180deg, ${palette.glassStrong} 0%, ${palette.glass} 100%)`,
+        border: `1px solid ${palette.borderGlass}`,
+        boxShadow: palette.shadowGlass,
+        backdropFilter: 'blur(22px) saturate(140%)',
+        WebkitBackdropFilter: 'blur(22px) saturate(140%)',
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-medium leading-snug" style={{ color: palette.inkStrong, fontSize: '15px' }}>
+            {item.patient.nombre} {item.patient.apellido}
+          </p>
+          <p className="mt-1 text-[12px] leading-none" style={{ color: palette.inkStrong }}>
+            {item.reason}
+          </p>
+          <p className="mt-1 text-[11px] leading-none" style={{ color: palette.inkFaint }}>
+            {item.context}
+          </p>
+          <p className="mt-1.5 line-clamp-1 text-[11px] leading-none" style={{ color: palette.inkSoft }}>
+            {item.preview}
+          </p>
+        </div>
+
+        <Link
+          href={item.patientHref}
+          className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium"
+          style={{
+            color: palette.inkStrong,
+            background: 'rgba(255,255,255,0.58)',
+            border: `1px solid ${palette.borderGlass}`,
+            boxShadow: '0 6px 18px rgba(124, 108, 128, 0.07)',
+          }}
+        >
+          Ver paciente
+          <ArrowUpRight size={11} />
+        </Link>
+      </div>
+
+      <div className="mt-2.5">
+        <a
+          href={item.primaryHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-full font-medium"
+          style={{
+            height: '30px',
+            padding: '0 12px',
+            fontSize: '12px',
+            background: `linear-gradient(145deg, ${palette.lavenderSmoke} 0%, ${palette.mauveFog} 100%)`,
+            color: palette.inkStrong,
+            border: `1px solid ${palette.borderSoft}`,
+            boxShadow: palette.shadowSoft,
+          }}
+        >
+          <MessageCircle size={13} />
+          {item.primaryLabel}
+        </a>
+      </div>
+    </div>
+  )
+}
+
+function PendingSection({ title, items }: { title: string; items: PendingItem[] }) {
+  if (items.length === 0) return null
+
+  return (
+    <section
+      className="rounded-[18px] p-3"
+      style={{
+        background: `linear-gradient(180deg, ${palette.glassStrong} 0%, ${palette.glass} 100%)`,
+        border: `1px solid ${palette.borderGlass}`,
+        boxShadow: palette.shadowGlass,
+        backdropFilter: 'blur(22px) saturate(140%)',
+        WebkitBackdropFilter: 'blur(22px) saturate(140%)',
+      }}
+    >
+      <h2 className="editorial-panel-title text-[1.02rem] sm:text-[1.08rem]" style={{ color: palette.inkStrong }}>
+        {title}
+      </h2>
+      <div className="mt-2 space-y-1.5">
+        {items.map((item) => (
+          <PendingCard key={item.id} item={item} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+export default async function PendingPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const ahora = new Date()
-  const manana = new Date(ahora)
-  manana.setDate(manana.getDate() + 1)
+  const now = new Date()
+  const tomorrow = new Date(now)
+  tomorrow.setDate(tomorrow.getDate() + 1)
 
-  // --- Citas de mañana: recordatorio 24h antes ---
-  const inicioManana = new Date(manana)
-  inicioManana.setHours(0, 0, 0, 0)
-  const finManana = new Date(manana)
-  finManana.setHours(23, 59, 59, 999)
+  const tomorrowStart = new Date(tomorrow)
+  tomorrowStart.setHours(0, 0, 0, 0)
+  const tomorrowEnd = new Date(tomorrow)
+  tomorrowEnd.setHours(23, 59, 59, 999)
 
-  const { data: citasManana } = await supabase
-    .from('appointments')
-    .select('*, patient:patients(*)')
-    .eq('user_id', user!.id)
-    .eq('estado_sesion', 'pendiente')
-    .gte('fecha_inicio', inicioManana.toISOString())
-    .lte('fecha_inicio', finManana.toISOString())
-
-  // --- Pagos pendientes: citas hace más de 3 días sin pagar ---
-  const hace3Dias = new Date(ahora)
-  hace3Dias.setDate(hace3Dias.getDate() - 3)
-
-  const { data: pagosPendientes } = await supabase
-    .from('appointments')
-    .select('*, patient:patients(*)')
-    .eq('user_id', user!.id)
-    .eq('estado_sesion', 'asistio')
-    .eq('estado_pago', 'pendiente')
-    .lte('fecha_inicio', hace3Dias.toISOString())
-
-  // --- Pacientes inactivos: sin cita en los últimos 20 días ---
-  const { data: allPatients } = await supabase
-    .from('patients')
-    .select('*')
-    .eq('user_id', user!.id)
-
-  const pacientesInactivos: { patient: Patient; dias: number }[] = []
-
-  for (const patient of (allPatients ?? [])) {
-    const { data: lastApt } = await supabase
+  const [{ data: appointments }, { data: patients }] = await Promise.all([
+    supabase
       .from('appointments')
-      .select('fecha_inicio')
-      .eq('patient_id', patient.id)
-      .order('fecha_inicio', { ascending: false })
-      .limit(1)
-      .single()
+      .select('*, patient:patients(*)')
+      .eq('user_id', user!.id)
+      .order('fecha_inicio', { ascending: false }),
+    supabase
+      .from('patients')
+      .select('*')
+      .eq('user_id', user!.id)
+      .order('apellido', { ascending: true }),
+  ])
 
-    if (lastApt) {
-      const dias = Math.floor(
-        (ahora.getTime() - new Date(lastApt.fecha_inicio).getTime()) / (1000 * 60 * 60 * 24)
-      )
-      if (dias >= 20) {
-        pacientesInactivos.push({ patient: patient as Patient, dias })
-      }
+  const allAppointments = ((appointments ?? []) as AppointmentWithPatient[]).filter((apt) => apt.patient)
+  const allPatients = (patients ?? []) as Patient[]
+
+  const urgent: PendingItem[] = []
+  const cobros: PendingItem[] = []
+  const noNext: PendingItem[] = []
+  const retomar: PendingItem[] = []
+
+  const tomorrowAppointments = allAppointments.filter((apt) => {
+    const start = new Date(apt.fecha_inicio)
+    return (
+      apt.estado_sesion === 'pendiente' &&
+      start >= tomorrowStart &&
+      start <= tomorrowEnd &&
+      !!apt.patient
+    )
+  })
+
+  tomorrowAppointments.forEach((apt) => {
+    const patient = apt.patient!
+    urgent.push({
+      id: `urgent-${apt.id}`,
+      patient,
+      reason: 'Sesión mañana',
+      context: formatDateTimeFull(apt.fecha_inicio),
+      preview: previewMessage(mensajeRecordatorioCita(patient, apt)),
+      primaryLabel: 'Enviar WhatsApp',
+      primaryHref: linkRecordatorioCita(patient, apt),
+      patientHref: `/pacientes/${patient.id}`,
+    })
+  })
+
+  const pendingPayments = allAppointments.filter(
+    (apt) => apt.estado_sesion === 'asistio' && apt.estado_pago === 'pendiente' && !!apt.patient
+  )
+
+  pendingPayments.forEach((apt) => {
+    const patient = apt.patient!
+    cobros.push({
+      id: `payment-${apt.id}`,
+      patient,
+      reason: 'Pago pendiente',
+      context: `Sesión del ${formatDateTimeFull(apt.fecha_inicio)}`,
+      preview: previewMessage(mensajePagoPendiente(patient, apt)),
+      primaryLabel: 'Enviar WhatsApp',
+      primaryHref: linkPagoPendiente(patient, apt),
+      patientHref: `/pacientes/${patient.id}`,
+    })
+  })
+
+  allPatients.forEach((patient) => {
+    const patientAppointments = allAppointments
+      .filter((apt) => apt.patient?.id === patient.id)
+      .sort((a, b) => new Date(b.fecha_inicio).getTime() - new Date(a.fecha_inicio).getTime())
+
+    const futureAppointment = patientAppointments
+      .filter((apt) => new Date(apt.fecha_inicio) > now)
+      .sort((a, b) => new Date(a.fecha_inicio).getTime() - new Date(b.fecha_inicio).getTime())[0] ?? null
+
+    const lastPastAppointment = patientAppointments
+      .filter((apt) => new Date(apt.fecha_inicio) <= now)
+      .sort((a, b) => new Date(b.fecha_inicio).getTime() - new Date(a.fecha_inicio).getTime())[0] ?? null
+
+    if (!lastPastAppointment || futureAppointment) return
+
+    const daysWithoutSchedule = Math.floor(
+      (now.getTime() - new Date(lastPastAppointment.fecha_inicio).getTime()) / (1000 * 60 * 60 * 24)
+    )
+
+    if (daysWithoutSchedule >= 20) {
+      retomar.push({
+        id: `resume-${patient.id}`,
+        patient,
+        reason: `${daysWithoutSchedule} días sin agendar`,
+        context: `Última sesión ${formatDateTimeFull(lastPastAppointment.fecha_inicio)}`,
+        preview: previewMessage(mensajePacienteInactivo(patient, daysWithoutSchedule)),
+        primaryLabel: 'Enviar WhatsApp',
+        primaryHref: linkPacienteInactivo(patient, daysWithoutSchedule),
+        patientHref: `/pacientes/${patient.id}`,
+      })
+      return
     }
+
+    noNext.push({
+      id: `next-${patient.id}`,
+      patient,
+      reason: 'Sin próxima sesión',
+      context: `Última sesión ${formatDateTimeFull(lastPastAppointment.fecha_inicio)}`,
+      preview: previewMessage(mensajeVerAgenda(patient)),
+      primaryLabel: 'Enviar WhatsApp',
+      primaryHref: linkVerAgenda(patient),
+      patientHref: `/pacientes/${patient.id}`,
+    })
+  })
+
+  const totals = {
+    urgent,
+    cobros,
+    noNext,
+    retomar,
   }
 
-  const totalAlertas = (citasManana?.length ?? 0) + (pagosPendientes?.length ?? 0) + pacientesInactivos.length
+  const totalSuggestions = countSummary(totals)
+  const hasFewSuggestions = totalSuggestions <= 2
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-light tracking-tight" style={{ color: '#111111' }}>WhatsApp</h1>
-        <p className="text-sm mt-1" style={{ color: '#666666' }}>
-          {totalAlertas === 0
-            ? 'Todo al día — no hay alertas pendientes ✓'
-            : `${totalAlertas} mensajes sugeridos hoy`}
-        </p>
-      </div>
+    <div className="relative mx-auto max-w-[1180px] px-4 pb-1 font-sans sm:px-5">
+      <PageBlobs />
 
-      <div className="space-y-4">
-
-        {/* SECCIÓN 1: Recordatorios de citas de mañana */}
-        <Section
-          icon={<Clock size={17} />}
-          title="Recordatorio de cita"
-          subtitle="Citas para mañana"
-          iconBg="rgba(175,165,185,0.25)"
-          iconColor="#666666"
-        >
-          {citasManana?.length === 0 && <EmptyState text="No hay citas mañana" />}
-          {(citasManana as (Appointment & { patient: Patient })[])?.map((apt) => (
-            <AlertCard
-              key={apt.id}
-              nombre={`${apt.patient.nombre} ${apt.patient.apellido}`}
-              detalle={new Date(apt.fecha_inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) + ' — mañana'}
-              link={linkRecordatorioCita(apt.patient, apt)}
-              tieneWhatsApp={!!apt.patient.whatsapp}
-            />
-          ))}
-        </Section>
-
-        {/* SECCIÓN 2: Pagos pendientes */}
-        <Section
-          icon={<CreditCard size={17} />}
-          title="Pago pendiente"
-          subtitle="Más de 3 días sin confirmar"
-          iconBg="rgba(185,172,135,0.22)"
-          iconColor="#7A6020"
-        >
-          {pagosPendientes?.length === 0 && <EmptyState text="Sin pagos pendientes" />}
-          {(pagosPendientes as (Appointment & { patient: Patient })[])?.map((apt) => (
-            <AlertCard
-              key={apt.id}
-              nombre={`${apt.patient.nombre} ${apt.patient.apellido}`}
-              detalle={`Sesión del ${new Date(apt.fecha_inicio).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}`}
-              link={linkPagoPendiente(apt.patient, apt)}
-              tieneWhatsApp={!!apt.patient.whatsapp}
-            />
-          ))}
-        </Section>
-
-        {/* SECCIÓN 3: Pacientes inactivos */}
-        <Section
-          icon={<UserX size={17} />}
-          title="Paciente inactivo"
-          subtitle="Más de 20 días sin cita"
-          iconBg="rgba(195,155,155,0.22)"
-          iconColor="#7A3535"
-        >
-          {pacientesInactivos.length === 0 && <EmptyState text="Todos los pacientes activos" />}
-          {pacientesInactivos.map(({ patient, dias }) => (
-            <AlertCard
-              key={patient.id}
-              nombre={`${patient.nombre} ${patient.apellido}`}
-              detalle={`${dias} días sin cita`}
-              link={linkPacienteInactivo(patient, dias)}
-              tieneWhatsApp={!!patient.whatsapp}
-            />
-          ))}
-        </Section>
-
-      </div>
-    </div>
-  )
-}
-
-// --- Componentes auxiliares de UI ---
-
-function Section({ icon, title, subtitle, iconBg, iconColor, children }: {
-  icon: React.ReactNode
-  title: string
-  subtitle: string
-  iconBg: string
-  iconColor: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="glass rounded-2xl overflow-hidden">
-      {/* Header de la sección */}
-      <div className="flex items-center gap-3 px-4 py-3">
-        <span className="p-2 rounded-xl" style={{ background: iconBg, color: iconColor }}>
-          {icon}
-        </span>
-        <div>
-          <p className="font-medium text-sm" style={{ color: '#111111' }}>{title}</p>
-          <p className="text-xs" style={{ color: '#888888' }}>{subtitle}</p>
+      <section
+        className="relative mb-3 rounded-[18px] p-3"
+        style={{
+          background: `linear-gradient(180deg, ${palette.glassStrong} 0%, ${palette.glass} 100%)`,
+          border: `1px solid ${palette.borderGlass}`,
+          boxShadow: palette.shadowGlass,
+          backdropFilter: 'blur(22px) saturate(140%)',
+          WebkitBackdropFilter: 'blur(22px) saturate(140%)',
+        }}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="editorial-panel-title text-[1.3rem] sm:text-[1.4rem]" style={{ color: palette.inkStrong }}>
+              Pendientes
+            </h1>
+            <p className="mt-1 text-[12px]" style={{ color: palette.inkSoft }}>
+              Acciones sugeridas para hoy
+            </p>
+          </div>
+          <div
+            className="rounded-full px-2.5 py-1 text-[10px] font-medium"
+            style={{
+              color: palette.inkSoft,
+              background: 'rgba(255,255,255,0.42)',
+              border: `1px solid ${palette.borderGlass}`,
+            }}
+          >
+            {totalSuggestions} sugerencias
+          </div>
         </div>
+      </section>
+
+      <div className="mb-3 grid gap-[10px] sm:grid-cols-2 xl:grid-cols-4">
+        <SummaryMiniCard label="Urgentes" value={urgent.length} />
+        <SummaryMiniCard label="Cobros" value={cobros.length} />
+        <SummaryMiniCard label="Sin próxima" value={noNext.length} />
+        <SummaryMiniCard label="Retomar" value={retomar.length} />
       </div>
-      {/* Items de la sección */}
-      <div>{children}</div>
+
+      <div className={`space-y-2.5 ${hasFewSuggestions ? 'max-w-[860px]' : ''}`}>
+        <PendingSection title="Urgente" items={urgent} />
+        <PendingSection title="Cobros" items={cobros} />
+        <PendingSection title="Sin próxima sesión" items={noNext} />
+        <PendingSection title="Retomar proceso" items={retomar} />
+      </div>
     </div>
   )
-}
-
-function AlertCard({ nombre, detalle, link, tieneWhatsApp }: {
-  nombre: string
-  detalle: string
-  link: string
-  tieneWhatsApp: boolean
-}) {
-  return (
-    <div className="flex items-center justify-between px-4 py-3">
-      <div>
-        <p className="font-medium text-sm" style={{ color: '#111111' }}>{nombre}</p>
-        <p className="text-xs mt-0.5" style={{ color: '#888888' }}>{detalle}</p>
-      </div>
-      {tieneWhatsApp ? (
-        // El link abre WhatsApp con el mensaje ya escrito — verde WA por branding
-        <a
-          href={link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-opacity hover:opacity-90"
-          style={{ background: 'linear-gradient(135deg, #4CAF6B 0%, #3D9E59 100%)', color: 'white' }}
-        >
-          <MessageCircle size={13} />
-          Enviar
-        </a>
-      ) : (
-        <span className="text-xs italic" style={{ color: '#AAAAAA' }}>Sin WhatsApp</span>
-      )}
-    </div>
-  )
-}
-
-function EmptyState({ text }: { text: string }) {
-  return <p className="text-center text-sm py-4" style={{ color: '#AAAAAA' }}>{text} ✓</p>
 }

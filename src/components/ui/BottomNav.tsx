@@ -13,7 +13,7 @@ const navItems = [
   { href: '/agenda',    label: 'Agenda',    icon: Calendar },
   { href: '/pacientes', label: 'Pacientes', icon: Users },
   { href: '/historias', label: 'Notas',     icon: FileText },
-  { href: '/whatsapp',  label: 'WhatsApp',  icon: MessageCircle },
+  { href: '/whatsapp',  label: 'Pendientes',  icon: MessageCircle },
 ]
 
 export default function BottomNav() {

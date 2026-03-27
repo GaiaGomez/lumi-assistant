@@ -22,11 +22,11 @@ interface AgendaClientProps {
 
 // Paleta neutral con toque rose para los estados — semántica clara, sin café/verde
 const COLORES_ESTADO: Record<string, string> = {
-  pendiente:  '#A8A0AA',  // gris-mauve — neutro
-  asistio:    '#8AAAA8',  // teal-gris — asistió (color funcional, no acento de marca)
-  cancelo:    '#C09090',  // rose-gris — canceló
-  no_asistio: '#B0A870',  // khaki — no asistió
-  pago_pend:  '#AE8898',  // rose-gris oscuro — asistió pero debe
+  pendiente:  '#B79B96',
+  asistio:    '#839285',
+  cancelo:    '#B07C84',
+  no_asistio: '#B69B78',
+  pago_pend:  '#9A6B72',
 }
 
 export default function AgendaClient({ appointments }: AgendaClientProps) {
@@ -65,13 +65,13 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
     return {
       style: {
         backgroundColor: bg,
-        borderRadius: '10px',
-        border: 'none',
-        color: 'white',
+        borderRadius: '12px',
+        border: '1px solid rgba(255,250,248,0.18)',
+        color: '#fffaf8',
         fontSize: '11px',
-        fontWeight: '500',
-        padding: '3px 8px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+        fontWeight: '600',
+        padding: '4px 9px',
+        boxShadow: '0 12px 24px rgba(88,62,58,0.14)',
       }
     }
   }, [])
@@ -100,64 +100,60 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
   return (
     <div className="space-y-4">
 
-      {/* ── Barra superior: navegación + view picker ── */}
-      <div className="flex items-center justify-between">
+      <div className="glass rounded-[28px] px-4 py-3 flex items-center justify-between">
 
-        {/* Período actual + flechas */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => navegar('prev')}
-            className="p-2 rounded-xl transition-all"
-            style={{ background: 'rgba(235,232,238,0.75)', color: '#777777' }}
+            aria-label={currentView === 'month' ? 'Mes anterior' : currentView === 'week' ? 'Semana anterior' : 'Día anterior'}
+            className="btn-secondary p-2.5"
+            style={{ color: 'var(--ink-soft)' }}
           >
             <ChevronLeft size={16} />
           </button>
           <button
             onClick={() => navegar('next')}
-            className="p-2 rounded-xl transition-all"
-            style={{ background: 'rgba(235,232,238,0.75)', color: '#777777' }}
+            aria-label={currentView === 'month' ? 'Mes siguiente' : currentView === 'week' ? 'Semana siguiente' : 'Día siguiente'}
+            className="btn-secondary p-2.5"
+            style={{ color: 'var(--ink-soft)' }}
           >
             <ChevronRight size={16} />
           </button>
-          {/* Nombre del período */}
-          <h2 className="text-base font-medium capitalize ml-1" style={{ color: '#111111' }}>
+          <h2 className="text-base font-medium capitalize ml-2 editorial-title" style={{ color: 'var(--ink-strong)' }}>
             {periodoLabel()}
           </h2>
         </div>
 
-        {/* View picker — pill flotante */}
-        <div className="flex gap-0.5 p-1 rounded-2xl" style={{ background: 'rgba(238,235,242,0.80)' }}>
+        <div className="flex gap-1 p-1 rounded-full" style={{ background: 'rgba(255,250,247,0.68)', border: '1px solid var(--border-soft)' }}>
           {(['day', 'week', 'month'] as View[]).map((view) => (
             <button
               key={view}
               onClick={() => setCurrentView(view)}
-              className="px-4 py-1.5 rounded-xl text-sm font-medium transition-all"
+              className="px-4 py-2 rounded-full text-sm font-medium transition-all"
               style={currentView === view ? {
-                background: 'white',
-                color: '#333333',
-                boxShadow: '0 1px 8px rgba(120,110,130,0.10)',
+                background: 'rgba(255,252,250,0.98)',
+                color: 'var(--ink-strong)',
+                boxShadow: 'var(--shadow-soft)',
               } : {
-                color: '#AAAAAA',
+                color: 'var(--ink-faint)',
                 background: 'transparent',
               }}
             >
               {view === 'day' ? 'Día' : view === 'week' ? 'Semana' : 'Mes'}
             </button>
           ))}
-          {/* Botón Hoy */}
           <button
             onClick={() => navegar('today')}
-            className="px-4 py-1.5 rounded-xl text-sm font-medium transition-all ml-1"
-            style={{ color: '#999999', background: 'transparent' }}
+            className="px-4 py-2 rounded-full text-sm font-medium transition-all ml-1"
+            style={{ color: 'var(--ink-soft)', background: 'transparent' }}
           >
             Hoy
           </button>
         </div>
       </div>
 
-      {/* ── El calendario — card limpia sin líneas ── */}
-      <div className="glass rounded-3xl overflow-hidden" style={{ minHeight: '620px' }}>
-        <div className="p-5" style={{ height: '620px' }}>
+      <div className="glass rounded-[34px] overflow-hidden" style={{ minHeight: '620px' }}>
+        <div className="p-6" style={{ height: '620px' }}>
           <Calendar
             localizer={localizer}
             events={events}
