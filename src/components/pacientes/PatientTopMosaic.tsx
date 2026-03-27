@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { MessageCircle } from 'lucide-react'
 import { Appointment, ClinicalNote, Patient } from '@/types'
-import { linkPagoPendiente, linkVerAgenda } from '@/lib/whatsapp'
+import { generarLinkWhatsApp } from '@/lib/whatsapp'
+import { interpolate, type SettingsMap } from '@/lib/settings'
+import { formatDateTimeFull } from '@/lib/format'
 
 const palette = {
   glass: 'rgba(255,255,255,0.38)',
@@ -25,6 +27,7 @@ interface PatientTopMosaicProps {
   latestNote: ClinicalNote | null
   pendingPaymentsCount: number
   oldestPendingPayment: Appointment | null
+  settings: SettingsMap
 }
 
 function formatAppointmentDate(date: string) {
@@ -150,11 +153,30 @@ export default function PatientTopMosaic({
   latestNote,
   pendingPaymentsCount,
   oldestPendingPayment,
+  settings,
 }: PatientTopMosaicProps) {
   const hasWhatsApp = !!patient.whatsapp
   const whatsappHref = hasWhatsApp ? `https://wa.me/${patient.whatsapp?.replace(/[^0-9]/g, '')}` : undefined
-  const paymentHref = hasWhatsApp && oldestPendingPayment ? linkPagoPendiente(patient, oldestPendingPayment) : undefined
-  const agendaHref = hasWhatsApp ? linkVerAgenda(patient) : undefined
+
+  const paymentHref = hasWhatsApp && oldestPendingPayment
+    ? generarLinkWhatsApp(
+        patient.whatsapp,
+        interpolate(settings['template_cobros'], {
+          first_name: patient.nombre,
+          session_date: formatDateTimeFull(oldestPendingPayment.fecha_inicio),
+        })
+      )
+    : undefined
+
+  const agendaHref = hasWhatsApp
+    ? generarLinkWhatsApp(
+        patient.whatsapp,
+        interpolate(settings['template_sin_proxima'], {
+          first_name: patient.nombre,
+          booking_url: settings['doctoralia_url'],
+        })
+      )
+    : undefined
   const noWhatsAppText = 'No tiene numero de WhatsApp registrado'
   const nextAppointmentText = nextAppointment ? formatAppointmentDate(nextAppointment.fecha_inicio) : null
   const lastPastAppointmentText = lastPastAppointment ? formatAppointmentDate(lastPastAppointment.fecha_inicio) : null

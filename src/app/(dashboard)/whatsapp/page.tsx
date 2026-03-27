@@ -5,16 +5,12 @@ import { ArrowUpRight, MessageCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Appointment, Patient } from '@/types'
 import { formatDateTimeFull } from '@/lib/format'
+import { fetchSettings, interpolate } from '@/lib/settings'
 import PageBlobs from '@/components/ui/PageBlobs'
 import {
-  linkPacienteInactivo,
-  linkPagoPendiente,
   linkRecordatorioCita,
-  linkVerAgenda,
-  mensajePacienteInactivo,
-  mensajePagoPendiente,
   mensajeRecordatorioCita,
-  mensajeVerAgenda,
+  generarLinkWhatsApp,
 } from '@/lib/whatsapp'
 
 type AppointmentWithPatient = Appointment & { patient: Patient | null }
@@ -192,6 +188,9 @@ export default async function PendingPage() {
   const tomorrowEnd = new Date(tomorrow)
   tomorrowEnd.setHours(23, 59, 59, 999)
 
+  // fetchSettings corre en paralelo con las otras queries
+  const settingsPromise = fetchSettings(supabase, user!.id)
+
   const [{ data: appointments }, { data: patients }] = await Promise.all([
     supabase
       .from('appointments')
@@ -204,6 +203,8 @@ export default async function PendingPage() {
       .eq('user_id', user!.id)
       .order('apellido', { ascending: true }),
   ])
+
+  const settings = await settingsPromise
 
   const allAppointments = ((appointments ?? []) as AppointmentWithPatient[]).filter((apt) => apt.patient)
   const allPatients = (patients ?? []) as Patient[]
@@ -243,14 +244,18 @@ export default async function PendingPage() {
 
   pendingPayments.forEach((apt) => {
     const patient = apt.patient!
+    const mensaje = interpolate(settings['template_cobros'], {
+      first_name: patient.nombre,
+      session_date: formatDateTimeFull(apt.fecha_inicio),
+    })
     cobros.push({
       id: `payment-${apt.id}`,
       patient,
       reason: 'Pago pendiente',
       context: `Sesión del ${formatDateTimeFull(apt.fecha_inicio)}`,
-      preview: previewMessage(mensajePagoPendiente(patient, apt)),
+      preview: previewMessage(mensaje),
       primaryLabel: 'Enviar WhatsApp',
-      primaryHref: linkPagoPendiente(patient, apt),
+      primaryHref: generarLinkWhatsApp(patient.whatsapp, mensaje),
       patientHref: `/pacientes/${patient.id}`,
     })
   })
@@ -275,27 +280,35 @@ export default async function PendingPage() {
     )
 
     if (daysWithoutSchedule >= 20) {
+      const mensaje = interpolate(settings['template_retomar'], {
+        first_name: patient.nombre,
+        days_inactive: String(daysWithoutSchedule),
+      })
       retomar.push({
         id: `resume-${patient.id}`,
         patient,
         reason: `${daysWithoutSchedule} días sin agendar`,
         context: `Última sesión ${formatDateTimeFull(lastPastAppointment.fecha_inicio)}`,
-        preview: previewMessage(mensajePacienteInactivo(patient, daysWithoutSchedule)),
+        preview: previewMessage(mensaje),
         primaryLabel: 'Enviar WhatsApp',
-        primaryHref: linkPacienteInactivo(patient, daysWithoutSchedule),
+        primaryHref: generarLinkWhatsApp(patient.whatsapp, mensaje),
         patientHref: `/pacientes/${patient.id}`,
       })
       return
     }
 
+    const mensaje = interpolate(settings['template_sin_proxima'], {
+      first_name: patient.nombre,
+      booking_url: settings['doctoralia_url'],
+    })
     noNext.push({
       id: `next-${patient.id}`,
       patient,
       reason: 'Sin próxima sesión',
       context: `Última sesión ${formatDateTimeFull(lastPastAppointment.fecha_inicio)}`,
-      preview: previewMessage(mensajeVerAgenda(patient)),
+      preview: previewMessage(mensaje),
       primaryLabel: 'Enviar WhatsApp',
-      primaryHref: linkVerAgenda(patient),
+      primaryHref: generarLinkWhatsApp(patient.whatsapp, mensaje),
       patientHref: `/pacientes/${patient.id}`,
     })
   })

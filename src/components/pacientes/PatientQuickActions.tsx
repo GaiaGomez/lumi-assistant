@@ -1,11 +1,9 @@
 import type { CSSProperties } from 'react'
 import { MessageCircle, Wallet, BellRing } from 'lucide-react'
 import { Appointment, Patient } from '@/types'
-import {
-  linkPacienteInactivo,
-  linkPagoPendiente,
-  linkRecordatorioCita,
-} from '@/lib/whatsapp'
+import { generarLinkWhatsApp, linkRecordatorioCita } from '@/lib/whatsapp'
+import { interpolate, type SettingsMap } from '@/lib/settings'
+import { formatDateTimeFull } from '@/lib/format'
 
 const palette = {
   glass: 'rgba(255,255,255,0.38)',
@@ -29,6 +27,7 @@ interface PatientQuickActionsProps {
   oldestPendingPayment: Appointment | null
   isInactive: boolean
   inactiveDays: number | null
+  settings: SettingsMap
 }
 
 function buildDirectWhatsAppLink(whatsapp: string | null) {
@@ -104,24 +103,29 @@ export default function PatientQuickActions({
   oldestPendingPayment,
   isInactive,
   inactiveDays,
+  settings,
 }: PatientQuickActionsProps) {
   const hasWhatsApp = !!patient.whatsapp
   const suggestedAction = oldestPendingPayment
     ? {
         label: 'Cobrar pago pendiente',
-        hint: hasWhatsApp
-          ? 'Cobro pendiente.'
-          : 'Falta un número de WhatsApp.',
+        hint: hasWhatsApp ? 'Cobro pendiente.' : 'Falta un número de WhatsApp.',
         icon: Wallet,
         accentStyle: { color: hasWhatsApp ? '#8E8691' : '#B2AAB3' },
-        href: hasWhatsApp ? linkPagoPendiente(patient, oldestPendingPayment) : undefined,
+        href: hasWhatsApp
+          ? generarLinkWhatsApp(
+              patient.whatsapp,
+              interpolate(settings['template_cobros'], {
+                first_name: patient.nombre,
+                session_date: formatDateTimeFull(oldestPendingPayment.fecha_inicio),
+              })
+            )
+          : undefined,
       }
     : nextAppointmentRequiringReminder
       ? {
           label: 'Recordar cita',
-          hint: hasWhatsApp
-            ? 'Próxima cita.'
-            : 'Falta un número de WhatsApp.',
+          hint: hasWhatsApp ? 'Próxima cita.' : 'Falta un número de WhatsApp.',
           icon: BellRing,
           accentStyle: { color: hasWhatsApp ? '#7E7683' : '#B2AAB3' },
           href: hasWhatsApp ? linkRecordatorioCita(patient, nextAppointmentRequiringReminder) : undefined,
@@ -129,12 +133,18 @@ export default function PatientQuickActions({
       : isInactive && inactiveDays
         ? {
             label: 'Contactar paciente inactivo',
-            hint: hasWhatsApp
-              ? `${inactiveDays} días sin sesión.`
-              : 'Falta un número de WhatsApp.',
+            hint: hasWhatsApp ? `${inactiveDays} días sin sesión.` : 'Falta un número de WhatsApp.',
             icon: MessageCircle,
             accentStyle: { color: hasWhatsApp ? '#8A7C8E' : '#B2AAB3' },
-            href: hasWhatsApp ? linkPacienteInactivo(patient, inactiveDays) : undefined,
+            href: hasWhatsApp
+              ? generarLinkWhatsApp(
+                  patient.whatsapp,
+                  interpolate(settings['template_retomar'], {
+                    first_name: patient.nombre,
+                    days_inactive: String(inactiveDays),
+                  })
+                )
+              : undefined,
           }
         : null
 

@@ -9,6 +9,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Appointment, ClinicalNote, Patient } from '@/types'
 import { formatDateTimeFull, formatDateOnly } from '@/lib/format'
+import { fetchSettings } from '@/lib/settings'
 import PageBlobs from '@/components/ui/PageBlobs'
 import PatientCaseNotesCard from '@/components/pacientes/PatientCaseNotesCard'
 import PatientHeaderCard from '@/components/pacientes/PatientHeaderCard'
@@ -21,6 +22,10 @@ interface Props {
 export default async function PatientProfilePage({ params }: Props) {
   const { id } = await params
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // fetchSettings corre en paralelo con las otras queries
+  const settingsPromise = fetchSettings(supabase, user!.id)
 
   // Cargamos el paciente, sus citas y sus notas clínicas en paralelo
   // Promise.all ejecuta las 3 queries al mismo tiempo (más rápido que secuencial)
@@ -29,6 +34,8 @@ export default async function PatientProfilePage({ params }: Props) {
     supabase.from('appointments').select('*').eq('patient_id', id).order('fecha_inicio', { ascending: false }),
     supabase.from('clinical_notes').select('*').eq('patient_id', id).order('created_at', { ascending: false }),
   ])
+
+  const settings = await settingsPromise
 
   if (!patient) notFound()
 
@@ -85,6 +92,7 @@ export default async function PatientProfilePage({ params }: Props) {
         latestNote={latestNote}
         pendingPaymentsCount={pendingPaymentsCount}
         oldestPendingPayment={oldestPendingPayment}
+        settings={settings}
       />
 
       <div className="space-y-2.5">

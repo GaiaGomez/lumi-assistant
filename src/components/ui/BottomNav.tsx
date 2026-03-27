@@ -7,13 +7,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Calendar, Users, FileText, MessageCircle } from 'lucide-react'
+import { Calendar, Users, FileText, MessageCircle, Settings } from 'lucide-react'
 
 const navItems = [
-  { href: '/agenda',    label: 'Agenda',    icon: Calendar },
-  { href: '/pacientes', label: 'Pacientes', icon: Users },
-  { href: '/historias', label: 'Notas',     icon: FileText },
-  { href: '/whatsapp',  label: 'Pendientes',  icon: MessageCircle },
+  { href: '/agenda',        label: 'Agenda',     icon: Calendar },
+  { href: '/pacientes',     label: 'Pacientes',  icon: Users },
+  { href: '/historias',     label: 'Notas',      icon: FileText },
+  { href: '/whatsapp',      label: 'Pendientes', icon: MessageCircle },
+  { href: '/configuracion', label: 'Ajustes',    icon: Settings },
 ]
 
 export default function BottomNav() {
@@ -103,7 +104,7 @@ export default function BottomNav() {
         {/* Footer del sidebar */}
         <div className="p-5">
           <p className="text-xs text-center tracking-widest" style={{ color: '#CCCCCC' }}>
-            🌿 Lu Assistant
+            Lumi Assistant
           </p>
         </div>
       </aside>
