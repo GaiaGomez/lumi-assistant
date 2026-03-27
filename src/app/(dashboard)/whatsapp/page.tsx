@@ -26,20 +26,6 @@ type PendingItem = {
   patientHref: string
 }
 
-const palette = {
-  inkStrong: '#3F3941',
-  ink: '#5A535D',
-  inkSoft: '#635965',
-  inkFaint: '#7E7381',
-  lavenderSmoke: '#BEB3C2',
-  mauveFog: '#C7BCC8',
-  glass: 'rgba(255,255,255,0.38)',
-  glassStrong: 'rgba(255,255,255,0.52)',
-  borderGlass: 'rgba(255,255,255,0.42)',
-  borderSoft: 'rgba(185,174,189,0.28)',
-  shadowGlass: '0 10px 40px rgba(124, 108, 128, 0.10)',
-  shadowSoft: '0 18px 50px rgba(140, 122, 145, 0.10)',
-}
 
 function previewMessage(message: string) {
   return message.length > 84 ? `${message.slice(0, 84)}...` : message
@@ -63,18 +49,18 @@ function SummaryMiniCard({ label, value }: { label: string; value: number }) {
         padding: value === 0 ? '10px 12px' : '12px 14px',
         background: value === 0
           ? 'linear-gradient(180deg, rgba(255,255,255,0.42) 0%, rgba(255,255,255,0.28) 100%)'
-          : `linear-gradient(180deg, ${palette.glassStrong} 0%, ${palette.glass} 100%)`,
-        border: `1px solid ${value === 0 ? 'rgba(255,255,255,0.32)' : palette.borderGlass}`,
-        boxShadow: value === 0 ? '0 8px 24px rgba(124, 108, 128, 0.06)' : palette.shadowGlass,
+          : 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
+        border: `1px solid ${value === 0 ? 'rgba(255,255,255,0.32)' : 'var(--border-glass-white)'}`,
+        boxShadow: value === 0 ? '0 8px 24px rgba(124, 108, 128, 0.06)' : 'var(--shadow-glass)',
         backdropFilter: 'blur(22px) saturate(140%)',
         WebkitBackdropFilter: 'blur(22px) saturate(140%)',
         opacity: value === 0 ? 0.72 : 1,
       }}
     >
-      <p className="mb-1 font-semibold uppercase" style={{ color: palette.inkFaint, fontSize: '9px', letterSpacing: '0.08em' }}>
+      <p className="mb-1 font-semibold uppercase" style={{ color: 'var(--ink-cool-faint)', fontSize: '9px', letterSpacing: '0.08em' }}>
         {label}
       </p>
-      <p className="font-medium leading-none" style={{ color: value === 0 ? palette.inkSoft : palette.inkStrong, fontSize: value === 0 ? '20px' : '24px' }}>
+      <p className="font-medium leading-none" style={{ color: value === 0 ? 'var(--ink-cool-soft)' : 'var(--ink-cool-strong)', fontSize: value === 0 ? '20px' : '24px' }}>
         {value}
       </p>
     </div>
@@ -87,25 +73,25 @@ function PendingCard({ item }: { item: PendingItem }) {
       className="rounded-[16px]"
       style={{
         padding: '11px 13px',
-        background: `linear-gradient(180deg, ${palette.glassStrong} 0%, ${palette.glass} 100%)`,
-        border: `1px solid ${palette.borderGlass}`,
-        boxShadow: palette.shadowGlass,
+        background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
+        border: '1px solid var(--border-glass-white)',
+        boxShadow: 'var(--shadow-glass)',
         backdropFilter: 'blur(22px) saturate(140%)',
         WebkitBackdropFilter: 'blur(22px) saturate(140%)',
       }}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-medium leading-snug" style={{ color: palette.inkStrong, fontSize: '15px' }}>
+          <p className="font-medium leading-snug" style={{ color: 'var(--ink-cool-strong)', fontSize: '15px' }}>
             {item.patient.nombre} {item.patient.apellido}
           </p>
-          <p className="mt-1 text-[12px] leading-none" style={{ color: palette.inkStrong }}>
+          <p className="mt-1 text-[12px] leading-none" style={{ color: 'var(--ink-cool-strong)' }}>
             {item.reason}
           </p>
-          <p className="mt-1 text-[11px] leading-none" style={{ color: palette.inkFaint }}>
+          <p className="mt-1 text-[11px] leading-none" style={{ color: 'var(--ink-cool-faint)' }}>
             {item.context}
           </p>
-          <p className="mt-1.5 line-clamp-1 text-[11px] leading-none" style={{ color: palette.inkSoft }}>
+          <p className="mt-1.5 line-clamp-1 text-[11px] leading-none" style={{ color: 'var(--ink-cool-soft)' }}>
             {item.preview}
           </p>
         </div>
@@ -114,9 +100,9 @@ function PendingCard({ item }: { item: PendingItem }) {
           href={item.patientHref}
           className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium"
           style={{
-            color: palette.inkStrong,
+            color: 'var(--ink-cool-strong)',
             background: 'rgba(255,255,255,0.58)',
-            border: `1px solid ${palette.borderGlass}`,
+            border: '1px solid var(--border-glass-white)',
             boxShadow: '0 6px 18px rgba(124, 108, 128, 0.07)',
           }}
         >
@@ -135,10 +121,10 @@ function PendingCard({ item }: { item: PendingItem }) {
             height: '30px',
             padding: '0 12px',
             fontSize: '12px',
-            background: `linear-gradient(145deg, ${palette.lavenderSmoke} 0%, ${palette.mauveFog} 100%)`,
-            color: palette.inkStrong,
-            border: `1px solid ${palette.borderSoft}`,
-            boxShadow: palette.shadowSoft,
+            background: 'linear-gradient(145deg, var(--accent-lilac) 0%, var(--accent-mauve) 100%)',
+            color: 'var(--ink-cool-strong)',
+            border: '1px solid var(--border-glass-muted)',
+            boxShadow: 'var(--shadow-glass-soft)',
           }}
         >
           <MessageCircle size={13} />
@@ -156,14 +142,14 @@ function PendingSection({ title, items }: { title: string; items: PendingItem[] 
     <section
       className="rounded-[18px] p-3"
       style={{
-        background: `linear-gradient(180deg, ${palette.glassStrong} 0%, ${palette.glass} 100%)`,
-        border: `1px solid ${palette.borderGlass}`,
-        boxShadow: palette.shadowGlass,
+        background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
+        border: '1px solid var(--border-glass-white)',
+        boxShadow: 'var(--shadow-glass)',
         backdropFilter: 'blur(22px) saturate(140%)',
         WebkitBackdropFilter: 'blur(22px) saturate(140%)',
       }}
     >
-      <h2 className="editorial-panel-title text-[1.02rem] sm:text-[1.08rem]" style={{ color: palette.inkStrong }}>
+      <h2 className="editorial-panel-title text-[1.02rem] sm:text-[1.08rem]" style={{ color: 'var(--ink-cool-strong)' }}>
         {title}
       </h2>
       <div className="mt-2 space-y-1.5">
@@ -330,28 +316,28 @@ export default async function PendingPage() {
       <section
         className="relative mb-3 rounded-[18px] p-3"
         style={{
-          background: `linear-gradient(180deg, ${palette.glassStrong} 0%, ${palette.glass} 100%)`,
-          border: `1px solid ${palette.borderGlass}`,
-          boxShadow: palette.shadowGlass,
+          background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
+          border: '1px solid var(--border-glass-white)',
+          boxShadow: 'var(--shadow-glass)',
           backdropFilter: 'blur(22px) saturate(140%)',
           WebkitBackdropFilter: 'blur(22px) saturate(140%)',
         }}
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="editorial-panel-title text-[1.3rem] sm:text-[1.4rem]" style={{ color: palette.inkStrong }}>
+            <h1 className="editorial-panel-title text-[1.3rem] sm:text-[1.4rem]" style={{ color: 'var(--ink-cool-strong)' }}>
               Pendientes
             </h1>
-            <p className="mt-1 text-[12px]" style={{ color: palette.inkSoft }}>
+            <p className="mt-1 text-[12px]" style={{ color: 'var(--ink-cool-soft)' }}>
               Acciones sugeridas para hoy
             </p>
           </div>
           <div
             className="rounded-full px-2.5 py-1 text-[10px] font-medium"
             style={{
-              color: palette.inkSoft,
+              color: 'var(--ink-cool-soft)',
               background: 'rgba(255,255,255,0.42)',
-              border: `1px solid ${palette.borderGlass}`,
+              border: '1px solid var(--border-glass-white)',
             }}
           >
             {totalSuggestions} sugerencias

@@ -5,21 +5,6 @@ import { generarLinkWhatsApp } from '@/lib/whatsapp'
 import { interpolate, type SettingsMap } from '@/lib/settings'
 import { formatDateTimeFull } from '@/lib/format'
 
-const palette = {
-  glass: 'rgba(255,255,255,0.38)',
-  glassStrong: 'rgba(255,255,255,0.52)',
-  lilacMuted: '#CFC4D1',
-  mauveFog: '#C7BCC8',
-  lavenderSmoke: '#BEB3C2',
-  inkStrong: '#3F3941',
-  inkFaint: '#7E7381',
-  inkSoft: '#635965',
-  borderGlass: 'rgba(255,255,255,0.42)',
-  borderSoft: 'rgba(185,174,189,0.28)',
-  shadowGlass: '0 10px 40px rgba(124, 108, 128, 0.10)',
-  shadowSoft: '0 18px 50px rgba(140, 122, 145, 0.10)',
-}
-
 interface PatientTopMosaicProps {
   patient: Patient
   nextAppointment: Appointment | null
@@ -65,21 +50,21 @@ function SummaryCard({
       style={{
         minHeight: '84px',
         padding: '12px 14px',
-        background: `linear-gradient(180deg, ${palette.glassStrong} 0%, ${palette.glass} 100%)`,
-        border: `1px solid ${palette.borderGlass}`,
-        boxShadow: palette.shadowGlass,
+        background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
+        border: '1px solid var(--border-glass-white)',
+        boxShadow: 'var(--shadow-glass)',
         backdropFilter: 'blur(22px) saturate(140%)',
         WebkitBackdropFilter: 'blur(22px) saturate(140%)',
       }}
     >
-      <p className="mb-1 font-semibold uppercase" style={{ color: palette.inkFaint, fontSize: '8px', letterSpacing: '0.08em' }}>
+      <p className="mb-1 font-semibold uppercase" style={{ color: 'var(--ink-cool-faint)', fontSize: '8px', letterSpacing: '0.08em' }}>
         {label}
       </p>
-      <p className="font-medium leading-snug" style={{ color: palette.inkStrong, fontSize: '15px' }}>
+      <p className="font-medium leading-snug" style={{ color: 'var(--ink-cool-strong)', fontSize: '15px' }}>
         {value}
       </p>
       {hint ? (
-          <p className="mt-1 text-[12px] leading-none" style={{ color: palette.inkSoft }}>
+          <p className="mt-1 text-[12px] leading-none" style={{ color: 'var(--ink-cool-soft)' }}>
             {hint}
           </p>
         ) : null}
@@ -108,10 +93,10 @@ function ActionCard({
         minHeight: '72px',
         padding: '12px 14px',
         background: accent === 'soft'
-          ? `linear-gradient(160deg, rgba(207,196,209,0.92) 0%, rgba(190,179,194,0.86) 100%)`
-          : `linear-gradient(180deg, ${palette.glassStrong} 0%, ${palette.glass} 100%)`,
-        border: `1px solid ${accent === 'soft' ? palette.borderSoft : palette.borderGlass}`,
-        boxShadow: accent === 'soft' ? palette.shadowSoft : palette.shadowGlass,
+          ? 'linear-gradient(160deg, rgba(207,196,209,0.92) 0%, rgba(190,179,194,0.86) 100%)'
+          : 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
+        border: `1px solid ${accent === 'soft' ? 'var(--border-glass-muted)' : 'var(--border-glass-white)'}`,
+        boxShadow: accent === 'soft' ? 'var(--shadow-glass-soft)' : 'var(--shadow-glass)',
         backdropFilter: 'blur(22px) saturate(140%)',
         WebkitBackdropFilter: 'blur(22px) saturate(140%)',
       }}
@@ -121,16 +106,16 @@ function ActionCard({
           className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
           style={{
             background: accent === 'soft' ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.56)',
-            color: palette.inkSoft,
+            color: 'var(--ink-cool-soft)',
           }}
         >
           <MessageCircle size={13} />
         </span>
         <div className="min-w-0">
-          <p className="font-medium leading-snug" style={{ color: palette.inkStrong, fontSize: '15px' }}>
+          <p className="font-medium leading-snug" style={{ color: 'var(--ink-cool-strong)', fontSize: '15px' }}>
             {label}
           </p>
-          <p className="mt-1 text-[10px] leading-tight" style={{ color: palette.inkSoft }}>
+          <p className="mt-1 text-[10px] leading-tight" style={{ color: 'var(--ink-cool-soft)' }}>
             {hint}
           </p>
         </div>

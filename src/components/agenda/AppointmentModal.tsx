@@ -60,12 +60,12 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
     }
   }
 
-  // Estilos activos para estado sesión — glass gris con toque semántico sutil
+  // Estilos activos para estado sesión — usa tokens del sistema
   const activeStyles: Record<string, { bg: string; color: string }> = {
-    pendiente:  { bg: 'rgba(158,152,165,0.22)', color: '#444444' },
-    asistio:    { bg: 'rgba(130,162,158,0.22)', color: '#2A5A55' },
-    cancelo:    { bg: 'rgba(195,155,155,0.30)', color: '#7A2E2E' },
-    no_asistio: { bg: 'rgba(180,168,130,0.28)', color: '#6A4E18' },
+    pendiente:  { bg: 'var(--state-inactive-bg)',  color: 'var(--ink)' },
+    asistio:    { bg: 'var(--state-success-bg)',   color: 'var(--state-success-text)' },
+    cancelo:    { bg: 'var(--state-cancel-bg)',    color: 'var(--state-cancel-text)' },
+    no_asistio: { bg: 'var(--state-warning-bg)',   color: 'var(--state-warning-text)' },
   }
 
   return (

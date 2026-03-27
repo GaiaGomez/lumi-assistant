@@ -21,23 +21,17 @@ function formatDate(date: string) {
   })
 }
 
-function sessionBadgeStyle(appointment: Appointment) {
-  if (appointment.estado_sesion === 'asistio') {
-    return { background: 'rgba(130,162,158,0.20)', color: '#2A5A55' }
-  }
-  if (appointment.estado_sesion === 'cancelo') {
-    return { background: 'rgba(195,155,155,0.25)', color: '#7A2E2E' }
-  }
-  if (appointment.estado_sesion === 'no_asistio') {
-    return { background: 'rgba(180,168,130,0.22)', color: '#6A4E18' }
-  }
-  return { background: 'rgba(158,152,165,0.20)', color: '#555555' }
+function sessionBadgeClass(appointment: Appointment) {
+  if (appointment.estado_sesion === 'asistio')    return 'status-badge status-badge--success'
+  if (appointment.estado_sesion === 'cancelo')    return 'status-badge status-badge--cancel'
+  if (appointment.estado_sesion === 'no_asistio') return 'status-badge status-badge--warning'
+  return 'status-badge status-badge--inactive'
 }
 
-function paymentBadgeStyle(appointment: Appointment) {
+function paymentBadgeClass(appointment: Appointment) {
   return appointment.estado_pago === 'pagado'
-    ? { background: 'rgba(130,162,158,0.20)', color: '#2A5A55' }
-    : { background: 'rgba(185,172,135,0.22)', color: '#6A4E18' }
+    ? 'status-badge status-badge--success'
+    : 'status-badge status-badge--pending'
 }
 
 export default function AgendaTodayList({ appointments, variant }: AgendaTodayListProps) {
@@ -74,18 +68,12 @@ export default function AgendaTodayList({ appointments, variant }: AgendaTodayLi
               </div>
 
               <div className="flex gap-1.5 flex-wrap justify-end">
-                <span
-                  className="status-badge"
-                  style={sessionBadgeStyle(appointment)}
-                >
+                <span className={sessionBadgeClass(appointment)}>
                   {appointment.estado_sesion === 'asistio' ? 'Asistió' :
                    appointment.estado_sesion === 'cancelo' ? 'Canceló' :
                    appointment.estado_sesion === 'no_asistio' ? 'No asistió' : 'Pendiente'}
                 </span>
-                <span
-                  className="status-badge"
-                  style={paymentBadgeStyle(appointment)}
-                >
+                <span className={paymentBadgeClass(appointment)}>
                   {appointment.estado_pago === 'pagado' ? 'Pagado' : 'Pago pendiente'}
                 </span>
               </div>

@@ -1,15 +1,6 @@
 import Link from 'next/link'
 import { Appointment, ClinicalNote } from '@/types'
 
-const palette = {
-  glass: 'rgba(255,255,255,0.38)',
-  glassStrong: 'rgba(255,255,255,0.52)',
-  inkStrong: '#3F3941',
-  inkFaint: '#B2AAB3',
-  borderGlass: 'rgba(255,255,255,0.42)',
-  shadowGlass: '0 10px 40px rgba(124, 108, 128, 0.10)',
-}
-
 interface PatientSummaryStatsProps {
   nextAppointment: Appointment | null
   lastPastAppointment: Appointment | null
@@ -55,17 +46,17 @@ function SummaryCard({
       style={{
         minHeight: '96px',
         padding: '12px 14px',
-        background: `linear-gradient(180deg, ${palette.glassStrong} 0%, ${palette.glass} 100%)`,
-        border: `1px solid ${palette.borderGlass}`,
-        boxShadow: palette.shadowGlass,
+        background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
+        border: '1px solid var(--border-glass-white)',
+        boxShadow: 'var(--shadow-glass)',
         backdropFilter: 'blur(22px) saturate(140%)',
         WebkitBackdropFilter: 'blur(22px) saturate(140%)',
       }}
     >
-      <p className="mb-1 font-semibold uppercase" style={{ color: palette.inkFaint, fontSize: '9px', letterSpacing: '0.08em' }}>
+      <p className="mb-1 font-semibold uppercase" style={{ color: 'var(--ink-cool-muted)', fontSize: '9px', letterSpacing: '0.08em' }}>
         {label}
       </p>
-      <p className="max-w-[18ch] font-medium leading-snug" style={{ color: palette.inkStrong, fontSize: '14px' }}>
+      <p className="max-w-[18ch] font-medium leading-snug" style={{ color: 'var(--ink-cool-strong)', fontSize: '14px' }}>
         {value}
       </p>
     </div>

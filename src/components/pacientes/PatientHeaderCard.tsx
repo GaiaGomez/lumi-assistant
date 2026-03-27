@@ -14,23 +14,6 @@ export default function PatientHeaderCard({
   lastAppointmentDate,
   newNoteHref,
 }: PatientHeaderCardProps) {
-  const palette = {
-    glass: 'rgba(255,255,255,0.38)',
-    glassStrong: 'rgba(255,255,255,0.52)',
-    lilacSoft: '#D9D1DA',
-    lilacMuted: '#CFC4D1',
-    mauveFog: '#C7BCC8',
-    lavenderSmoke: '#BEB3C2',
-    inkStrong: '#3F3941',
-    ink: '#5A535D',
-    inkSoft: '#635965',
-    inkFaint: '#7E7381',
-    borderGlass: 'rgba(255,255,255,0.42)',
-    borderSoft: 'rgba(185,174,189,0.28)',
-    shadowGlass: '0 10px 40px rgba(124, 108, 128, 0.10)',
-    shadowSoft: '0 18px 50px rgba(140, 122, 145, 0.10)',
-  }
-
   return (
     <div className="relative mb-3 overflow-hidden rounded-[22px]">
       <div
@@ -46,9 +29,9 @@ export default function PatientHeaderCard({
         style={{
           minHeight: '88px',
           padding: '14px 18px',
-          background: `linear-gradient(180deg, ${palette.glassStrong} 0%, ${palette.glass} 100%)`,
-          border: `1px solid ${palette.borderGlass}`,
-          boxShadow: palette.shadowSoft,
+          background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
+          border: '1px solid var(--border-glass-white)',
+          boxShadow: 'var(--shadow-glass-soft)',
           backdropFilter: 'blur(24px) saturate(145%)',
           WebkitBackdropFilter: 'blur(24px) saturate(145%)',
         }}
@@ -59,10 +42,10 @@ export default function PatientHeaderCard({
               href="/pacientes"
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
               style={{
-                color: palette.inkSoft,
+                color: 'var(--ink-cool-soft)',
                 background: 'rgba(255,255,255,0.42)',
-                border: `1px solid ${palette.borderGlass}`,
-                boxShadow: palette.shadowGlass,
+                border: '1px solid var(--border-glass-white)',
+                boxShadow: 'var(--shadow-glass)',
                 backdropFilter: 'blur(18px) saturate(135%)',
                 WebkitBackdropFilter: 'blur(18px) saturate(135%)',
               }}
@@ -75,12 +58,12 @@ export default function PatientHeaderCard({
               style={{
                 width: '36px',
                 height: '36px',
-                background: `linear-gradient(145deg, ${palette.lilacSoft} 0%, ${palette.lavenderSmoke} 100%)`,
-                boxShadow: palette.shadowGlass,
-                border: `1px solid ${palette.borderGlass}`,
+                background: 'linear-gradient(145deg, var(--accent-lavender-soft) 0%, var(--accent-lilac) 100%)',
+                boxShadow: 'var(--shadow-glass)',
+                border: '1px solid var(--border-glass-white)',
               }}
             >
-              <span className="text-[10px] font-medium tracking-[0.02em]" style={{ color: palette.inkStrong }}>
+              <span className="text-[10px] font-medium tracking-[0.02em]" style={{ color: 'var(--ink-cool-strong)' }}>
                 {patient.nombre[0]}{patient.apellido[0]}
               </span>
             </div>
@@ -88,11 +71,11 @@ export default function PatientHeaderCard({
             <div className="min-w-0 pt-2.5">
               <h1
                 className="editorial-panel-title truncate leading-none"
-                style={{ color: palette.inkStrong, fontSize: '25px' }}
+                style={{ color: 'var(--ink-cool-strong)', fontSize: '25px' }}
               >
                 {patient.nombre} {patient.apellido}
               </h1>
-              <div className="mt-1.5" style={{ color: palette.inkStrong }}>
+              <div className="mt-1.5" style={{ color: 'var(--ink-cool-strong)' }}>
                 <PatientInactivityStatus
                   lastAppointmentDate={lastAppointmentDate}
                 />
@@ -107,10 +90,10 @@ export default function PatientHeaderCard({
               height: '34px',
               padding: '0 14px',
               fontSize: '13px',
-              background: `linear-gradient(145deg, ${palette.lavenderSmoke} 0%, ${palette.mauveFog} 100%)`,
-              color: palette.inkStrong,
-              border: `1px solid rgba(255,255,255,0.32)`,
-              boxShadow: palette.shadowGlass,
+              background: 'linear-gradient(145deg, var(--accent-lilac) 0%, var(--accent-mauve) 100%)',
+              color: 'var(--ink-cool-strong)',
+              border: '1px solid rgba(255,255,255,0.32)',
+              boxShadow: 'var(--shadow-glass)',
             }}
           >
             <Plus size={12} />

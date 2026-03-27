@@ -5,22 +5,6 @@ import { generarLinkWhatsApp, linkRecordatorioCita } from '@/lib/whatsapp'
 import { interpolate, type SettingsMap } from '@/lib/settings'
 import { formatDateTimeFull } from '@/lib/format'
 
-const palette = {
-  glass: 'rgba(255,255,255,0.38)',
-  glassStrong: 'rgba(255,255,255,0.52)',
-  lilacMuted: '#CFC4D1',
-  mauveFog: '#C7BCC8',
-  lavenderSmoke: '#BEB3C2',
-  inkStrong: '#3F3941',
-  ink: '#5A535D',
-  inkSoft: '#8E8691',
-  inkFaint: '#B2AAB3',
-  borderGlass: 'rgba(255,255,255,0.42)',
-  borderSoft: 'rgba(185,174,189,0.28)',
-  shadowGlass: '0 10px 40px rgba(124, 108, 128, 0.10)',
-  shadowSoft: '0 18px 50px rgba(140, 122, 145, 0.10)',
-}
-
 interface PatientQuickActionsProps {
   patient: Patient
   nextAppointmentRequiringReminder: Appointment | null
@@ -60,12 +44,12 @@ function ActionLink({
         minHeight: '72px',
         padding: '12px 14px',
         gap: '9px',
-        color: palette.inkStrong,
+        color: 'var(--ink-cool-strong)',
         background: variant === 'dark'
-          ? `linear-gradient(160deg, rgba(207,196,209,0.92) 0%, rgba(190,179,194,0.86) 100%)`
-          : `linear-gradient(180deg, ${palette.glassStrong} 0%, ${palette.glass} 100%)`,
-        border: `1px solid ${variant === 'dark' ? palette.borderSoft : palette.borderGlass}`,
-        boxShadow: variant === 'dark' ? palette.shadowSoft : palette.shadowGlass,
+          ? 'linear-gradient(160deg, rgba(207,196,209,0.92) 0%, rgba(190,179,194,0.86) 100%)'
+          : 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
+        border: `1px solid ${variant === 'dark' ? 'var(--border-glass-muted)' : 'var(--border-glass-white)'}`,
+        boxShadow: variant === 'dark' ? 'var(--shadow-glass-soft)' : 'var(--shadow-glass)',
         backdropFilter: 'blur(22px) saturate(140%)',
         WebkitBackdropFilter: 'blur(22px) saturate(140%)',
       }}
@@ -83,12 +67,12 @@ function ActionLink({
       </span>
       <span className="min-w-0">
         {variant === 'dark' && (
-          <span className="mb-0.5 block font-semibold uppercase" style={{ color: palette.inkSoft, fontSize: '8px', letterSpacing: '0.08em' }}>Sugerida</span>
+          <span className="mb-0.5 block font-semibold uppercase" style={{ color: 'var(--ink-cool-faint)', fontSize: '8px', letterSpacing: '0.08em' }}>Sugerida</span>
         )}
         <span className="block font-medium leading-tight" style={{ fontSize: '13px' }}>{label}</span>
         <span
           className="mt-0.5 block truncate"
-          style={{ color: variant === 'dark' ? palette.ink : palette.inkSoft, fontSize: '11px' }}
+          style={{ color: variant === 'dark' ? 'var(--ink-cool)' : 'var(--ink-cool-faint)', fontSize: '11px' }}
         >
           {hint}
         </span>
@@ -111,7 +95,7 @@ export default function PatientQuickActions({
         label: 'Cobrar pago pendiente',
         hint: hasWhatsApp ? 'Cobro pendiente.' : 'Falta un número de WhatsApp.',
         icon: Wallet,
-        accentStyle: { color: hasWhatsApp ? '#8E8691' : '#B2AAB3' },
+        accentStyle: { color: hasWhatsApp ? 'var(--ink-cool-faint)' : 'var(--ink-cool-muted)' },
         href: hasWhatsApp
           ? generarLinkWhatsApp(
               patient.whatsapp,
@@ -127,7 +111,7 @@ export default function PatientQuickActions({
           label: 'Recordar cita',
           hint: hasWhatsApp ? 'Próxima cita.' : 'Falta un número de WhatsApp.',
           icon: BellRing,
-          accentStyle: { color: hasWhatsApp ? '#7E7683' : '#B2AAB3' },
+          accentStyle: { color: hasWhatsApp ? 'var(--ink-cool-faint)' : 'var(--ink-cool-muted)' },
           href: hasWhatsApp ? linkRecordatorioCita(patient, nextAppointmentRequiringReminder) : undefined,
         }
       : isInactive && inactiveDays
@@ -135,7 +119,7 @@ export default function PatientQuickActions({
             label: 'Contactar paciente inactivo',
             hint: hasWhatsApp ? `${inactiveDays} días sin sesión.` : 'Falta un número de WhatsApp.',
             icon: MessageCircle,
-            accentStyle: { color: hasWhatsApp ? '#8A7C8E' : '#B2AAB3' },
+            accentStyle: { color: hasWhatsApp ? 'var(--ink-cool-faint)' : 'var(--ink-cool-muted)' },
             href: hasWhatsApp
               ? generarLinkWhatsApp(
                   patient.whatsapp,
@@ -150,7 +134,7 @@ export default function PatientQuickActions({
 
   return (
     <div className="mb-3">
-      <h2 className="mb-2 font-semibold uppercase" style={{ color: palette.inkFaint, fontSize: '9px', letterSpacing: '0.08em' }}>
+      <h2 className="mb-2 font-semibold uppercase" style={{ color: 'var(--ink-cool-muted)', fontSize: '9px', letterSpacing: '0.08em' }}>
         Acciones rápidas
       </h2>
 
@@ -172,10 +156,10 @@ export default function PatientQuickActions({
                 minHeight: '72px',
                 padding: '12px 14px',
                 gap: '9px',
-                color: palette.inkStrong,
-                background: `linear-gradient(160deg, rgba(207,196,209,0.92) 0%, rgba(190,179,194,0.86) 100%)`,
-                border: `1px solid ${palette.borderSoft}`,
-                boxShadow: palette.shadowSoft,
+                color: 'var(--ink-cool-strong)',
+                background: 'linear-gradient(160deg, rgba(207,196,209,0.92) 0%, rgba(190,179,194,0.86) 100%)',
+                border: '1px solid var(--border-glass-muted)',
+                boxShadow: 'var(--shadow-glass-soft)',
               }}
             >
               <span
@@ -185,11 +169,11 @@ export default function PatientQuickActions({
                 <suggestedAction.icon size={16} />
               </span>
               <span className="min-w-0">
-                <span className="mb-0.5 block font-semibold uppercase" style={{ color: palette.inkSoft, fontSize: '8px', letterSpacing: '0.08em' }}>
+                <span className="mb-0.5 block font-semibold uppercase" style={{ color: 'var(--ink-cool-faint)', fontSize: '8px', letterSpacing: '0.08em' }}>
                   Sugerida
                 </span>
                 <span className="block font-medium leading-tight" style={{ fontSize: '13px' }}>{suggestedAction.label}</span>
-                <span className="mt-0.5 block truncate" style={{ color: palette.ink, fontSize: '11px' }}>{suggestedAction.hint}</span>
+                <span className="mt-0.5 block truncate" style={{ color: 'var(--ink-cool)', fontSize: '11px' }}>{suggestedAction.hint}</span>
               </span>
             </div>
           )
@@ -200,17 +184,17 @@ export default function PatientQuickActions({
               minHeight: '72px',
               padding: '12px 14px',
               gap: '9px',
-              color: palette.inkSoft,
-              background: `linear-gradient(180deg, ${palette.glassStrong} 0%, ${palette.glass} 100%)`,
-              border: `1px solid ${palette.borderGlass}`,
-              boxShadow: palette.shadowGlass,
+              color: 'var(--ink-cool-faint)',
+              background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
+              border: '1px solid var(--border-glass-white)',
+              boxShadow: 'var(--shadow-glass)',
               backdropFilter: 'blur(22px) saturate(140%)',
               WebkitBackdropFilter: 'blur(22px) saturate(140%)',
             }}
           >
             <span
               className="flex shrink-0 items-center justify-center rounded-[12px]"
-              style={{ width: '26px', height: '26px', background: 'rgba(255,255,255,0.58)', color: palette.inkFaint }}
+              style={{ width: '26px', height: '26px', background: 'rgba(255,255,255,0.58)', color: 'var(--ink-cool-muted)' }}
             >
               <BellRing size={16} />
             </span>
@@ -227,7 +211,7 @@ export default function PatientQuickActions({
             label="WhatsApp"
             hint="Abre la conversación directa con el paciente."
             icon={MessageCircle}
-            accentStyle={{ color: '#7C8B84' }}
+            accentStyle={{ color: 'var(--ink-cool-faint)' }}
           />
         ) : (
           <div
@@ -236,17 +220,17 @@ export default function PatientQuickActions({
               minHeight: '72px',
               padding: '12px 14px',
               gap: '9px',
-              color: palette.inkSoft,
-              background: `linear-gradient(180deg, ${palette.glassStrong} 0%, ${palette.glass} 100%)`,
-              border: `1px solid ${palette.borderGlass}`,
-              boxShadow: palette.shadowGlass,
+              color: 'var(--ink-cool-faint)',
+              background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
+              border: '1px solid var(--border-glass-white)',
+              boxShadow: 'var(--shadow-glass)',
               backdropFilter: 'blur(22px) saturate(140%)',
               WebkitBackdropFilter: 'blur(22px) saturate(140%)',
             }}
           >
             <span
               className="flex shrink-0 items-center justify-center rounded-[12px]"
-              style={{ width: '26px', height: '26px', background: 'rgba(255,255,255,0.58)', color: palette.inkFaint }}
+              style={{ width: '26px', height: '26px', background: 'rgba(255,255,255,0.58)', color: 'var(--ink-cool-muted)' }}
             >
               <MessageCircle size={16} />
             </span>

@@ -65,16 +65,6 @@ export default async function PatientProfilePage({ params }: Props) {
       .filter((appointment) => appointment.estado_sesion === 'asistio' && appointment.estado_pago === 'pendiente')
       .sort((a, b) => new Date(a.fecha_inicio).getTime() - new Date(b.fecha_inicio).getTime())[0] ?? null
 
-  const palette = {
-    ink: '#5A535D',
-    inkFaint: '#7E7381',
-    inkSoft: '#635965',
-    glass: 'rgba(255,255,255,0.38)',
-    glassStrong: 'rgba(255,255,255,0.52)',
-    borderGlass: 'rgba(255,255,255,0.42)',
-    shadowGlass: '0 10px 40px rgba(124, 108, 128, 0.10)',
-  }
-
   return (
     <div className="relative mx-auto max-w-[1180px] px-4 pb-1 font-sans sm:px-5">
       <PageBlobs />
@@ -99,16 +89,16 @@ export default async function PatientProfilePage({ params }: Props) {
         <section
           className="relative rounded-[18px] p-3"
           style={{
-            background: `linear-gradient(180deg, rgba(255,255,255,0.56) 0%, rgba(255,255,255,0.42) 100%)`,
-            border: `1px solid ${palette.borderGlass}`,
-            boxShadow: palette.shadowGlass,
+            background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
+            border: '1px solid var(--border-glass-white)',
+            boxShadow: 'var(--shadow-glass)',
             backdropFilter: 'blur(22px) saturate(140%)',
             WebkitBackdropFilter: 'blur(22px) saturate(140%)',
           }}
         >
           <div className="mb-2">
             <div>
-              <h2 className="editorial-panel-title text-[1.12rem] sm:text-[1.2rem]" style={{ color: '#3F3941' }}>
+              <h2 className="editorial-panel-title text-[1.12rem] sm:text-[1.2rem]" style={{ color: 'var(--ink-cool-strong)' }}>
                 Historia clínica
               </h2>
             </div>
@@ -116,7 +106,7 @@ export default async function PatientProfilePage({ params }: Props) {
 
           <div className="relative space-y-2">
             {patientNotes.length === 0 && (
-              <p className="py-3 text-center text-[13px]" style={{ color: palette.inkSoft }}>
+              <p className="py-3 text-center text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>
                 No hay notas clínicas aún
               </p>
             )}
@@ -128,20 +118,20 @@ export default async function PatientProfilePage({ params }: Props) {
                 style={{
                   minHeight: '52px',
                   background: 'rgba(255,255,255,0.30)',
-                  border: `1px solid ${palette.borderGlass}`,
+                  border: '1px solid var(--border-glass-white)',
                   boxShadow: '0 8px 28px rgba(124, 108, 128, 0.08)',
                 }}
               >
-                <p className="mb-0.5 text-[11px] capitalize tracking-[0.03em]" style={{ color: palette.inkFaint }}>
+                <p className="mb-0.5 text-[11px] capitalize tracking-[0.03em]" style={{ color: 'var(--ink-cool-faint)' }}>
                   {formatDateOnly(note.created_at)}
                 </p>
                 {note.texto && (
-                  <p className="line-clamp-2 text-[12px] leading-5" style={{ color: palette.ink }}>
+                  <p className="line-clamp-2 text-[12px] leading-5" style={{ color: 'var(--ink-cool)' }}>
                     Nota de sesión
                   </p>
                 )}
                 {note.canvas_url && (
-                  <p className="mt-0.5 text-[11px]" style={{ color: palette.inkSoft }}>Nota de sesión</p>
+                  <p className="mt-0.5 text-[11px]" style={{ color: 'var(--ink-cool-soft)' }}>Nota de sesión</p>
                 )}
               </Link>
             ))}
@@ -151,16 +141,16 @@ export default async function PatientProfilePage({ params }: Props) {
         <section
           className="relative rounded-[18px] p-3"
           style={{
-            background: `linear-gradient(180deg, ${palette.glassStrong} 0%, ${palette.glass} 100%)`,
-            border: `1px solid ${palette.borderGlass}`,
-            boxShadow: palette.shadowGlass,
+            background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
+            border: '1px solid var(--border-glass-white)',
+            boxShadow: 'var(--shadow-glass)',
             backdropFilter: 'blur(22px) saturate(140%)',
             WebkitBackdropFilter: 'blur(22px) saturate(140%)',
           }}
         >
           <div className="mb-2">
             <div>
-              <h2 className="editorial-panel-title text-[1.12rem] sm:text-[1.2rem]" style={{ color: '#3F3941' }}>
+              <h2 className="editorial-panel-title text-[1.12rem] sm:text-[1.2rem]" style={{ color: 'var(--ink-cool-strong)' }}>
                 Historial de citas
               </h2>
             </div>
@@ -168,7 +158,7 @@ export default async function PatientProfilePage({ params }: Props) {
 
           <div className="relative space-y-2">
             {patientAppointments.length === 0 && (
-              <p className="py-3 text-center text-[13px]" style={{ color: palette.inkSoft }}>Sin citas registradas</p>
+              <p className="py-3 text-center text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>Sin citas registradas</p>
             )}
             {patientAppointments.map((apt) => (
               <div
@@ -177,33 +167,26 @@ export default async function PatientProfilePage({ params }: Props) {
                 style={{
                   minHeight: '52px',
                   background: 'linear-gradient(180deg, rgba(255,255,255,0.48) 0%, rgba(255,255,255,0.32) 100%)',
-                  border: `1px solid ${palette.borderGlass}`,
+                  border: '1px solid var(--border-glass-white)',
                   boxShadow: '0 10px 24px rgba(124, 108, 128, 0.07)',
                 }}
               >
                 <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-[13px] leading-5" style={{ color: palette.ink }}>
+                  <p className="text-[13px] leading-5" style={{ color: 'var(--ink-cool)' }}>
                     {formatDateTimeFull(apt.fecha_inicio)}
                   </p>
                   <div className="flex flex-wrap gap-1">
-                    <span className="rounded-full px-2 py-0.5 text-[11px] font-medium"
-                      style={apt.estado_sesion === 'asistio'
-                        ? { background: 'rgba(206, 221, 212, 0.58)', color: '#66796E', border: '1px solid rgba(255,255,255,0.36)' }
-                        : apt.estado_sesion === 'cancelo'
-                        ? { background: 'rgba(233, 214, 218, 0.58)', color: '#8A6F76', border: '1px solid rgba(255,255,255,0.36)' }
-                        : apt.estado_sesion === 'no_asistio'
-                        ? { background: 'rgba(236, 225, 212, 0.64)', color: '#8E7564', border: '1px solid rgba(255,255,255,0.36)' }
-                        : { background: 'rgba(216, 209, 218, 0.62)', color: '#736977', border: '1px solid rgba(255,255,255,0.36)' }
-                      }>
+                    <span className={
+                      apt.estado_sesion === 'asistio'    ? 'status-badge status-badge--success' :
+                      apt.estado_sesion === 'cancelo'    ? 'status-badge status-badge--cancel' :
+                      apt.estado_sesion === 'no_asistio' ? 'status-badge status-badge--warning' :
+                                                           'status-badge status-badge--inactive'
+                    }>
                       {apt.estado_sesion === 'asistio' ? 'Asistió' :
                        apt.estado_sesion === 'cancelo' ? 'Canceló' :
                        apt.estado_sesion === 'no_asistio' ? 'No asistió' : 'Programada'}
                     </span>
-                    <span className="rounded-full px-2 py-0.5 text-[11px] font-medium"
-                      style={apt.estado_pago === 'pagado'
-                        ? { background: 'rgba(206, 221, 212, 0.58)', color: '#66796E', border: '1px solid rgba(255,255,255,0.36)' }
-                        : { background: 'rgba(236, 225, 212, 0.64)', color: '#8E7564', border: '1px solid rgba(255,255,255,0.36)' }
-                      }>
+                    <span className={apt.estado_pago === 'pagado' ? 'status-badge status-badge--success' : 'status-badge status-badge--pending'}>
                       {apt.estado_pago === 'pagado' ? 'Pagada' : 'Pendiente de pago'}
                     </span>
                   </div>
