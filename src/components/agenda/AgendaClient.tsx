@@ -159,20 +159,41 @@ function EventoCalendario({ event }: { event: CalendarEvent }) {
   )
 }
 
-// Cabecera de fecha en mes: número + punto rosa si es festivo
+// Cabecera de fecha en vista Mes: número + etiqueta "festivo"
 function CabechaFecha({ date, label }: { date: Date; label: string }) {
   const esFestivo = FESTIVOS.has(toDateKey(date))
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-      {label}
+    <div style={{ textAlign: 'right', lineHeight: 1.2 }}>
+      <span>{label}</span>
       {esFestivo && (
-        <span style={{
-          display: 'inline-block', width: '5px', height: '5px',
-          borderRadius: '50%', background: 'var(--accent-rose)',
-          opacity: 0.65, flexShrink: 0,
-        }} />
+        <div style={{
+          fontSize: '8px', fontWeight: 700,
+          letterSpacing: '0.08em', textTransform: 'uppercase' as const,
+          color: 'var(--accent-rose)', opacity: 0.9, marginTop: '1px',
+        }}>
+          festivo
+        </div>
       )}
-    </span>
+    </div>
+  )
+}
+
+// Cabecera de columna en vista Semana/Día: día + etiqueta "Festivo"
+function ColumnaHeader({ date, label }: { date: Date; label: string }) {
+  const esFestivo = FESTIVOS.has(toDateKey(date))
+  return (
+    <div style={{ textAlign: 'center', lineHeight: 1.3 }}>
+      <span>{label}</span>
+      {esFestivo && (
+        <div style={{
+          fontSize: '8px', fontWeight: 700,
+          letterSpacing: '0.08em', textTransform: 'uppercase' as const,
+          color: 'var(--accent-rose)', opacity: 0.9, marginTop: '2px',
+        }}>
+          Festivo
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -342,7 +363,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
             eventPropGetter={eventPropGetter}
             dayPropGetter={dayPropGetter}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            components={{ event: EventoCalendario, dateHeader: CabechaFecha } as any}
+            components={{ event: EventoCalendario, dateHeader: CabechaFecha, header: ColumnaHeader } as any}
             min={new Date(0, 0, 0, 7, 0)}
             max={new Date(0, 0, 0, 21, 0)}
             messages={{
