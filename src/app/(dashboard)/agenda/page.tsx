@@ -58,7 +58,7 @@ export default async function AgendaPage() {
     <div>
       <div className="mb-8">
         <p className="section-kicker mb-3">Weekly Rhythm</p>
-        <h1 className="page-title text-[2.35rem] leading-none">Agenda</h1>
+        <h1 className="page-title text-[2rem] leading-none">Agenda</h1>
         <p className="page-subtitle mt-3">
           {todayCount > 0
             ? `${todayCount} cita${todayCount === 1 ? '' : 's'} hoy`

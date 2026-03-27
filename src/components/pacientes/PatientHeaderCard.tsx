@@ -54,7 +54,7 @@ export default function PatientHeaderCard({
             </Link>
 
             <div
-              className="rounded-[14px] flex items-center justify-center shrink-0"
+              className="rounded-full flex items-center justify-center shrink-0"
               style={{
                 width: '36px',
                 height: '36px',

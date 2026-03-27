@@ -67,7 +67,7 @@ function ActionLink({
       </span>
       <span className="min-w-0">
         {variant === 'dark' && (
-          <span className="mb-0.5 block font-semibold uppercase" style={{ color: 'var(--ink-cool-faint)', fontSize: '8px', letterSpacing: '0.08em' }}>Sugerida</span>
+          <span className="card-label mb-0.5 block" style={{ color: 'var(--ink-cool-faint)' }}>Sugerida</span>
         )}
         <span className="block font-medium leading-tight" style={{ fontSize: '13px' }}>{label}</span>
         <span
@@ -134,7 +134,7 @@ export default function PatientQuickActions({
 
   return (
     <div className="mb-3">
-      <h2 className="mb-2 font-semibold uppercase" style={{ color: 'var(--ink-cool-muted)', fontSize: '9px', letterSpacing: '0.08em' }}>
+      <h2 className="card-label mb-2" style={{ color: 'var(--ink-cool-muted)' }}>
         Acciones rápidas
       </h2>
 

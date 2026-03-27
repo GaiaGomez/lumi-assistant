@@ -35,7 +35,10 @@ export default function PatientInactivityStatus({
   return (
     <p
       className="leading-none"
-      style={{ color: diasSinCita > 20 ? '#6B5E6D' : '#635965', fontSize: '12px' }}
+      style={{
+        color: diasSinCita > 20 ? 'var(--ink-cool-strong)' : 'var(--ink-cool-soft)',
+        fontSize: '12px',
+      }}
     >
       Última cita: hace {diasSinCita} días
     </p>

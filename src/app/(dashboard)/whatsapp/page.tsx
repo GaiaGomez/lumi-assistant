@@ -57,7 +57,7 @@ function SummaryMiniCard({ label, value }: { label: string; value: number }) {
         opacity: value === 0 ? 0.72 : 1,
       }}
     >
-      <p className="mb-1 font-semibold uppercase" style={{ color: 'var(--ink-cool-faint)', fontSize: '9px', letterSpacing: '0.08em' }}>
+      <p className="card-label mb-1" style={{ color: 'var(--ink-cool-faint)' }}>
         {label}
       </p>
       <p className="font-medium leading-none" style={{ color: value === 0 ? 'var(--ink-cool-soft)' : 'var(--ink-cool-strong)', fontSize: value === 0 ? '20px' : '24px' }}>

@@ -53,7 +53,7 @@ function SummaryCard({
         WebkitBackdropFilter: 'blur(22px) saturate(140%)',
       }}
     >
-      <p className="mb-1 font-semibold uppercase" style={{ color: 'var(--ink-cool-muted)', fontSize: '9px', letterSpacing: '0.08em' }}>
+      <p className="card-label mb-1" style={{ color: 'var(--ink-cool-muted)' }}>
         {label}
       </p>
       <p className="max-w-[18ch] font-medium leading-snug" style={{ color: 'var(--ink-cool-strong)', fontSize: '14px' }}>

@@ -23,11 +23,18 @@ function formatAppointmentDate(date: string) {
 
 function StatChip({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl p-3" style={{ background: 'rgba(255,255,255,0.48)' }}>
-      <p className="text-xs font-medium tracking-widest uppercase" style={{ color: '#AAAAAA' }}>
+    <div
+      className="rounded-[14px] p-3"
+      style={{
+        background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
+        border: '1px solid var(--border-glass-white)',
+        boxShadow: 'var(--shadow-glass)',
+      }}
+    >
+      <p className="card-label mb-1" style={{ color: 'var(--ink-cool-muted)' }}>
         {label}
       </p>
-      <p className="text-lg font-medium mt-1" style={{ color: '#111111' }}>
+      <p className="text-[18px] font-medium leading-none" style={{ color: 'var(--ink-cool-strong)' }}>
         {value}
       </p>
     </div>
@@ -39,10 +46,17 @@ export default function PatientFinancePanel({
   pendingPaymentAppointments,
 }: PatientFinancePanelProps) {
   return (
-    <div className="glass rounded-2xl p-4">
-      <h2 className="font-medium text-sm tracking-widest uppercase mb-4" style={{ color: '#888888' }}>
-        Sesiones y pagos
-      </h2>
+    <div
+      className="rounded-[18px] p-4"
+      style={{
+        background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
+        border: '1px solid var(--border-glass-white)',
+        boxShadow: 'var(--shadow-glass)',
+        backdropFilter: 'blur(22px) saturate(140%)',
+        WebkitBackdropFilter: 'blur(22px) saturate(140%)',
+      }}
+    >
+      <h2 className="section-kicker mb-4">Sesiones y pagos</h2>
 
       <div className="grid grid-cols-2 gap-2 mb-4">
         <StatChip label="Total" value={sessionCounts.total} />
@@ -51,31 +65,40 @@ export default function PatientFinancePanel({
         <StatChip label="No asistió" value={sessionCounts.noAsistio} />
       </div>
 
-      <div className="rounded-2xl p-3 mb-4" style={{ background: 'rgba(185,172,135,0.14)' }}>
-        <p className="text-xs font-medium tracking-widest uppercase mb-1" style={{ color: '#7A6020' }}>
+      <div
+        className="rounded-[14px] p-3 mb-4"
+        style={{
+          background: 'var(--state-pending-bg)',
+          border: '1px solid var(--border-glass-white)',
+        }}
+      >
+        <p className="card-label mb-1" style={{ color: 'var(--state-pending-text)' }}>
           Pagos pendientes
         </p>
-        <p className="text-lg font-medium" style={{ color: '#6A4E18' }}>
+        <p className="text-[18px] font-medium leading-none" style={{ color: 'var(--state-pending-text)' }}>
           {sessionCounts.pendientes}
         </p>
       </div>
 
       <div className="space-y-2">
         {pendingPaymentAppointments.length === 0 ? (
-          <p className="text-sm" style={{ color: '#AAAAAA' }}>
+          <p className="text-[13px]" style={{ color: 'var(--ink-cool-faint)' }}>
             No hay pagos pendientes.
           </p>
         ) : (
           pendingPaymentAppointments.map((appointment) => (
             <div
               key={appointment.id}
-              className="rounded-2xl p-3"
-              style={{ background: 'rgba(255,255,255,0.48)' }}
+              className="rounded-[14px] p-3"
+              style={{
+                background: 'rgba(255,255,255,0.48)',
+                border: '1px solid var(--border-glass-white)',
+              }}
             >
-              <p className="text-sm font-medium" style={{ color: '#111111' }}>
+              <p className="text-[13px] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
                 {formatAppointmentDate(appointment.fecha_inicio)}
               </p>
-              <p className="text-xs mt-1" style={{ color: '#888888' }}>
+              <p className="text-[12px] mt-1" style={{ color: 'var(--ink-cool-faint)' }}>
                 {appointment.notas || 'Sesión asistida pendiente por confirmar pago.'}
               </p>
             </div>

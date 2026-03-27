@@ -208,6 +208,14 @@ textarea {
   background: rgba(255, 250, 247, 0.45);
 }
 
+/* Label mini para el interior de cards — más compacto que section-kicker */
+.card-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;
