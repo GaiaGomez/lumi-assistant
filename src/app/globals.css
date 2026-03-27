@@ -140,6 +140,14 @@ textarea {
   box-shadow: var(--shadow-card);
 }
 
+.glass-cool {
+  background: linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border: 1px solid var(--border-glass-white);
+  box-shadow: var(--shadow-glass);
+}
+
 .editorial-title {
   font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   color: var(--ink-strong);

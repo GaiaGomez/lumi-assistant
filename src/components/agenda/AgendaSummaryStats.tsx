@@ -26,14 +26,14 @@ function SummaryCard({
   hint: string
 }) {
   return (
-    <div className="glass rounded-[26px] p-5">
-      <p className="section-kicker mb-3">
+    <div className="glass-cool rounded-[18px] p-4">
+      <p className="card-label mb-2" style={{ color: 'var(--ink-cool-faint)' }}>
         {label}
       </p>
-      <p className="text-[1.05rem] font-medium leading-snug" style={{ color: 'var(--ink-strong)' }}>
+      <p className="text-[1rem] font-medium leading-snug" style={{ color: 'var(--ink-cool-strong)' }}>
         {value}
       </p>
-      <p className="text-xs mt-3 leading-relaxed" style={{ color: 'var(--ink-faint)' }}>
+      <p className="text-[11px] mt-2 leading-relaxed" style={{ color: 'var(--ink-cool-muted)' }}>
         {hint}
       </p>
     </div>

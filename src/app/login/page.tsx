@@ -122,7 +122,7 @@ export default function LoginPage() {
               <div className="flex items-start justify-between gap-4 mb-8">
                 <div>
                   <p className="section-kicker mb-3">Ingreso privado</p>
-                  <h2 className="editorial-panel-title text-[2.2rem] sm:text-[2.6rem]">
+                  <h2 className="editorial-panel-title text-[1.8rem] sm:text-[2.1rem]">
                     Bienvenida de nuevo
                   </h2>
                   <p className="page-subtitle mt-3 max-w-xs leading-6">
@@ -130,7 +130,7 @@ export default function LoginPage() {
                   </p>
                 </div>
                 <div
-                  className="rounded-[28px] flex items-center justify-center shrink-0"
+                  className="rounded-full flex items-center justify-center shrink-0"
                   style={{
                     width: '4.8rem',
                     height: '4.8rem',
@@ -148,7 +148,7 @@ export default function LoginPage() {
                 className="space-y-5"
               >
                 <div>
-                  <label className="section-kicker block mb-2.5">
+                  <label className="card-label block mb-2" style={{ color: 'var(--ink-faint)' }}>
                     Email
                   </label>
                   <input
@@ -157,12 +157,12 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="hola@email.com"
                     required
-                    className="w-full px-4 py-4 rounded-[20px] text-base"
+                    className="w-full px-4 py-3.5 rounded-[14px] text-[13px]"
                   />
                 </div>
 
                 <div>
-                  <label className="section-kicker block mb-2.5">
+                  <label className="card-label block mb-2" style={{ color: 'var(--ink-faint)' }}>
                     Contraseña
                   </label>
                   <input
@@ -171,13 +171,13 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="w-full px-4 py-4 rounded-[20px] text-base"
+                    className="w-full px-4 py-3.5 rounded-[14px] text-[13px]"
                   />
                 </div>
 
                 {error && (
                   <p
-                    className="text-sm text-center py-3 px-4 rounded-[20px]"
+                    className="text-sm text-center py-3 px-4 rounded-[12px]"
                     style={{ background: 'var(--state-cancel-bg)', color: 'var(--state-cancel-text)' }}
                   >
                     {error}
@@ -187,7 +187,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-primary-dark w-full py-4 text-sm font-medium tracking-[0.1em] uppercase disabled:opacity-50 mt-2"
+                  className="btn-primary-dark w-full py-3.5 text-xs font-medium tracking-[0.06em] uppercase disabled:opacity-50 mt-2"
                 >
                   {loading ? 'Entrando...' : 'Entrar'}
                 </button>

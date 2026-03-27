@@ -92,7 +92,7 @@ export default function TemplateEditor({ settings, userId }: Props) {
       {/* ── URL de agenda ── */}
       <FieldCard>
         <div>
-          <h2 className="editorial-panel-title text-[1.05rem] mb-0.5" style={{ color: 'var(--ink-strong)' }}>
+          <h2 className="editorial-panel-title text-[1.05rem] mb-0.5" style={{ color: 'var(--ink-cool-strong)' }}>
             Link de agenda
           </h2>
           <p className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>
@@ -126,7 +126,7 @@ export default function TemplateEditor({ settings, userId }: Props) {
         return (
           <FieldCard key={tpl.key}>
             <div>
-              <h2 className="editorial-panel-title text-[1.05rem] mb-0.5" style={{ color: 'var(--ink-strong)' }}>
+              <h2 className="editorial-panel-title text-[1.05rem] mb-0.5" style={{ color: 'var(--ink-cool-strong)' }}>
                 {tpl.label}
               </h2>
               <p className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>

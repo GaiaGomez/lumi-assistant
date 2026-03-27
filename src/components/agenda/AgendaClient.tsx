@@ -100,14 +100,14 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
   return (
     <div className="space-y-4">
 
-      <div className="glass rounded-[28px] px-4 py-3 flex items-center justify-between">
+      <div className="glass-cool rounded-[18px] px-4 py-3 flex items-center justify-between">
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => navegar('prev')}
             aria-label={currentView === 'month' ? 'Mes anterior' : currentView === 'week' ? 'Semana anterior' : 'Día anterior'}
             className="btn-secondary p-2.5"
-            style={{ color: 'var(--ink-soft)' }}
+            style={{ color: 'var(--ink-cool-soft)' }}
           >
             <ChevronLeft size={16} />
           </button>
@@ -115,27 +115,27 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
             onClick={() => navegar('next')}
             aria-label={currentView === 'month' ? 'Mes siguiente' : currentView === 'week' ? 'Semana siguiente' : 'Día siguiente'}
             className="btn-secondary p-2.5"
-            style={{ color: 'var(--ink-soft)' }}
+            style={{ color: 'var(--ink-cool-soft)' }}
           >
             <ChevronRight size={16} />
           </button>
-          <h2 className="text-base font-medium capitalize ml-2 editorial-title" style={{ color: 'var(--ink-strong)' }}>
+          <h2 className="text-base font-medium capitalize ml-2 editorial-title" style={{ color: 'var(--ink-cool-strong)' }}>
             {periodoLabel()}
           </h2>
         </div>
 
-        <div className="flex gap-1 p-1 rounded-full" style={{ background: 'rgba(255,250,247,0.68)', border: '1px solid var(--border-soft)' }}>
+        <div className="flex gap-1 p-1 rounded-full" style={{ background: 'var(--surface-glass)', border: '1px solid var(--border-glass-white)' }}>
           {(['day', 'week', 'month'] as View[]).map((view) => (
             <button
               key={view}
               onClick={() => setCurrentView(view)}
               className="px-4 py-2 rounded-full text-sm font-medium transition-all"
               style={currentView === view ? {
-                background: 'rgba(255,252,250,0.98)',
-                color: 'var(--ink-strong)',
-                boxShadow: 'var(--shadow-soft)',
+                background: 'rgba(255,255,255,0.92)',
+                color: 'var(--ink-cool-strong)',
+                boxShadow: 'var(--shadow-glass)',
               } : {
-                color: 'var(--ink-faint)',
+                color: 'var(--ink-cool-faint)',
                 background: 'transparent',
               }}
             >
@@ -145,14 +145,14 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
           <button
             onClick={() => navegar('today')}
             className="px-4 py-2 rounded-full text-sm font-medium transition-all ml-1"
-            style={{ color: 'var(--ink-soft)', background: 'transparent' }}
+            style={{ color: 'var(--ink-cool-soft)', background: 'transparent' }}
           >
             Hoy
           </button>
         </div>
       </div>
 
-      <div className="glass rounded-[34px] overflow-hidden" style={{ minHeight: '620px' }}>
+      <div className="glass-cool rounded-[24px] overflow-hidden" style={{ minHeight: '620px' }}>
         <div className="p-6" style={{ height: '620px' }}>
           <Calendar
             localizer={localizer}

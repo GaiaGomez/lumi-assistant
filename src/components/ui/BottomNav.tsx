@@ -39,12 +39,12 @@ export default function BottomNav() {
               key={href}
               href={href}
               className="flex-1 flex flex-col items-center justify-center py-3.5 gap-1 transition-all"
-              style={{ color: isActive ? '#333333' : '#AAAAAA' }}
+              style={{ color: isActive ? 'var(--ink-cool-strong)' : 'var(--ink-cool-muted)' }}
             >
               {/* Indicador activo — bolita sobre el ícono */}
               {isActive && (
                 <span className="absolute top-2 w-1 h-1 rounded-full"
-                  style={{ background: '#888888' }} />
+                  style={{ background: 'var(--ink-cool-faint)' }} />
               )}
               <Icon size={21} strokeWidth={isActive ? 2.2 : 1.5} />
               <span className="text-xs font-medium tracking-wide">{label}</span>
@@ -71,8 +71,8 @@ export default function BottomNav() {
               <span className="text-white text-base font-light">L</span>
             </div>
             <div>
-              <p className="font-medium text-sm" style={{ color: '#111111' }}>Lu Assistant</p>
-              <p className="text-xs tracking-wide" style={{ color: '#AAAAAA' }}>Consultorio privado</p>
+              <p className="font-medium text-sm" style={{ color: 'var(--ink-cool-strong)' }}>Lu Assistant</p>
+              <p className="text-xs tracking-wide" style={{ color: 'var(--ink-cool-muted)' }}>Consultorio privado</p>
             </div>
           </div>
         </div>
@@ -88,9 +88,9 @@ export default function BottomNav() {
                 className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
                 style={isActive ? {
                   background: 'rgba(200, 188, 205, 0.30)',
-                  color: '#333333',
+                  color: 'var(--ink-cool-strong)',
                 } : {
-                  color: '#AAAAAA',
+                  color: 'var(--ink-cool-muted)',
                 }}
               >
                 <Icon size={17} strokeWidth={isActive ? 2.2 : 1.5} />
@@ -102,7 +102,7 @@ export default function BottomNav() {
 
         {/* Footer del sidebar */}
         <div className="p-5">
-          <p className="text-xs text-center tracking-widest" style={{ color: '#CCCCCC' }}>
+          <p className="text-xs text-center tracking-widest" style={{ color: 'var(--ink-cool-muted)' }}>
             Lumi Assistant
           </p>
         </div>

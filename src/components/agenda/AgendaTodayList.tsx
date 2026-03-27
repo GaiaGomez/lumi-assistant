@@ -38,10 +38,10 @@ export default function AgendaTodayList({ appointments, variant }: AgendaTodayLi
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="section-kicker">
+        <h2 className="card-label" style={{ color: 'var(--ink-cool-faint)' }}>
           {variant === 'today' ? 'Hoy' : 'Próximas'}
         </h2>
-        <p className="text-xs" style={{ color: 'var(--ink-muted)' }}>
+        <p className="text-[11px]" style={{ color: 'var(--ink-cool-muted)' }}>
           {appointments.length} cita{appointments.length === 1 ? '' : 's'}
         </p>
       </div>
@@ -51,16 +51,16 @@ export default function AgendaTodayList({ appointments, variant }: AgendaTodayLi
           <Link
             key={appointment.id}
             href={`/pacientes/${appointment.patient_id}`}
-            className="block glass rounded-[24px] p-4 transition-all hover:translate-y-[-1px]"
+            className="block glass-cool rounded-[16px] p-4 transition-all hover:translate-y-[-1px]"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-sm font-medium" style={{ color: 'var(--ink-strong)' }}>
+                <p className="text-sm font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
                   {appointment.patient
                     ? `${appointment.patient.nombre} ${appointment.patient.apellido}`
                     : appointment.notas || 'Cita'}
                 </p>
-                <p className="text-xs mt-1.5 tracking-[0.01em]" style={{ color: 'var(--ink-soft)' }}>
+                <p className="text-xs mt-1.5 tracking-[0.01em]" style={{ color: 'var(--ink-cool-soft)' }}>
                   {variant === 'today'
                     ? `${formatTime(appointment.fecha_inicio)} · ${appointment.notas || 'Sesión agendada'}`
                     : `${formatDate(appointment.fecha_inicio)} · ${formatTime(appointment.fecha_inicio)}`}
