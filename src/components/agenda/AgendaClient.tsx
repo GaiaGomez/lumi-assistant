@@ -100,17 +100,25 @@ const FESTIVOS = new Set<string>([
 ])
 
 // ─────────────────────────────────────────────────────────────
-// CATEGORÍAS — detectadas desde el campo notas
+// CATEGORÍAS — fuente principal: campo `modalidad`
+// Fallback temporal: detección por notas (citas legacy sin modalidad)
 // ─────────────────────────────────────────────────────────────
 
 type Categoria = 'online' | 'medellin' | 'retiro' | 'default'
 
-function detectarCategoria(notas: string | null): Categoria {
+/** Fallback legacy: infiere categoría desde el texto libre de notas */
+function inferirDesdeNotas(notas: string | null): Categoria {
   const n = notas?.toLowerCase() ?? ''
   if (n.includes('retiro')) return 'retiro'
   if (n.includes('online') || n.includes('virtual')) return 'online'
   if (n.includes('medell')) return 'medellin'
   return 'default'
+}
+
+/** Fuente de verdad: modalidad del campo real; fallback a notas para datos legacy */
+function resolverCategoria(apt: Appointment): Categoria {
+  if (apt.modalidad) return apt.modalidad
+  return inferirDesdeNotas(apt.notas)
 }
 
 const CATEGORIA_CONFIG: Record<Categoria, {
@@ -138,7 +146,7 @@ const ESTADO_LABEL: Record<Appointment['estado_sesion'], string> = {
 // Evento: nombre + [icono] categoría · estado — máx 2 líneas, sin hora
 function EventoCalendario({ event }: { event: CalendarEvent }) {
   const apt = event.resource
-  const { label, Icon } = CATEGORIA_CONFIG[detectarCategoria(apt.notas)]
+  const { label, Icon } = CATEGORIA_CONFIG[resolverCategoria(apt)]
   return (
     <div style={{ lineHeight: 1.35, overflow: 'hidden', minHeight: 0 }}>
       <p style={{
@@ -247,7 +255,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
   // Fondo del evento: color de categoría
   const eventPropGetter = useCallback((event: CalendarEvent) => ({
     style: {
-      backgroundColor: CATEGORIA_CONFIG[detectarCategoria(event.resource.notas)].bg,
+      backgroundColor: CATEGORIA_CONFIG[resolverCategoria(event.resource)].bg,
       borderRadius: '10px',
       border: '1px solid rgba(255,250,248,0.18)',
       color: '#fffaf8',

@@ -27,6 +27,7 @@ create table if not exists appointments (
   estado_pago      text default 'pendiente'
                    check (estado_pago in ('pendiente', 'pagado')),
   notas            text,
+  modalidad        text check (modalidad in ('online', 'medellin', 'retiro')),
   created_at       timestamptz default now()
 );
 

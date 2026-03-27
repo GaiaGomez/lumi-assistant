@@ -12,7 +12,7 @@ export default async function AgendaPage() {
 
   const { data: appointments, error } = await supabase
     .from('appointments')
-    .select('id, patient_id, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, patient:patients(id, nombre, apellido, whatsapp)')
+    .select('id, patient_id, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, patient:patients(id, nombre, apellido, whatsapp)')
     .eq('user_id', user.id)
     .order('fecha_inicio', { ascending: true })
 

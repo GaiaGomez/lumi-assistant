@@ -6,9 +6,10 @@
 // ============================================================
 
 import { useState } from 'react'
+import type React from 'react'
 import { useRouter } from 'next/navigation'
-import { X, FileText, MessageCircle } from 'lucide-react'
-import { Appointment } from '@/types'
+import { X, FileText, MessageCircle, Monitor, MapPin, Leaf } from 'lucide-react'
+import { Appointment, AppointmentModalidad } from '@/types'
 import { createClient } from '@/lib/supabase/client'
 import { linkRecordatorioCita } from '@/lib/whatsapp'
 import Button from '@/components/ui/Button'
@@ -26,6 +27,16 @@ const ESTADOS_SESION = [
   { value: 'cancelo',     label: 'Canceló' },
   { value: 'no_asistio',  label: 'No asistió' },
 ]
+
+const MODALIDAD_CONFIG: Record<AppointmentModalidad, {
+  label: string
+  color: string
+  Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>
+}> = {
+  online:   { label: 'Online',   color: '#8FA5BD', Icon: Monitor },
+  medellin: { label: 'Medellín', color: '#9488B0', Icon: MapPin  },
+  retiro:   { label: 'Retiro',   color: '#7EA88F', Icon: Leaf    },
+}
 
 const ACTIVE_SESSION_STYLES: Record<string, { bg: string; color: string }> = {
   pendiente:  { bg: 'var(--state-inactive-bg)',  color: 'var(--ink-cool)' },
@@ -88,6 +99,15 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
               {appointment.patient?.nombre} {appointment.patient?.apellido}
             </h2>
             <p className="text-sm mt-1 capitalize" style={{ color: 'var(--ink-cool-soft)' }}>{fechaFormateada}</p>
+            {appointment.modalidad && (() => {
+              const { label, color, Icon } = MODALIDAD_CONFIG[appointment.modalidad!]
+              return (
+                <p className="flex items-center gap-1.5 mt-1.5 text-[12px]" style={{ color: 'var(--ink-cool-soft)' }}>
+                  <Icon size={12} style={{ color }} />
+                  {label}
+                </p>
+              )
+            })()}
           </div>
           <Button variant="subtle" onClick={onClose} aria-label="Cerrar" className="p-2.5">
             <X size={18} />

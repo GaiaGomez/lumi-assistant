@@ -16,6 +16,8 @@ export interface Patient {
   created_at: string
 }
 
+export type AppointmentModalidad = 'online' | 'medellin' | 'retiro'
+
 export interface Appointment {
   id: string
   patient_id: string
@@ -28,6 +30,9 @@ export interface Appointment {
   // Estado del pago
   estado_pago: 'pendiente' | 'pagado'
   notas: string | null
+  // Modalidad de la sesión — fuente de verdad para categoría/color
+  // NULL = dato previo a esta migración; se resuelve con fallback a notas
+  modalidad: AppointmentModalidad | null
   created_at: string
   // Relación expandida — viene del JOIN con patients
   patient?: Patient
