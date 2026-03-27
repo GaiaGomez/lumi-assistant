@@ -92,7 +92,7 @@ export default function TemplateEditor({ settings, userId }: Props) {
       {/* ── URL de agenda ── */}
       <FieldCard>
         <div>
-          <h2 className="editorial-panel-title text-[1.05rem] mb-0.5" style={{ color: '#3F3941' }}>
+          <h2 className="editorial-panel-title text-[1.05rem] mb-0.5" style={{ color: 'var(--ink-strong)' }}>
             Link de agenda
           </h2>
           <p className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>
@@ -105,7 +105,7 @@ export default function TemplateEditor({ settings, userId }: Props) {
           value={doctoraliaUrl}
           onChange={e => setDoctoraliaUrl(e.target.value)}
           placeholder="https://www.doctoralia.co/tu-perfil"
-          className="w-full rounded-[12px] px-3 py-2.5 text-[13px]"
+          className="w-full rounded-[14px] px-3.5 py-3 text-[13px]"
         />
 
         <FieldActions
@@ -126,7 +126,7 @@ export default function TemplateEditor({ settings, userId }: Props) {
         return (
           <FieldCard key={tpl.key}>
             <div>
-              <h2 className="editorial-panel-title text-[1.05rem] mb-0.5" style={{ color: '#3F3941' }}>
+              <h2 className="editorial-panel-title text-[1.05rem] mb-0.5" style={{ color: 'var(--ink-strong)' }}>
                 {tpl.label}
               </h2>
               <p className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>
@@ -145,19 +145,19 @@ export default function TemplateEditor({ settings, userId }: Props) {
               value={currentValue}
               onChange={e => setValues(prev => ({ ...prev, [tpl.key]: e.target.value }))}
               rows={4}
-              className="w-full rounded-[12px] px-3 py-2.5 text-[13px] leading-relaxed resize-none"
+              className="w-full rounded-[14px] px-3.5 py-3 text-[13px] leading-relaxed resize-none"
             />
 
             {/* Vista previa en vivo */}
             {currentValue.trim() && (
               <div
-                className="rounded-[10px] px-3 py-2.5"
+                className="rounded-[12px] px-3.5 py-3"
                 style={{
-                  background: 'rgba(185,143,149,0.07)',
-                  border: '1px solid rgba(185,143,149,0.14)',
+                  background: 'var(--state-cancel-bg)',
+                  border: '1px solid var(--border-soft)',
                 }}
               >
-                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] mb-1.5" style={{ color: 'var(--ink-faint)' }}>
+                <p className="card-label mb-1.5" style={{ color: 'var(--ink-faint)' }}>
                   Vista previa
                 </p>
                 <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink-soft)' }}>
@@ -184,9 +184,9 @@ function FieldCard({ children }: { children: ReactNode }) {
     <section
       className="rounded-[18px] p-4 space-y-3"
       style={{
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.56) 0%, rgba(255,255,255,0.42) 100%)',
-        border: '1px solid rgba(255,255,255,0.42)',
-        boxShadow: '0 10px 40px rgba(124,108,128,0.10)',
+        background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
+        border: '1px solid var(--border-glass-white)',
+        boxShadow: 'var(--shadow-glass)',
         backdropFilter: 'blur(22px) saturate(140%)',
         WebkitBackdropFilter: 'blur(22px) saturate(140%)',
       }}
@@ -201,9 +201,9 @@ function VarChip({ name, hint }: { name: string; hint?: string }) {
     <span
       className="inline-flex items-center text-[11px] px-2 py-0.5 rounded-full font-mono font-medium cursor-default"
       style={{
-        background: 'rgba(185,143,149,0.12)',
+        background: 'var(--state-cancel-bg)',
         color: 'var(--accent-wine)',
-        border: '1px solid rgba(185,143,149,0.22)',
+        border: '1px solid var(--border-medium)',
       }}
       title={hint}
     >
@@ -231,7 +231,7 @@ function FieldActions({ state, onSave }: { state: SaveState; onSave: () => void 
         <button
           onClick={onSave}
           disabled={state === 'saving'}
-          className="btn-primary px-4 py-2 text-[12px] font-medium tracking-[0.04em] disabled:opacity-50"
+          className="btn-primary px-5 py-2.5 text-xs font-medium tracking-[0.06em] uppercase disabled:opacity-50"
         >
           {state === 'saving' ? 'Guardando…' : 'Guardar'}
         </button>
