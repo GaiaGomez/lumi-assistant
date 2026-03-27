@@ -130,7 +130,7 @@ function CabechaFecha({ date, label }: { date: Date; label: string }) {
         <div style={{
           fontSize: '8px', fontWeight: 700,
           letterSpacing: '0.08em', textTransform: 'uppercase' as const,
-          color: 'var(--accent-rose)', opacity: 0.9, marginTop: '1px',
+          color: '#B98F95', marginTop: '2px',
         }}>
           festivo
         </div>
@@ -149,9 +149,9 @@ function ColumnaHeader({ date, label }: { date: Date; label: string }) {
         <div style={{
           fontSize: '8px', fontWeight: 700,
           letterSpacing: '0.08em', textTransform: 'uppercase' as const,
-          color: 'var(--accent-rose)', opacity: 0.9, marginTop: '2px',
+          color: '#B98F95', marginTop: '2px',
         }}>
-          Festivo
+          festivo
         </div>
       )}
     </div>
@@ -217,16 +217,19 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
     }
   }), [])
 
-  // Fondo de cada día: festivos (rosa suave) + fines de semana (mauve muy sutil)
+  // Fondo de cada día: festivos (rosa visible, inline style garantizado) + fines de semana (mauve sutil)
   const dayPropGetter = useCallback((date: Date) => {
     const dow = date.getDay()
     const isFestivo = FESTIVOS_CO.has(toDateKey(date))
     const isWeekend = dow === 0 || dow === 6
-    const className =
-      isFestivo ? 'rbc-festivo'
-      : isWeekend ? 'rbc-weekend-day'
-      : undefined
-    return { className }
+    if (isFestivo) return {
+      style: {
+        background: 'rgba(185,143,149,0.20)',
+        boxShadow: 'inset 0 3px 0 rgba(185,143,149,0.70)',
+      }
+    }
+    if (isWeekend) return { style: { background: 'rgba(175,175,210,0.05)' } }
+    return {}
   }, [])
 
   // Etiqueta del período visible
