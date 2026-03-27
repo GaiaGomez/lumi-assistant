@@ -116,16 +116,8 @@ function PendingCard({ item }: { item: PendingItem }) {
           href={item.primaryHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-full font-medium"
-          style={{
-            height: '30px',
-            padding: '0 12px',
-            fontSize: '12px',
-            background: 'linear-gradient(145deg, var(--accent-lilac) 0%, var(--accent-mauve) 100%)',
-            color: 'var(--ink-cool-strong)',
-            border: '1px solid var(--border-glass-muted)',
-            boxShadow: 'var(--shadow-glass-soft)',
-          }}
+          className="btn-action gap-1.5"
+          style={{ height: '30px', padding: '0 12px', fontSize: '12px' }}
         >
           <MessageCircle size={13} />
           {item.primaryLabel}

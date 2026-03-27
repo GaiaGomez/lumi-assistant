@@ -216,6 +216,40 @@ textarea {
   background: rgba(255, 250, 247, 0.45);
 }
 
+/* ── Acción principal zona cool (lavanda — referencia: "Enviar WhatsApp") ── */
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, var(--accent-lilac) 0%, var(--accent-mauve) 100%);
+  color: var(--ink-cool-strong);
+  border: 1px solid var(--border-glass-muted);
+  box-shadow: var(--shadow-glass-soft);
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.btn-action:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+/* ── Acción secundaria zona cool (cristal neutro) ── */
+.btn-subtle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%);
+  color: var(--ink-cool-soft);
+  border: 1px solid var(--border-glass-white);
+  box-shadow: var(--shadow-glass);
+  border-radius: 999px;
+}
+
+.btn-subtle:hover {
+  opacity: 0.9;
+}
+
 /* Label mini para el interior de cards — más compacto que section-kicker */
 .card-label {
   font-size: 9px;

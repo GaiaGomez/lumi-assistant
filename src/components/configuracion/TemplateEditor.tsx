@@ -231,7 +231,7 @@ function FieldActions({ state, onSave }: { state: SaveState; onSave: () => void 
         <button
           onClick={onSave}
           disabled={state === 'saving'}
-          className="btn-primary px-5 py-2.5 text-xs font-medium tracking-[0.06em] uppercase disabled:opacity-50"
+          className="btn-action px-5 py-2.5 text-xs font-medium tracking-[0.06em] uppercase disabled:opacity-50"
         >
           {state === 'saving' ? 'Guardando…' : 'Guardar'}
         </button>
