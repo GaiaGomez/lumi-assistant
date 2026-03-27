@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import AgendaClient from '@/components/agenda/AgendaClient'
 import { Appointment } from '@/types'
-import { getTodayAppointments } from '@/lib/appointments'
 
 export default async function AgendaPage() {
   const supabase = await createClient()
@@ -22,19 +21,12 @@ export default async function AgendaPage() {
   }
 
   const allAppointments = (appointments as unknown as Appointment[]) ?? []
-  const todayCount = getTodayAppointments(allAppointments).length
 
   return (
     <div>
-      <div className="mb-3 flex items-baseline justify-between">
+      <div className="mb-3">
         <h1 className="page-title text-[1.6rem] leading-none">Agenda</h1>
-        <p className="text-[12px]" style={{ color: 'var(--ink-soft)' }}>
-          {todayCount > 0
-            ? `${todayCount} cita${todayCount === 1 ? '' : 's'} hoy`
-            : 'Sin citas hoy'}
-        </p>
       </div>
-
       <AgendaClient appointments={allAppointments} />
     </div>
   )

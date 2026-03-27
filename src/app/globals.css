@@ -416,66 +416,101 @@ textarea:focus {
     inset 0 1px 0 rgba(255, 255, 255, 0.65) !important;
 }
 
-/* ══════════════════════════════════════════════════════
-   react-big-calendar — overrides minimal, sin líneas
-   ══════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   REACT-BIG-CALENDAR — overrides Agenda Lumi
+   ══════════════════════════════════════════════════════════════ */
 
 .rbc-toolbar { display: none !important; }
-.rbc-calendar { font-family: inherit; background: transparent; color: var(--ink); }
-.rbc-time-view,
-.rbc-month-view {
-  border: 1px solid var(--border-soft) !important;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  background: rgba(255, 252, 250, 0.22);
+
+/* Container base */
+.rbc-calendar { font-family: inherit; background: transparent; color: var(--ink-cool); }
+.rbc-time-view, .rbc-month-view { border: none !important; background: transparent; }
+
+/* ── Cabeceras de día ── */
+.rbc-header {
+  color: var(--ink-cool-faint) !important;
+  font-weight: 600 !important;
+  font-size: 10px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  padding: 10px 6px 8px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.28) !important;
+  border-left: none !important;
+  background: transparent !important;
+}
+.rbc-header + .rbc-header { border-left: none !important; }
+
+/* ── Hoy — tinte mauve sutil ── */
+.rbc-today { background: rgba(148, 136, 176, 0.09) !important; }
+.rbc-header.rbc-today { color: var(--ink-cool-strong) !important; background: rgba(148, 136, 176, 0.06) !important; }
+
+/* Número de hoy con círculo (vista Mes) */
+.rbc-now.rbc-date-cell .rbc-button-link {
+  background: #9488B0 !important;
+  color: #fffaf8 !important;
+  border-radius: 999px !important;
+  padding: 2px 8px !important;
+  font-weight: 700 !important;
 }
 
-.rbc-time-content { border-top: none !important; }
-.rbc-time-header { border-bottom: none !important; }
-.rbc-time-header-content { border-left: none !important; }
-.rbc-timeslot-group { border-bottom: 1px solid rgba(175, 146, 137, 0.14) !important; }
-.rbc-day-slot .rbc-time-slot { border-top: none !important; }
-.rbc-header { border-bottom: none !important; border-left: none !important; }
-.rbc-header + .rbc-header { border-left: none !important; }
+/* ── Días fuera del mes actual — más tenues ── */
+.rbc-off-range-bg { background: rgba(0,0,0,0.022) !important; }
+.rbc-off-range.rbc-date-cell .rbc-button-link { color: var(--ink-cool-muted) !important; opacity: 0.5; }
+
+/* ── Festivos colombianos ── */
+.rbc-festivo { background: rgba(185, 143, 149, 0.07) !important; }
+
+/* ── Fines de semana — tinte muy sutil ── */
+.rbc-weekend-day { background: rgba(175, 175, 210, 0.045) !important; }
+
+/* ── Celdas de fecha ── */
+.rbc-date-cell { padding: 5px 8px !important; }
+.rbc-date-cell .rbc-button-link { font-size: 12px !important; color: var(--ink-cool-soft) !important; }
+
+/* ── Líneas del mes ── */
+.rbc-month-row + .rbc-month-row { border-top: 1px solid rgba(255,255,255,0.28) !important; }
 .rbc-day-bg + .rbc-day-bg { border-left: none !important; }
-.rbc-month-row + .rbc-month-row { border-top: 1px solid rgba(175, 146, 137, 0.14) !important; }
 .rbc-month-view .rbc-day-bg { border: none !important; }
 
+/* ── Time grid ── */
+.rbc-time-content { border-top: 1px solid rgba(255,255,255,0.28) !important; }
+.rbc-time-header { border-bottom: none !important; }
+.rbc-time-header-content { border-left: none !important; }
+.rbc-time-header-gutter { background: transparent !important; border-bottom: 1px solid rgba(255,255,255,0.22) !important; }
+.rbc-time-header.rbc-overflowing { border-right: none !important; }
+.rbc-timeslot-group { border-bottom: 1px solid rgba(185,174,189,0.12) !important; min-height: 56px; }
+.rbc-time-gutter .rbc-timeslot-group { border-bottom: none !important; }
+.rbc-day-slot .rbc-time-slot { border-top: none !important; }
+.rbc-time-content > * + * > * { border-left: 1px solid rgba(255,255,255,0.18) !important; }
+
+/* Etiquetas de hora */
 .rbc-label {
   font-size: 10px !important;
-  color: var(--ink-muted) !important;
-  padding-right: 8px !important;
-  letter-spacing: 0.02em;
-}
-.rbc-time-gutter .rbc-timeslot-group { border-bottom: none !important; }
-
-.rbc-header {
-  color: var(--ink-faint) !important;
-  font-weight: 600 !important;
-  font-size: 0.72rem !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.1em !important;
-  padding: 12px 0 8px !important;
+  color: var(--ink-cool-muted) !important;
+  padding-right: 10px !important;
+  letter-spacing: 0.01em;
 }
 
-.rbc-today { background: rgba(185, 143, 149, 0.08) !important; }
+/* Línea de hora actual */
+.rbc-current-time-indicator { background-color: #9488B0 !important; height: 2px !important; opacity: 0.6; }
+
+/* ── Eventos ── */
 .rbc-event {
-  border-radius: 12px !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  padding: 5px 8px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(255,250,248,0.18) !important;
+  padding: 3px 8px !important;
   font-size: 11px !important;
   font-weight: 600 !important;
-  box-shadow: 0 10px 22px rgba(88, 62, 58, 0.14) !important;
+  box-shadow: 0 6px 18px rgba(60,50,70,0.16) !important;
+  outline: none !important;
 }
-.rbc-event:focus { outline: none !important; }
-.rbc-event-label { font-size: 10px !important; opacity: 0.75; }
-.rbc-event.rbc-selected { box-shadow: 0 14px 28px rgba(88, 62, 58, 0.18) !important; }
+.rbc-event:focus { outline: none !important; box-shadow: 0 6px 18px rgba(60,50,70,0.20) !important; }
+.rbc-event.rbc-selected { filter: brightness(1.06); }
+.rbc-event-label { display: none !important; }  /* hora en grilla, no en el evento */
+.rbc-event-content { font-size: 11px !important; overflow: hidden; }
 
-.rbc-date-cell {
-  padding: 6px 8px !important;
-  font-size: 11px !important;
-  color: var(--ink-faint) !important;
-}
-.rbc-off-range .rbc-date-cell { color: rgba(160, 143, 139, 0.55) !important; }
-.rbc-off-range-bg { background: transparent !important; }
-.rbc-slot-selection { background: rgba(185, 143, 149, 0.12) !important; border: none !important; }
+/* ── Selección de slot ── */
+.rbc-slot-selection { background: rgba(148, 136, 176, 0.12) !important; border: none !important; }
+
+/* ── Ver más ── */
+.rbc-show-more { font-size: 10px !important; color: var(--ink-cool-soft) !important; background: transparent !important; font-weight: 600; }
