@@ -5,12 +5,20 @@ export const dynamic = 'force-dynamic'
 // ============================================================
 
 import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Appointment, ClinicalNote, Patient } from '@/types'
 import { formatDateTimeFull, formatDateOnly } from '@/lib/format'
 import { fetchSettings } from '@/lib/settings'
+import {
+  getNextAppointment,
+  getLastPastAppointment,
+  getPendingPayments,
+  getOldestPendingPayment,
+} from '@/lib/appointments'
 import PageBlobs from '@/components/ui/PageBlobs'
+import Badge from '@/components/ui/Badge'
+import EmptyState from '@/components/ui/EmptyState'
 import PatientCaseNotesCard from '@/components/pacientes/PatientCaseNotesCard'
 import PatientHeaderCard from '@/components/pacientes/PatientHeaderCard'
 import PatientTopMosaic from '@/components/pacientes/PatientTopMosaic'
@@ -23,16 +31,22 @@ export default async function PatientProfilePage({ params }: Props) {
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
-  // fetchSettings corre en paralelo con las otras queries
-  const settingsPromise = fetchSettings(supabase, user!.id)
+  const settingsPromise = fetchSettings(supabase, user.id)
 
-  // Cargamos el paciente, sus citas y sus notas clínicas en paralelo
-  // Promise.all ejecuta las 3 queries al mismo tiempo (más rápido que secuencial)
   const [{ data: patient }, { data: appointments }, { data: notes }] = await Promise.all([
     supabase.from('patients').select('*').eq('id', id).single(),
-    supabase.from('appointments').select('*').eq('patient_id', id).order('fecha_inicio', { ascending: false }),
-    supabase.from('clinical_notes').select('*').eq('patient_id', id).order('created_at', { ascending: false }),
+    supabase
+      .from('appointments')
+      .select('id, patient_id, fecha_inicio, fecha_fin, estado_sesion, estado_pago')
+      .eq('patient_id', id)
+      .order('fecha_inicio', { ascending: false }),
+    supabase
+      .from('clinical_notes')
+      .select('id, patient_id, texto, canvas_url, created_at')
+      .eq('patient_id', id)
+      .order('created_at', { ascending: false }),
   ])
 
   const settings = await settingsPromise
@@ -42,28 +56,13 @@ export default async function PatientProfilePage({ params }: Props) {
   const p = patient as Patient
   const patientAppointments = (appointments as Appointment[]) ?? []
   const patientNotes = (notes as ClinicalNote[]) ?? []
-  const now = new Date()
 
-  const nextAppointment =
-    patientAppointments
-      .filter((appointment) => new Date(appointment.fecha_inicio) > now)
-      .sort((a, b) => new Date(a.fecha_inicio).getTime() - new Date(b.fecha_inicio).getTime())[0] ?? null
-
-  const lastPastAppointment =
-    patientAppointments
-      .filter((appointment) => new Date(appointment.fecha_inicio) <= now)
-      .sort((a, b) => new Date(b.fecha_inicio).getTime() - new Date(a.fecha_inicio).getTime())[0] ?? null
-
+  const nextAppointment = getNextAppointment(patientAppointments)
+  const lastPastAppointment = getLastPastAppointment(patientAppointments)
   const latestNote = patientNotes[0] ?? null
-
-  const pendingPaymentsCount = patientAppointments.filter(
-    (appointment) => appointment.estado_sesion === 'asistio' && appointment.estado_pago === 'pendiente'
-  ).length
-
-  const oldestPendingPayment =
-    patientAppointments
-      .filter((appointment) => appointment.estado_sesion === 'asistio' && appointment.estado_pago === 'pendiente')
-      .sort((a, b) => new Date(a.fecha_inicio).getTime() - new Date(b.fecha_inicio).getTime())[0] ?? null
+  const pendingPayments = getPendingPayments(patientAppointments)
+  const pendingPaymentsCount = pendingPayments.length
+  const oldestPendingPayment = getOldestPendingPayment(patientAppointments)
 
   return (
     <div className="relative mx-auto max-w-[1180px] px-4 pb-1 font-sans sm:px-5">
@@ -86,30 +85,13 @@ export default async function PatientProfilePage({ params }: Props) {
       />
 
       <div className="space-y-2.5">
-        <section
-          className="relative rounded-[18px] p-3"
-          style={{
-            background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
-            border: '1px solid var(--border-glass-white)',
-            boxShadow: 'var(--shadow-glass)',
-            backdropFilter: 'blur(22px) saturate(140%)',
-            WebkitBackdropFilter: 'blur(22px) saturate(140%)',
-          }}
-        >
-          <div className="mb-2">
-            <div>
-              <h2 className="editorial-panel-title text-[1.12rem] sm:text-[1.2rem]" style={{ color: 'var(--ink-cool-strong)' }}>
-                Historia clínica
-              </h2>
-            </div>
-          </div>
-
-          <div className="relative space-y-2">
-            {patientNotes.length === 0 && (
-              <p className="py-3 text-center text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>
-                No hay notas clínicas aún
-              </p>
-            )}
+        {/* ── Historia clínica ── */}
+        <section className="glass-cool relative rounded-[18px] p-3">
+          <h2 className="editorial-panel-title text-[1.12rem] sm:text-[1.2rem] mb-2" style={{ color: 'var(--ink-cool-strong)' }}>
+            Historia clínica
+          </h2>
+          <div className="space-y-2">
+            {patientNotes.length === 0 && <EmptyState message="No hay notas clínicas aún" />}
             {patientNotes.map((note) => (
               <Link
                 key={note.id}
@@ -125,41 +107,21 @@ export default async function PatientProfilePage({ params }: Props) {
                 <p className="mb-0.5 text-[11px] capitalize tracking-[0.03em]" style={{ color: 'var(--ink-cool-faint)' }}>
                   {formatDateOnly(note.created_at)}
                 </p>
-                {note.texto && (
-                  <p className="line-clamp-2 text-[12px] leading-5" style={{ color: 'var(--ink-cool)' }}>
-                    Nota de sesión
-                  </p>
-                )}
-                {note.canvas_url && (
-                  <p className="mt-0.5 text-[11px]" style={{ color: 'var(--ink-cool-soft)' }}>Nota de sesión</p>
-                )}
+                <p className="line-clamp-2 text-[12px] leading-5" style={{ color: 'var(--ink-cool)' }}>
+                  {note.canvas_url ? 'Nota manuscrita' : 'Nota de sesión'}
+                </p>
               </Link>
             ))}
           </div>
         </section>
 
-        <section
-          className="relative rounded-[18px] p-3"
-          style={{
-            background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
-            border: '1px solid var(--border-glass-white)',
-            boxShadow: 'var(--shadow-glass)',
-            backdropFilter: 'blur(22px) saturate(140%)',
-            WebkitBackdropFilter: 'blur(22px) saturate(140%)',
-          }}
-        >
-          <div className="mb-2">
-            <div>
-              <h2 className="editorial-panel-title text-[1.12rem] sm:text-[1.2rem]" style={{ color: 'var(--ink-cool-strong)' }}>
-                Historial de citas
-              </h2>
-            </div>
-          </div>
-
-          <div className="relative space-y-2">
-            {patientAppointments.length === 0 && (
-              <p className="py-3 text-center text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>Sin citas registradas</p>
-            )}
+        {/* ── Historial de citas ── */}
+        <section className="glass-cool relative rounded-[18px] p-3">
+          <h2 className="editorial-panel-title text-[1.12rem] sm:text-[1.2rem] mb-2" style={{ color: 'var(--ink-cool-strong)' }}>
+            Historial de citas
+          </h2>
+          <div className="space-y-2">
+            {patientAppointments.length === 0 && <EmptyState message="Sin citas registradas" />}
             {patientAppointments.map((apt) => (
               <div
                 key={apt.id}
@@ -176,19 +138,18 @@ export default async function PatientProfilePage({ params }: Props) {
                     {formatDateTimeFull(apt.fecha_inicio)}
                   </p>
                   <div className="flex flex-wrap gap-1">
-                    <span className={
-                      apt.estado_sesion === 'asistio'    ? 'status-badge status-badge--success' :
-                      apt.estado_sesion === 'cancelo'    ? 'status-badge status-badge--cancel' :
-                      apt.estado_sesion === 'no_asistio' ? 'status-badge status-badge--warning' :
-                                                           'status-badge status-badge--inactive'
+                    <Badge status={
+                      apt.estado_sesion === 'asistio'    ? 'success'  :
+                      apt.estado_sesion === 'cancelo'    ? 'cancel'   :
+                      apt.estado_sesion === 'no_asistio' ? 'warning'  : 'inactive'
                     }>
-                      {apt.estado_sesion === 'asistio' ? 'Asistió' :
-                       apt.estado_sesion === 'cancelo' ? 'Canceló' :
+                      {apt.estado_sesion === 'asistio'    ? 'Asistió'    :
+                       apt.estado_sesion === 'cancelo'    ? 'Canceló'    :
                        apt.estado_sesion === 'no_asistio' ? 'No asistió' : 'Programada'}
-                    </span>
-                    <span className={apt.estado_pago === 'pagado' ? 'status-badge status-badge--success' : 'status-badge status-badge--pending'}>
+                    </Badge>
+                    <Badge status={apt.estado_pago === 'pagado' ? 'success' : 'pending'}>
                       {apt.estado_pago === 'pagado' ? 'Pagada' : 'Pendiente de pago'}
-                    </span>
+                    </Badge>
                   </div>
                 </div>
               </div>

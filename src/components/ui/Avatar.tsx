@@ -4,12 +4,13 @@
 // Props:
 //   nombre   → primer nombre del paciente
 //   apellido → apellido del paciente
-//   size     → 'sm' (28px) | 'md' (36px)   default: 'md'
+//   size     → 'sm' (28px) | 'md' (36px) | 'lg' (40px)   default: 'md'
 // ============================================================
 
 const sizes = {
   sm: { box: '28px', font: '9px' },
   md: { box: '36px', font: '10px' },
+  lg: { box: '40px', font: '12px' },
 } as const
 
 interface AvatarProps {

@@ -1,11 +1,5 @@
--- ============================================================
--- SCHEMA SQL — Lu Assistant
--- Pega esto en el SQL Editor de tu proyecto Supabase
--- Ejecuta en orden: primero patients, luego appointments, luego clinical_notes
--- ============================================================
-
 -- TABLA: patients
--- Guarda la información básica de cada paciente de Lu
+-- Guarda la información básica de cada paciente
 create table if not exists patients (
   id           uuid default gen_random_uuid() primary key,
   user_id      uuid references auth.users(id) on delete cascade not null,
@@ -92,7 +86,6 @@ create policy "notes: solo el dueño puede borrar" on clinical_notes for delete 
 
 -- ============================================================
 -- STORAGE BUCKET — para guardar las imágenes del canvas
--- Ejecuta esto también en el SQL Editor
 -- ============================================================
 
 insert into storage.buckets (id, name, public)

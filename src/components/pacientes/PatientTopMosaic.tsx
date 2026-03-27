@@ -4,6 +4,7 @@ import { Appointment, ClinicalNote, Patient } from '@/types'
 import { generarLinkWhatsApp } from '@/lib/whatsapp'
 import { interpolate, type SettingsMap } from '@/lib/settings'
 import { formatDateTimeFull } from '@/lib/format'
+import StatCard from '@/components/ui/StatCard'
 
 interface PatientTopMosaicProps {
   patient: Patient
@@ -31,48 +32,6 @@ function formatAppointmentDate(date: string) {
     primary: `${weekday} · ${time}`,
     secondary: `${day}/${month}/${year}`,
   }
-}
-
-function SummaryCard({
-  label,
-  value,
-  hint,
-  href,
-}: {
-  label: string
-  value: string
-  hint?: string
-  href?: string
-}) {
-  const content = (
-    <div
-      className="h-full rounded-[16px] font-sans"
-      style={{
-        minHeight: '84px',
-        padding: '12px 14px',
-        background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
-        border: '1px solid var(--border-glass-white)',
-        boxShadow: 'var(--shadow-glass)',
-        backdropFilter: 'blur(22px) saturate(140%)',
-        WebkitBackdropFilter: 'blur(22px) saturate(140%)',
-      }}
-    >
-      <p className="card-label mb-1" style={{ color: 'var(--ink-cool-faint)' }}>
-        {label}
-      </p>
-      <p className="font-medium leading-snug" style={{ color: 'var(--ink-cool-strong)', fontSize: '15px' }}>
-        {value}
-      </p>
-      {hint ? (
-          <p className="mt-1 text-[12px] leading-none" style={{ color: 'var(--ink-cool-soft)' }}>
-            {hint}
-          </p>
-        ) : null}
-    </div>
-  )
-
-  if (!href) return content
-  return <Link href={href} className="block h-full">{content}</Link>
 }
 
 function ActionCard({
@@ -162,33 +121,37 @@ export default function PatientTopMosaic({
         })
       )
     : undefined
-  const noWhatsAppText = 'No tiene numero de WhatsApp registrado'
+
+  const noWhatsAppText = 'No tiene número de WhatsApp registrado'
   const nextAppointmentText = nextAppointment ? formatAppointmentDate(nextAppointment.fecha_inicio) : null
   const lastPastAppointmentText = lastPastAppointment ? formatAppointmentDate(lastPastAppointment.fecha_inicio) : null
 
   return (
     <div className="mb-3 space-y-[10px]">
       <div className="grid gap-[10px] md:grid-cols-4">
-        <SummaryCard
-          label="PRÓXIMA CITA"
+        <StatCard
+          label="Próxima cita"
           value={nextAppointmentText ? nextAppointmentText.primary : 'Sin cita'}
           hint={nextAppointmentText ? nextAppointmentText.secondary : undefined}
+          muted={!nextAppointmentText}
         />
-        <SummaryCard
-          label="ÚLTIMA SESIÓN"
+        <StatCard
+          label="Última sesión"
           value={lastPastAppointmentText ? lastPastAppointmentText.primary : 'Sin sesiones'}
           hint={lastPastAppointmentText ? lastPastAppointmentText.secondary : undefined}
+          muted={!lastPastAppointmentText}
         />
-        <SummaryCard
-          label="PAGOS PENDIENTES"
+        <StatCard
+          label="Pagos pendientes"
           value={pendingPaymentsCount === 0 ? 'Todo al día' : `${pendingPaymentsCount} pendiente${pendingPaymentsCount === 1 ? '' : 's'}`}
           hint={pendingPaymentsCount === 0 ? undefined : 'Sin pago confirmado'}
+          muted={pendingPaymentsCount === 0}
         />
-        <SummaryCard
-          label="HISTORIA CLÍNICA"
-          value="Última nota"
-          hint={latestNote ? '25 mar 2026' : undefined}
+        <StatCard
+          label="Historia clínica"
+          value={latestNote ? 'Última nota' : 'Sin notas'}
           href={latestNote ? `/historias/${latestNote.id}` : undefined}
+          muted={!latestNote}
         />
       </div>
 
@@ -201,7 +164,7 @@ export default function PatientTopMosaic({
         />
         <ActionCard
           label="Agendar sesión"
-          hint="Sin próxima sesion agendada."
+          hint="Sin próxima sesión agendada."
           href={agendaHref}
         />
         <ActionCard

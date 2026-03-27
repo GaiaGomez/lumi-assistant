@@ -8,6 +8,8 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { UserPlus, ChevronRight } from 'lucide-react'
 import { Patient } from '@/types'
+import Avatar from '@/components/ui/Avatar'
+import EmptyState from '@/components/ui/EmptyState'
 
 export default async function PacientesPage() {
   const supabase = await createClient()
@@ -21,60 +23,56 @@ export default async function PacientesPage() {
 
   return (
     <div>
-      {/* Header con botón de agregar */}
+      {/* ── Header ── */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-light tracking-tight" style={{ color: '#111111' }}>
+          <h1 className="editorial-panel-title text-[1.8rem] leading-none" style={{ color: 'var(--ink-cool-strong)' }}>
             Pacientes
           </h1>
-          <p className="text-sm mt-1" style={{ color: '#666666' }}>
-            {patients?.length ?? 0} pacientes registrados
+          <p className="text-[13px] mt-1" style={{ color: 'var(--ink-cool-soft)' }}>
+            {patients?.length ?? 0} paciente{(patients?.length ?? 0) === 1 ? '' : 's'} registrado{(patients?.length ?? 0) === 1 ? '' : 's'}
           </p>
         </div>
-        {/* Botón Nuevo — glass gris con toque rose sutil */}
         <Link
           href="/pacientes/nuevo"
-          className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-opacity hover:opacity-90"
-          style={{ background: 'rgba(155, 142, 160, 0.90)', color: 'white' }}
+          className="btn-action gap-2"
+          style={{ height: '38px', padding: '0 16px', fontSize: '13px' }}
         >
-          <UserPlus size={16} />
+          <UserPlus size={15} />
           Nuevo
         </Link>
       </div>
 
-      {/* Lista de pacientes */}
+      {/* ── Lista ── */}
       <div className="space-y-2">
         {patients?.length === 0 && (
-          <div className="text-center py-16" style={{ color: '#AAAAAA' }}>
-            <p className="text-lg mb-1">Aún no hay pacientes</p>
-            <p className="text-sm">Toca &quot;Nuevo&quot; para agregar el primero 🌿</p>
-          </div>
+          <EmptyState
+            message="Aún no hay pacientes"
+            hint="Toca «Nuevo» para agregar el primero"
+            size="md"
+          />
         )}
 
         {patients?.map((patient: Patient) => (
           <Link
             key={patient.id}
             href={`/pacientes/${patient.id}`}
-            className="flex items-center justify-between p-4 glass rounded-2xl transition-all"
+            className="glass-cool rounded-[16px] flex items-center justify-between p-4 transition-all hover:translate-y-[-1px]"
           >
             <div className="flex items-center gap-3">
-              {/* Avatar con iniciales — gradiente rose-lavender */}
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
-                style={{ background: 'linear-gradient(135deg, #C4B0C8 0%, #9A9AB8 100%)' }}>
-                <span className="text-white font-medium text-sm">
-                  {patient.nombre[0]}{patient.apellido[0]}
-                </span>
-              </div>
+              <Avatar nombre={patient.nombre} apellido={patient.apellido} size="lg" />
               <div>
-                <p className="font-medium" style={{ color: '#111111' }}>
+                <p className="font-medium text-[14px]" style={{ color: 'var(--ink-cool-strong)' }}>
                   {patient.nombre} {patient.apellido}
                 </p>
                 {patient.whatsapp && (
-                  <p className="text-sm" style={{ color: '#888888' }}>+{patient.whatsapp}</p>
+                  <p className="text-[12px] mt-0.5" style={{ color: 'var(--ink-cool-soft)' }}>
+                    +{patient.whatsapp}
+                  </p>
                 )}
               </div>
             </div>
-            <ChevronRight size={18} style={{ color: '#CCCCCC' }} />
+            <ChevronRight size={17} style={{ color: 'var(--ink-cool-muted)' }} />
           </Link>
         ))}
       </div>

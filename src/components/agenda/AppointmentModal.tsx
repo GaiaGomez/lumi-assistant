@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/client'
 import { linkRecordatorioCita } from '@/lib/whatsapp'
 import Button from '@/components/ui/Button'
 import SectionHeader from '@/components/ui/SectionHeader'
+import ModalShell from '@/components/ui/ModalShell'
 
 interface AppointmentModalProps {
   appointment: Appointment
@@ -78,16 +79,8 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
-      style={{ background: 'var(--overlay-modal)', backdropFilter: 'blur(8px)' }}
-      onClick={onClose}
-    >
-      <div
-        className="glass-cool w-full max-w-md rounded-[24px] overflow-hidden"
-        style={{ boxShadow: 'var(--shadow-float)' }}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ModalShell onClose={onClose}>
+      <div>
         <div className="flex items-start justify-between p-5">
           <div>
             <SectionHeader label="Detalle de cita" className="mb-2" />
@@ -194,6 +187,6 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
           </Button>
         </div>
       </div>
-    </div>
+    </ModalShell>
   )
 }

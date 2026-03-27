@@ -21,6 +21,7 @@ export default function NuevaHistoriaPage() {
   const [texto, setTexto] = useState('')
   const [canvasDataUrl, setCanvasDataUrl] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   // Cargamos el nombre del paciente para mostrarlo en el header
   useEffect(() => {
@@ -32,40 +33,47 @@ export default function NuevaHistoriaPage() {
   async function handleSave() {
     if (!pacienteId) return
     setSaving(true)
+    setSaveError(null)
 
-    const { data: { user } } = await supabase.auth.getUser()
-    let canvas_url: string | null = null
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setSaveError('Sesión expirada. Recarga la página.'); return }
 
-    // Si hay algo dibujado en el canvas, lo subimos a Supabase Storage
-    if (canvasDataUrl) {
-      // Convertimos base64 a Blob (binario) para poder subirlo como archivo
-      const response = await fetch(canvasDataUrl)
-      const blob = await response.blob()
+      let canvas_url: string | null = null
 
-      // Nombre del archivo: userId/timestamp.png
-      const fileName = `${user!.id}/${Date.now()}.png`
+      if (canvasDataUrl) {
+        const response = await fetch(canvasDataUrl)
+        const blob = await response.blob()
+        const fileName = `${user.id}/${Date.now()}.png`
 
-      const { data: uploadData } = await supabase.storage
-        .from('canvas-notes')
-        .upload(fileName, blob, { contentType: 'image/png' })
-
-      if (uploadData) {
-        const { data: { publicUrl } } = supabase.storage
+        const { data: uploadData } = await supabase.storage
           .from('canvas-notes')
-          .getPublicUrl(uploadData.path)
-        canvas_url = publicUrl
+          .upload(fileName, blob, { contentType: 'image/png' })
+
+        if (uploadData) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('canvas-notes')
+            .getPublicUrl(uploadData.path)
+          canvas_url = publicUrl
+        }
       }
+
+      const { error } = await supabase.from('clinical_notes').insert({
+        patient_id: pacienteId,
+        user_id: user.id,
+        texto: texto || null,
+        canvas_url,
+      })
+
+      if (error) throw error
+
+      router.push(`/pacientes/${pacienteId}`)
+      router.refresh()
+    } catch {
+      setSaveError('No se pudo guardar la nota. Intenta de nuevo.')
+    } finally {
+      setSaving(false)
     }
-
-    await supabase.from('clinical_notes').insert({
-      patient_id: pacienteId,
-      user_id: user!.id,
-      texto: texto || null,
-      canvas_url,
-    })
-
-    router.push(`/pacientes/${pacienteId}`)
-    router.refresh()
   }
 
   return (
@@ -98,6 +106,12 @@ export default function NuevaHistoriaPage() {
           {saving ? 'Guardando...' : 'Guardar'}
         </button>
       </div>
+
+      {saveError && (
+        <p className="text-[12px] text-center mb-2" style={{ color: 'var(--state-cancel-text)' }}>
+          {saveError}
+        </p>
+      )}
 
       <div className="space-y-4">
         {/* Canvas de escritura */}

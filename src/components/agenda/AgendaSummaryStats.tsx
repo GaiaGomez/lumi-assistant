@@ -1,4 +1,5 @@
 import { Appointment } from '@/types'
+import StatCard from '@/components/ui/StatCard'
 
 interface AgendaSummaryStatsProps {
   todayCount: number
@@ -16,30 +17,6 @@ function formatAppointmentDate(date: string) {
   })
 }
 
-function SummaryCard({
-  label,
-  value,
-  hint,
-}: {
-  label: string
-  value: string
-  hint: string
-}) {
-  return (
-    <div className="glass-cool rounded-[18px] p-4">
-      <p className="card-label mb-2" style={{ color: 'var(--ink-cool-faint)' }}>
-        {label}
-      </p>
-      <p className="text-[1rem] font-medium leading-snug" style={{ color: 'var(--ink-cool-strong)' }}>
-        {value}
-      </p>
-      <p className="text-[11px] mt-2 leading-relaxed" style={{ color: 'var(--ink-cool-muted)' }}>
-        {hint}
-      </p>
-    </div>
-  )
-}
-
 export default function AgendaSummaryStats({
   todayCount,
   nextAppointment,
@@ -48,13 +25,14 @@ export default function AgendaSummaryStats({
 }: AgendaSummaryStatsProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
-      <SummaryCard
+      <StatCard
         label="Hoy"
         value={todayCount === 0 ? 'Sin citas' : `${todayCount} cita${todayCount === 1 ? '' : 's'}`}
         hint={todayCount === 0 ? 'La agenda de hoy está libre.' : 'Sesiones programadas para hoy.'}
+        muted={todayCount === 0}
       />
 
-      <SummaryCard
+      <StatCard
         label="Próxima cita"
         value={nextAppointment ? formatAppointmentDate(nextAppointment.fecha_inicio) : 'Sin próxima cita'}
         hint={nextAppointment
@@ -62,22 +40,25 @@ export default function AgendaSummaryStats({
             ? `${nextAppointment.patient.nombre} ${nextAppointment.patient.apellido}`
             : 'Paciente sin nombre asociado')
           : 'No hay citas futuras agendadas.'}
+        muted={!nextAppointment}
       />
 
-      <SummaryCard
+      <StatCard
         label="Pendientes"
         value={pendingSessionCount === 0 ? 'Todo al día' : `${pendingSessionCount} por atender`}
         hint={pendingSessionCount === 0
           ? 'No hay sesiones pendientes por revisar.'
           : 'Citas con estado de sesión pendiente.'}
+        muted={pendingSessionCount === 0}
       />
 
-      <SummaryCard
+      <StatCard
         label="Pagos por revisar"
         value={pendingPaymentCount === 0 ? 'Ninguno' : `${pendingPaymentCount} pendiente${pendingPaymentCount === 1 ? '' : 's'}`}
         hint={pendingPaymentCount === 0
           ? 'No hay pagos por confirmar.'
           : 'Sesiones asistidas sin pago confirmado.'}
+        muted={pendingPaymentCount === 0}
       />
     </div>
   )

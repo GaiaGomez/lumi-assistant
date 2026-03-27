@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { ArrowUpRight, MessageCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Appointment, Patient } from '@/types'
@@ -12,6 +13,13 @@ import {
   mensajeRecordatorioCita,
   generarLinkWhatsApp,
 } from '@/lib/whatsapp'
+import {
+  getTomorrowPendingAppointments,
+  getPendingPayments,
+  getNextAppointment,
+  getLastPastAppointment,
+  getDaysInactive,
+} from '@/lib/appointments'
 
 type AppointmentWithPatient = Appointment & { patient: Patient | null }
 
@@ -156,35 +164,28 @@ function PendingSection({ title, items }: { title: string; items: PendingItem[] 
 export default async function PendingPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
   const now = new Date()
-  const tomorrow = new Date(now)
-  tomorrow.setDate(tomorrow.getDate() + 1)
 
-  const tomorrowStart = new Date(tomorrow)
-  tomorrowStart.setHours(0, 0, 0, 0)
-  const tomorrowEnd = new Date(tomorrow)
-  tomorrowEnd.setHours(23, 59, 59, 999)
-
-  // fetchSettings corre en paralelo con las otras queries
-  const settingsPromise = fetchSettings(supabase, user!.id)
+  const settingsPromise = fetchSettings(supabase, user.id)
 
   const [{ data: appointments }, { data: patients }] = await Promise.all([
     supabase
       .from('appointments')
-      .select('*, patient:patients(*)')
-      .eq('user_id', user!.id)
+      .select('id, patient_id, fecha_inicio, estado_sesion, estado_pago, patient:patients(id, nombre, apellido, whatsapp)')
+      .eq('user_id', user.id)
       .order('fecha_inicio', { ascending: false }),
     supabase
       .from('patients')
-      .select('*')
-      .eq('user_id', user!.id)
+      .select('id, nombre, apellido, whatsapp')
+      .eq('user_id', user.id)
       .order('apellido', { ascending: true }),
   ])
 
   const settings = await settingsPromise
 
-  const allAppointments = ((appointments ?? []) as AppointmentWithPatient[]).filter((apt) => apt.patient)
+  const allAppointments = ((appointments as unknown as AppointmentWithPatient[]) ?? []).filter((apt) => apt.patient)
   const allPatients = (patients ?? []) as Patient[]
 
   const urgent: PendingItem[] = []
@@ -192,15 +193,7 @@ export default async function PendingPage() {
   const noNext: PendingItem[] = []
   const retomar: PendingItem[] = []
 
-  const tomorrowAppointments = allAppointments.filter((apt) => {
-    const start = new Date(apt.fecha_inicio)
-    return (
-      apt.estado_sesion === 'pendiente' &&
-      start >= tomorrowStart &&
-      start <= tomorrowEnd &&
-      !!apt.patient
-    )
-  })
+  const tomorrowAppointments = getTomorrowPendingAppointments(allAppointments, now).filter((apt) => !!(apt as AppointmentWithPatient).patient)
 
   tomorrowAppointments.forEach((apt) => {
     const patient = apt.patient!
@@ -216,9 +209,7 @@ export default async function PendingPage() {
     })
   })
 
-  const pendingPayments = allAppointments.filter(
-    (apt) => apt.estado_sesion === 'asistio' && apt.estado_pago === 'pendiente' && !!apt.patient
-  )
+  const pendingPayments = getPendingPayments(allAppointments).filter((apt) => !!(apt as AppointmentWithPatient).patient)
 
   pendingPayments.forEach((apt) => {
     const patient = apt.patient!
@@ -239,23 +230,14 @@ export default async function PendingPage() {
   })
 
   allPatients.forEach((patient) => {
-    const patientAppointments = allAppointments
-      .filter((apt) => apt.patient?.id === patient.id)
-      .sort((a, b) => new Date(b.fecha_inicio).getTime() - new Date(a.fecha_inicio).getTime())
+    const patientAppointments = allAppointments.filter((apt) => apt.patient?.id === patient.id)
 
-    const futureAppointment = patientAppointments
-      .filter((apt) => new Date(apt.fecha_inicio) > now)
-      .sort((a, b) => new Date(a.fecha_inicio).getTime() - new Date(b.fecha_inicio).getTime())[0] ?? null
-
-    const lastPastAppointment = patientAppointments
-      .filter((apt) => new Date(apt.fecha_inicio) <= now)
-      .sort((a, b) => new Date(b.fecha_inicio).getTime() - new Date(a.fecha_inicio).getTime())[0] ?? null
+    const futureAppointment = getNextAppointment(patientAppointments, now)
+    const lastPastAppointment = getLastPastAppointment(patientAppointments, now)
 
     if (!lastPastAppointment || futureAppointment) return
 
-    const daysWithoutSchedule = Math.floor(
-      (now.getTime() - new Date(lastPastAppointment.fecha_inicio).getTime()) / (1000 * 60 * 60 * 24)
-    )
+    const daysWithoutSchedule = getDaysInactive(lastPastAppointment, now)!
 
     if (daysWithoutSchedule >= 20) {
       const mensaje = interpolate(settings['template_retomar'], {

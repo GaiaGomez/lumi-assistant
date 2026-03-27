@@ -16,6 +16,7 @@ export default function NuevoPacientePage() {
     nombre: '', apellido: '', telefono: '', whatsapp: '', email: '', notas_generales: ''
   })
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   // Actualiza el campo correspondiente en el estado del formulario
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
@@ -25,17 +26,27 @@ export default function NuevoPacientePage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
+    setSaveError(null)
 
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setSaveError('Sesión expirada. Recarga la página.'); return }
 
-    await supabase.from('patients').insert({
-      ...form,
-      user_id: user!.id,
-      fecha_inicio: new Date().toISOString().split('T')[0],  // fecha de hoy
-    })
+      const { error } = await supabase.from('patients').insert({
+        ...form,
+        user_id: user.id,
+        fecha_inicio: new Date().toISOString().split('T')[0],
+      })
 
-    router.push('/pacientes')
-    router.refresh()
+      if (error) throw error
+
+      router.push('/pacientes')
+      router.refresh()
+    } catch {
+      setSaveError('No se pudo guardar el paciente. Intenta de nuevo.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   // Estilos reutilizables para inputs
@@ -118,7 +129,12 @@ export default function NuevoPacientePage() {
           />
         </div>
 
-        {/* Botón guardar — glass gris con toque rose */}
+        {saveError && (
+          <p className="text-[12px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
+            {saveError}
+          </p>
+        )}
+
         <button type="submit" disabled={saving}
           className="w-full py-3.5 rounded-2xl text-white font-medium transition-opacity disabled:opacity-50 mt-2"
           style={{ background: 'rgba(155, 142, 160, 0.90)' }}>

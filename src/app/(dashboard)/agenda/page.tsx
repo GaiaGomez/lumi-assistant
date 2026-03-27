@@ -4,53 +4,42 @@ export const dynamic = 'force-dynamic'
 // Server Component: carga las citas desde Supabase antes de renderizar
 // ============================================================
 
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import AgendaClient from '@/components/agenda/AgendaClient'
 import { Appointment } from '@/types'
 import AgendaSummaryStats from '@/components/agenda/AgendaSummaryStats'
 import AgendaTodayList from '@/components/agenda/AgendaTodayList'
+import { getTodayAppointments, getNextAppointment, getPendingPayments } from '@/lib/appointments'
 
 export default async function AgendaPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
-  // Cargamos todas las citas del usuario con los datos del paciente incluidos
-  // .select('*, patient:patients(*)') hace un JOIN automático de appointments con patients
   const { data: appointments, error } = await supabase
     .from('appointments')
-    .select('*, patient:patients(*)')
-    .eq('user_id', user!.id)
+    .select('id, patient_id, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, patient:patients(id, nombre, apellido, whatsapp)')
+    .eq('user_id', user.id)
     .order('fecha_inicio', { ascending: true })
 
   if (error) {
     console.error('Error cargando citas:', error)
   }
 
-  const allAppointments = (appointments as Appointment[]) ?? []
+  const allAppointments = (appointments as unknown as Appointment[]) ?? []
   const now = new Date()
-  const startOfToday = new Date(now)
-  startOfToday.setHours(0, 0, 0, 0)
-  const endOfToday = new Date(now)
-  endOfToday.setHours(23, 59, 59, 999)
 
-  const todayAppointments = allAppointments.filter((appointment) => {
-    const start = new Date(appointment.fecha_inicio)
-    return start >= startOfToday && start <= endOfToday
-  })
+  const todayAppointments = getTodayAppointments(allAppointments, now)
+  const nextAppointment = getNextAppointment(allAppointments, now)
+  const todayCount = todayAppointments.length
+  const pendingPaymentCount = getPendingPayments(allAppointments).length
+  const pendingSessionCount = allAppointments.filter((a) => a.estado_sesion === 'pendiente').length
 
   const upcomingAppointments = allAppointments
-    .filter((appointment) => new Date(appointment.fecha_inicio) > now)
-    .sort((a, b) => new Date(a.fecha_inicio).getTime() - new Date(b.fecha_inicio).getTime())
+    .filter((a) => new Date(a.fecha_inicio) > now)
     .slice(0, 5)
 
-  const nextAppointment = upcomingAppointments[0] ?? null
-  const todayCount = todayAppointments.length
-  const pendingPaymentCount = allAppointments.filter(
-    (appointment) => appointment.estado_sesion === 'asistio' && appointment.estado_pago === 'pendiente'
-  ).length
-  const pendingSessionCount = allAppointments.filter(
-    (appointment) => appointment.estado_sesion === 'pendiente'
-  ).length
   const listAppointments = todayCount > 0 ? todayAppointments : upcomingAppointments
   const listVariant = todayCount > 0 ? 'today' as const : 'upcoming' as const
 
