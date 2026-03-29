@@ -253,21 +253,6 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
           {/* ── Reagendar ── */}
           <div>
             <SectionHeader label="Reagendar" className="mb-2.5" />
-            <div
-              className="rounded-[14px] p-3 mb-2.5"
-              style={{ background: 'rgba(255,255,255,0.34)', border: '1px solid var(--border-glass-white)' }}
-            >
-              <p className="text-[11px] uppercase tracking-[0.08em] mb-1" style={{ color: 'var(--ink-cool-faint)' }}>
-                Horario actual
-              </p>
-              <p className="text-[13px] font-medium capitalize" style={{ color: 'var(--ink-cool-strong)' }}>
-                {formatSchedule(currentStart)}
-              </p>
-              <p className="text-[12px] mt-1" style={{ color: 'var(--ink-cool-soft)' }}>
-                {formatTimeRange(currentStart, currentEnd)}
-              </p>
-            </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <label className="space-y-1">
                 <span className="text-[11px] uppercase tracking-[0.08em]" style={{ color: 'var(--ink-cool-faint)' }}>
@@ -337,10 +322,6 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                 </p>
                 <p className="text-[13px] font-medium capitalize mt-1" style={{ color: 'var(--ink-cool-strong)' }}>
                   {formatSchedule(nuevaInicio)}
-                </p>
-                <p className="text-[12px] mt-1" style={{ color: 'var(--ink-cool-soft)' }}>
-                  {formatTimeRange(nuevaInicio, nuevaFin)}
-                  {` · ${duracion} min`}
                 </p>
               </div>
             )}
