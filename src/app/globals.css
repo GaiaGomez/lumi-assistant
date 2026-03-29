@@ -478,6 +478,9 @@ textarea:focus {
 .rbc-time-header-content { border-left: none !important; }
 .rbc-time-header-gutter { background: transparent !important; border-bottom: 1px solid rgba(255,255,255,0.22) !important; }
 .rbc-time-header.rbc-overflowing { border-right: none !important; }
+/* Ocultar fila de eventos de todo el día — Lumi no la usa y aparece vacía */
+.rbc-allday-cell { display: none !important; }
+.rbc-time-header-gutter { min-height: 0 !important; }
 .rbc-timeslot-group { border-bottom: 1px solid rgba(185,174,189,0.12) !important; min-height: 56px; }
 .rbc-time-gutter .rbc-timeslot-group { border-bottom: none !important; }
 .rbc-day-slot .rbc-time-slot { border-top: none !important; }

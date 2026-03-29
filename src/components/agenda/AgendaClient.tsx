@@ -136,40 +136,20 @@ function EventoCalendario({ event }: { event: CalendarEvent }) {
   )
 }
 
-// Cabecera de fecha en vista Mes: número + etiqueta "festivo"
-function CabechaFecha({ date, label }: { date: Date; label: string }) {
-  const esFestivo = FESTIVOS_CO.has(toDateKey(date))
+// Cabecera de fecha en vista Mes — festivo se comunica solo por el tinte del día
+function CabechaFecha({ date: _date, label }: { date: Date; label: string }) {
   return (
     <div style={{ textAlign: 'right', lineHeight: 1.2 }}>
       <span>{label}</span>
-      {esFestivo && (
-        <div style={{
-          fontSize: '8px', fontWeight: 700,
-          letterSpacing: '0.08em', textTransform: 'uppercase' as const,
-          color: '#B98F95', marginTop: '2px',
-        }}>
-          festivo
-        </div>
-      )}
     </div>
   )
 }
 
-// Cabecera de columna en vista Semana/Día: día + etiqueta "Festivo"
-function ColumnaHeader({ date, label }: { date: Date; label: string }) {
-  const esFestivo = FESTIVOS_CO.has(toDateKey(date))
+// Cabecera de columna en vista Semana/Día — festivo se comunica solo por el tinte del día
+function ColumnaHeader({ date: _date, label }: { date: Date; label: string }) {
   return (
     <div style={{ textAlign: 'center', lineHeight: 1.3 }}>
       <span>{label}</span>
-      {esFestivo && (
-        <div style={{
-          fontSize: '8px', fontWeight: 700,
-          letterSpacing: '0.08em', textTransform: 'uppercase' as const,
-          color: '#B98F95', marginTop: '2px',
-        }}>
-          festivo
-        </div>
-      )}
     </div>
   )
 }
@@ -241,17 +221,12 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
     }
   }), [])
 
-  // Fondo de cada día: festivos (rosa visible, inline style garantizado) + fines de semana (mauve sutil)
+  // Fondo de cada día: festivos (tinte muy sutil) + fines de semana (mauve apenas perceptible)
   const dayPropGetter = useCallback((date: Date) => {
     const dow = date.getDay()
     const isFestivo = FESTIVOS_CO.has(toDateKey(date))
     const isWeekend = dow === 0 || dow === 6
-    if (isFestivo) return {
-      style: {
-        background: 'rgba(185,143,149,0.20)',
-        boxShadow: 'inset 0 3px 0 rgba(185,143,149,0.70)',
-      }
-    }
+    if (isFestivo) return { style: { background: 'rgba(185,143,149,0.07)' } }
     if (isWeekend) return { style: { background: 'rgba(175,175,210,0.05)' } }
     return {}
   }, [])
@@ -338,10 +313,6 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
               </div>
             )
           })}
-        <div className="flex items-center gap-1.5 ml-auto">
-          <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: 'var(--accent-rose)', opacity: 0.65 }} />
-          <span style={{ fontSize: '11px', color: 'var(--ink-cool-muted)' }}>Festivo CO</span>
-        </div>
       </div>
 
       {/* ── Calendario ── */}
@@ -361,7 +332,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
             dayPropGetter={dayPropGetter}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             components={{ event: EventoCalendario, dateHeader: CabechaFecha, header: ColumnaHeader } as any}
-            min={new Date(0, 0, 0, 7, 0)}
+            min={new Date(0, 0, 0, 8, 0)}
             max={new Date(0, 0, 0, 21, 0)}
             messages={{
               today: 'Hoy',
