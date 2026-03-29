@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Plus, AlertTriangle } from 'lucide-react'
+import { X, Plus, AlertTriangle, CalendarDays, Clock3, ChevronDown, UserRound, Monitor, MapPin, Leaf } from 'lucide-react'
 import { Appointment, Patient, AppointmentModalidad } from '@/types'
 import {
   buildLocalAppointmentStart,
@@ -27,11 +27,15 @@ interface NewAppointmentModalProps {
   onClose: () => void
 }
 
-const MODALIDADES: { value: AppointmentModalidad; label: string }[] = [
-  { value: 'online',   label: 'Online'   },
-  { value: 'medellin', label: 'Medellín' },
-  { value: 'retiro',   label: 'Retiro'   },
-]
+const MODALIDAD_CONFIG: Record<AppointmentModalidad, {
+  label: string
+  color: string
+  Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>
+}> = {
+  online: { label: 'Online', color: '#8FA5BD', Icon: Monitor },
+  medellin: { label: 'Medellín', color: '#9488B0', Icon: MapPin },
+  retiro: { label: 'Retiro', color: '#7EA88F', Icon: Leaf },
+}
 
 function toDateInputValue(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0')
@@ -43,12 +47,10 @@ function toTimeInputValue(date: Date): string {
   return pad(date.getHours()) + ':' + pad(date.getMinutes())
 }
 
-const selectStyle: React.CSSProperties = {
-  background: 'rgba(255,250,247,0.74)',
-  color: 'var(--ink-strong)',
+const inactiveToggle = {
+  background: 'rgba(255,255,255,0.42)',
+  color: 'var(--ink-cool-muted)',
   border: '1px solid transparent',
-  outline: 'none',
-  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
 }
 
 function formatTimeRange(start: Date, end: Date): string {
@@ -194,33 +196,42 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
           <div>
             <SectionHeader label="Paciente" className="mb-2" />
             {selectedPatient ? (
-              <div
-                className="flex items-center justify-between px-3.5 py-3 rounded-[14px]"
-                style={{ background: 'rgba(255,250,247,0.74)', border: '1px solid var(--border-medium)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)' }}
-              >
-                <span className="text-[13px]" style={{ color: 'var(--ink-strong)' }}>
-                  {selectedPatient.nombre} {selectedPatient.apellido}
-                </span>
-                <button
-                  onClick={() => setSelectedPatient(null)}
-                  className="text-[11px] ml-2 shrink-0"
-                  style={{ color: 'var(--ink-cool-muted)' }}
-                >
-                  Cambiar
-                </button>
+              <div className="lumi-control-shell">
+                <div className="lumi-control-field flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="lumi-control-icon" aria-hidden="true" style={{ position: 'static', transform: 'none' }}>
+                      <UserRound size={14} />
+                    </span>
+                    <span className="text-[13px] truncate" style={{ color: 'var(--ink-cool-strong)' }}>
+                      {selectedPatient.nombre} {selectedPatient.apellido}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setSelectedPatient(null)}
+                    className="text-[11px] ml-2 shrink-0"
+                    style={{ color: 'var(--ink-cool-muted)' }}
+                  >
+                    Cambiar
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="relative">
-                <input
-                  type="text"
-                  placeholder={loadingPatients ? 'Cargando pacientes…' : 'Buscar paciente…'}
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setShowDropdown(true) }}
-                  onFocus={() => setShowDropdown(true)}
-                  className="w-full rounded-[14px] px-3.5 py-3 text-[13px]"
-                  disabled={loadingPatients}
-                  autoComplete="off"
-                />
+                <span className="lumi-control-shell">
+                  <span className="lumi-control-icon" aria-hidden="true">
+                    <UserRound size={14} />
+                  </span>
+                  <input
+                    type="text"
+                    placeholder={loadingPatients ? 'Cargando pacientes…' : 'Buscar paciente…'}
+                    value={search}
+                    onChange={(e) => { setSearch(e.target.value); setShowDropdown(true) }}
+                    onFocus={() => setShowDropdown(true)}
+                    className="lumi-control-field w-full"
+                    disabled={loadingPatients}
+                    autoComplete="off"
+                  />
+                </span>
                 {showDropdown && search && (
                   <div
                     className="absolute left-0 right-0 z-10 mt-1 rounded-[14px] overflow-hidden"
@@ -255,21 +266,31 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
           <div className="grid grid-cols-2 gap-3">
             <div>
               <SectionHeader label="Fecha" className="mb-2" />
-              <input
-                type="date"
-                value={fechaValue}
-                onChange={(e) => setFechaValue(e.target.value)}
-                className="w-full rounded-[14px] px-3.5 py-3 text-[13px]"
-              />
+              <span className="lumi-control-shell">
+                <span className="lumi-control-icon" aria-hidden="true">
+                  <CalendarDays size={14} />
+                </span>
+                <input
+                  type="date"
+                  value={fechaValue}
+                  onChange={(e) => setFechaValue(e.target.value)}
+                  className="lumi-control-field lumi-control-field--date w-full"
+                />
+              </span>
             </div>
             <div>
               <SectionHeader label="Hora" className="mb-2" />
-              <input
-                type="time"
-                value={horaInicioValue}
-                onChange={(e) => setHoraInicioValue(e.target.value)}
-                className="w-full rounded-[14px] px-3.5 py-3 text-[13px]"
-              />
+              <span className="lumi-control-shell">
+                <span className="lumi-control-icon" aria-hidden="true">
+                  <Clock3 size={14} />
+                </span>
+                <input
+                  type="time"
+                  value={horaInicioValue}
+                  onChange={(e) => setHoraInicioValue(e.target.value)}
+                  className="lumi-control-field lumi-control-field--time w-full"
+                />
+              </span>
             </div>
           </div>
 
@@ -277,29 +298,47 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
           <div className="grid grid-cols-2 gap-3">
             <div>
               <SectionHeader label="Duración" className="mb-2" />
-              <select
-                value={duracion}
-                onChange={(e) => setDuracion(Number(e.target.value))}
-                className="w-full rounded-[14px] px-3.5 py-3 text-[13px]"
-                style={selectStyle}
-              >
-                {durationOptions.map((value) => (
-                  <option key={value} value={value}>{formatDurationLabel(value)}</option>
-                ))}
-              </select>
+              <span className="lumi-control-shell">
+                <span className="lumi-control-icon" aria-hidden="true">
+                  <Clock3 size={14} />
+                </span>
+                <span className="lumi-control-affordance" aria-hidden="true">
+                  <ChevronDown size={14} />
+                </span>
+                <select
+                  value={duracion}
+                  onChange={(e) => setDuracion(Number(e.target.value))}
+                  className="lumi-control-field lumi-control-field--select w-full"
+                >
+                  {durationOptions.map((value) => (
+                    <option key={value} value={value}>{formatDurationLabel(value)}</option>
+                  ))}
+                </select>
+              </span>
             </div>
             <div>
               <SectionHeader label="Modalidad" className="mb-2" />
-              <select
-                value={modalidad}
-                onChange={(e) => setModalidad(e.target.value as AppointmentModalidad)}
-                className="w-full rounded-[14px] px-3.5 py-3 text-[13px]"
-                style={selectStyle}
-              >
-                {MODALIDADES.map((m) => (
-                  <option key={m.value} value={m.value}>{m.label}</option>
-                ))}
-              </select>
+              <div className="grid grid-cols-3 gap-1.5">
+                {(Object.entries(MODALIDAD_CONFIG) as [AppointmentModalidad, typeof MODALIDAD_CONFIG[AppointmentModalidad]][]).map(([value, { label, color, Icon }]) => {
+                  const isActive = modalidad === value
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setModalidad(value)}
+                      className="py-2.5 px-3 rounded-[14px] text-[13px] font-medium transition-all flex items-center justify-center gap-1.5"
+                      style={isActive ? {
+                        background: `${color}22`,
+                        color,
+                        border: `1px solid ${color}44`,
+                      } : inactiveToggle}
+                    >
+                      <Icon size={12} style={{ color: isActive ? color : undefined }} />
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </div>
 
@@ -311,15 +350,22 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
               onChange={(e) => setNotas(e.target.value)}
               placeholder="Observaciones, contexto…"
               rows={2}
-              className="w-full rounded-[14px] px-3.5 py-3 text-[13px] resize-none"
+              className="lumi-control-field w-full rounded-[14px] px-3.5 py-3 text-[13px] resize-none"
             />
           </div>
 
           {startDate && endDate && !scheduleError && (
-            <p className="text-[12px]" style={{ color: 'var(--ink-cool-soft)' }}>
-              Horario: {formatDateTimeRange(startDate, endDate)}
-              {` · ${duracion} min`}
-            </p>
+            <div
+              className="rounded-[10px] px-3 py-2"
+              style={{ background: 'rgba(143,165,189,0.10)', border: '1px solid rgba(143,165,189,0.16)' }}
+            >
+              <p className="text-[11px] uppercase tracking-[0.08em]" style={{ color: 'var(--ink-cool-faint)' }}>
+                Nuevo horario
+              </p>
+              <p className="text-[13px] font-medium capitalize mt-1" style={{ color: 'var(--ink-cool-strong)' }}>
+                {formatDateTimeRange(startDate, endDate)}
+              </p>
+            </div>
           )}
 
           {scheduleError && (

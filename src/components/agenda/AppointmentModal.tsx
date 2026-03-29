@@ -7,7 +7,7 @@
 import { useState, useEffect } from 'react'
 import type React from 'react'
 import { useRouter } from 'next/navigation'
-import { X, FileText, MessageCircle, Monitor, MapPin, Leaf, AlertTriangle, Trash2 } from 'lucide-react'
+import { X, FileText, MessageCircle, Monitor, MapPin, Leaf, AlertTriangle, Trash2, CalendarDays, Clock3, ChevronDown } from 'lucide-react'
 import { Appointment, AppointmentModalidad } from '@/types'
 import {
   APPOINTMENT_SESSION_LABEL,
@@ -36,34 +36,35 @@ interface AppointmentModalProps {
 const MODALIDAD_CONFIG: Record<AppointmentModalidad, {
   label: string
   color: string
+  textColor: string
   Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>
 }> = {
   online:   {
-    label: 'Online',   color: '#8FA5BD', Icon: Monitor,
+    label: 'Online',   color: '#8FA5BD', textColor: '#273847', Icon: Monitor,
   },
   medellin: {
-    label: 'Medellín', color: '#9488B0', Icon: MapPin,
+    label: 'Medellín', color: '#9488B0', textColor: '#302944', Icon: MapPin,
   },
   retiro:   {
-    label: 'Retiro',   color: '#7EA88F', Icon: Leaf,
+    label: 'Retiro',   color: '#7EA88F', textColor: '#284236', Icon: Leaf,
   },
 }
 
 const ACTIVE_SESSION_STYLES: Record<string, { bg: string; color: string }> = {
-  pendiente:  { bg: 'var(--state-inactive-bg)',       color: 'var(--ink-cool)' },
-  confirmada: { bg: 'rgba(143,165,189,0.22)',         color: '#3d6b8a' },
-  realizada:  { bg: 'var(--state-success-bg)',        color: 'var(--state-success-text)' },
-  cancelo:    { bg: 'var(--state-cancel-bg)',         color: 'var(--state-cancel-text)' },
+  pendiente:  { bg: 'var(--state-inactive-bg)',       color: 'var(--ink-cool-strong)' },
+  confirmada: { bg: 'rgba(143,165,189,0.22)',         color: '#273847' },
+  realizada:  { bg: 'var(--state-success-bg)',        color: '#284236' },
+  cancelo:    { bg: 'var(--state-cancel-bg)',         color: '#5B353B' },
 }
 
 const ACTIVE_PAYMENT_STYLES: Record<string, { bg: string; color: string }> = {
-  pendiente: { bg: 'var(--state-pending-bg)', color: 'var(--state-pending-text)' },
-  pagado:    { bg: 'var(--state-success-bg)', color: 'var(--state-success-text)' },
+  pendiente: { bg: 'var(--state-pending-bg)', color: '#5D4535' },
+  pagado:    { bg: 'var(--state-success-bg)', color: '#284236' },
 }
 
 const inactiveToggle = {
   background: 'rgba(255,255,255,0.42)',
-  color: 'var(--ink-cool-muted)',
+  color: 'var(--ink-cool-strong)',
   border: '1px solid transparent',
 }
 
@@ -271,57 +272,57 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                 <span className="text-[11px] uppercase tracking-[0.08em]" style={{ color: 'var(--ink-cool-faint)' }}>
                   Fecha
                 </span>
-                <input
-                  type="date"
-                  value={fechaValue}
-                  onChange={(e) => setFechaValue(e.target.value)}
-                  className="rounded-[12px] px-3 py-2.5 text-[13px] w-full"
-                  style={{
-                    background: 'rgba(255,255,255,0.52)',
-                    border: '1px solid var(--border-glass-white)',
-                    color: 'var(--ink-cool-strong)',
-                    outline: 'none',
-                  }}
-                />
+                <span className="lumi-control-shell">
+                  <span className="lumi-control-icon" aria-hidden="true">
+                    <CalendarDays size={14} />
+                  </span>
+                  <input
+                    type="date"
+                    value={fechaValue}
+                    onChange={(e) => setFechaValue(e.target.value)}
+                    className="lumi-control-field lumi-control-field--date w-full"
+                  />
+                </span>
               </label>
               <label className="space-y-1">
                 <span className="text-[11px] uppercase tracking-[0.08em]" style={{ color: 'var(--ink-cool-faint)' }}>
                   Inicio
                 </span>
-                <input
-                  type="time"
-                  value={horaInicioValue}
-                  onChange={(e) => setHoraInicioValue(e.target.value)}
-                  className="rounded-[12px] px-3 py-2.5 text-[13px] w-full"
-                  style={{
-                    background: 'rgba(255,255,255,0.52)',
-                    border: '1px solid var(--border-glass-white)',
-                    color: 'var(--ink-cool-strong)',
-                    outline: 'none',
-                  }}
-                />
+                <span className="lumi-control-shell">
+                  <span className="lumi-control-icon" aria-hidden="true">
+                    <Clock3 size={14} />
+                  </span>
+                  <input
+                    type="time"
+                    value={horaInicioValue}
+                    onChange={(e) => setHoraInicioValue(e.target.value)}
+                    className="lumi-control-field lumi-control-field--time w-full"
+                  />
+                </span>
               </label>
               <label className="space-y-1">
                 <span className="text-[11px] uppercase tracking-[0.08em]" style={{ color: 'var(--ink-cool-faint)' }}>
                   Duración
                 </span>
-                <select
-                  value={duracion}
-                  onChange={(e) => setDuracion(Number(e.target.value))}
-                  className="rounded-[12px] px-3 py-2.5 text-[13px] w-full"
-                  style={{
-                    background: 'rgba(255,255,255,0.52)',
-                    border: '1px solid var(--border-glass-white)',
-                    color: 'var(--ink-cool-strong)',
-                    outline: 'none',
-                  }}
-                >
-                  {durationOptions.map((value) => (
-                    <option key={value} value={value}>
-                      {value < 60 ? `${value} min` : value % 60 === 0 ? `${value / 60} hora${value === 60 ? '' : 's'}` : `${Math.floor(value / 60)}h ${value % 60}min`}
-                    </option>
-                  ))}
-                </select>
+                <span className="lumi-control-shell">
+                  <span className="lumi-control-icon" aria-hidden="true">
+                    <Clock3 size={14} />
+                  </span>
+                  <span className="lumi-control-affordance" aria-hidden="true">
+                    <ChevronDown size={14} />
+                  </span>
+                  <select
+                    value={duracion}
+                    onChange={(e) => setDuracion(Number(e.target.value))}
+                    className="lumi-control-field lumi-control-field--select w-full"
+                  >
+                    {durationOptions.map((value) => (
+                      <option key={value} value={value}>
+                        {value < 60 ? `${value} min` : value % 60 === 0 ? `${value / 60} hora${value === 60 ? '' : 's'}` : `${Math.floor(value / 60)}h ${value % 60}min`}
+                      </option>
+                    ))}
+                  </select>
+                </span>
               </label>
             </div>
 
@@ -375,7 +376,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
           <div>
             <SectionHeader label="Modalidad" className="mb-2.5" />
             <div className="grid grid-cols-3 gap-1.5">
-              {(Object.entries(MODALIDAD_CONFIG) as [AppointmentModalidad, typeof MODALIDAD_CONFIG[AppointmentModalidad]][]).map(([value, { label, color, Icon }]) => {
+              {(Object.entries(MODALIDAD_CONFIG) as [AppointmentModalidad, typeof MODALIDAD_CONFIG[AppointmentModalidad]][]).map(([value, { label, color, textColor, Icon }]) => {
                 const isActive = modalidadEdit === value
                 return (
                   <button
@@ -384,7 +385,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                     className="py-2.5 px-3 rounded-[14px] text-[13px] font-medium transition-all flex items-center justify-center gap-1.5"
                     style={isActive ? {
                       background: `${color}22`,
-                      color,
+                      color: textColor,
                       border: `1px solid ${color}44`,
                     } : inactiveToggle}
                   >

@@ -139,10 +139,25 @@ function CabechaFecha({ date: _date, label }: { date: Date; label: string }) {
   )
 }
 
-// Cabecera de columna en vista Semana/Día — festivo se comunica solo por el tinte del día
-function ColumnaHeader({ date: _date, label }: { date: Date; label: string }) {
+// Cabecera de columna en vista Semana/Día — festivo se comunica con una etiqueta sutil
+function ColumnaHeader({ date, label }: { date: Date; label: string }) {
+  const isFestivo = FESTIVOS_CO.has(toDateKey(date))
   return (
     <div style={{ textAlign: 'center', lineHeight: 1.3 }}>
+      {isFestivo && (
+        <div
+          style={{
+            fontSize: '9px',
+            fontWeight: 700,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: 'var(--ink-cool-faint)',
+            marginBottom: '2px',
+          }}
+        >
+          Festivo
+        </div>
+      )}
       <span>{label}</span>
     </div>
   )
