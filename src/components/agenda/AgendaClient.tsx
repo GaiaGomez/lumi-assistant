@@ -12,7 +12,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { Appointment, CalendarEvent } from '@/types'
 import AppointmentModal from './AppointmentModal'
 import NewAppointmentModal from './NewAppointmentModal'
-import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, HandCoins, Leaf, MapPin, Monitor, Plus } from 'lucide-react'
+import { AlertTriangle, Check, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, HandCoins, Leaf, MapPin, Monitor, Plus } from 'lucide-react'
 import { getAppointmentEnd, getTodayAppointments } from '@/lib/appointments'
 
 moment.locale('es')
@@ -119,7 +119,7 @@ function EventoCalendario({ event }: { event: CalendarEvent }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: '7px', minHeight: '18px', paddingTop: '1px' }}>
         {Icon && <Icon size={12} style={{ color: 'rgba(255,255,255,0.96)', flexShrink: 0 }} />}
         {isConfirmed ? (
-          <CheckCircle2 size={12} style={{ color: 'rgba(255,255,255,0.98)', flexShrink: 0 }} />
+          <Check size={12} style={{ color: 'rgba(255,255,255,0.98)', flexShrink: 0 }} />
         ) : (
           <Clock3 size={12} style={{ color: 'rgba(255,242,235,0.94)', flexShrink: 0 }} />
         )}
