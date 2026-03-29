@@ -10,11 +10,10 @@ import moment from 'moment'
 import 'moment/locale/es'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { Appointment, CalendarEvent } from '@/types'
-import { APPOINTMENT_SESSION_LABEL } from '@/lib/appointment-status'
 import AppointmentModal from './AppointmentModal'
 import NewAppointmentModal from './NewAppointmentModal'
-import { ChevronLeft, ChevronRight, Monitor, MapPin, Leaf, Plus } from 'lucide-react'
-import { getTodayAppointments } from '@/lib/appointments'
+import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Leaf, MapPin, Monitor, Plus, Wallet } from 'lucide-react'
+import { getAppointmentEnd, getTodayAppointments } from '@/lib/appointments'
 
 moment.locale('es')
 const localizer = momentLocalizer(moment)
@@ -91,41 +90,75 @@ const CATEGORIA_CONFIG: Record<Categoria, {
 // SUB-COMPONENTES DEL CALENDARIO
 // ─────────────────────────────────────────────────────────────
 
-// Card de cita — dos líneas:
-//   Línea 1: [icono modalidad] Nombre Apellido  (icono comunica modalidad, nombre puede truncar)
-//   Línea 2: Estado  (sola en su línea, nunca se corta)
+// Card de cita — tres líneas:
+//   Línea 1: Nombre del paciente
+//   Línea 2: Icono + modalidad
+//   Línea 3: Iconos compactos de confirmación / pago / alerta
 // Las canceladas se filtran antes de llegar aquí
 function EventoCalendario({ event }: { event: CalendarEvent }) {
   const apt = event.resource
-  const { Icon } = CATEGORIA_CONFIG[resolverCategoria(apt)]
-  const estado = apt.estado_sesion === 'cancelo' ? '' : APPOINTMENT_SESSION_LABEL[apt.estado_sesion]
+  const { Icon, label } = CATEGORIA_CONFIG[resolverCategoria(apt)]
+  const isConfirmed = apt.estado_sesion === 'confirmada' || apt.estado_sesion === 'realizada'
+  const isPaid = apt.estado_pago === 'pagado'
+  const needsConfirmation = apt.estado_sesion === 'pendiente'
+  const needsPayment = apt.estado_sesion === 'realizada' && apt.estado_pago === 'pendiente'
+  const needsAction = needsConfirmation || needsPayment
+
   return (
-    <div style={{ lineHeight: 1.35, overflow: 'hidden', minHeight: 0 }}>
-      {/* Línea 1: icono de modalidad + nombre del paciente */}
+    <div style={{ lineHeight: 1.2, overflow: 'hidden', minHeight: 0, display: 'grid', gap: '3px' }}>
       <p style={{
-        fontWeight: 700, fontSize: '11px', marginBottom: '1px',
-        display: 'flex', alignItems: 'center', gap: '4px',
+        fontWeight: 700,
+        fontSize: '11px',
         overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
+        color: 'white',
       }}>
-        {Icon && (
-          <Icon size={9} style={{ color: 'white', flexShrink: 0 }} />
-        )}
-        <span style={{
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          color: 'white',
-        }}>
-          {event.title}
-        </span>
+        {event.title}
       </p>
-      {/* Línea 2: estado de sesión — nunca se trunca porque es lo único en su línea */}
-      {estado && (
-        <p style={{
-          fontSize: '10px', color: 'rgba(255,255,255,0.88)',
-          whiteSpace: 'nowrap', overflow: 'hidden',
-        }}>
-          {estado}
-        </p>
-      )}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          fontSize: '10px',
+          color: 'rgba(255,255,255,0.88)',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+        }}
+      >
+        {Icon && <Icon size={10} style={{ color: 'rgba(255,255,255,0.94)', flexShrink: 0 }} />}
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minHeight: '14px' }}>
+        {isConfirmed ? (
+          <CheckCircle2 size={11} style={{ color: 'rgba(255,255,255,0.98)', flexShrink: 0 }} />
+        ) : (
+          <Clock3 size={11} style={{ color: 'rgba(255,242,235,0.92)', flexShrink: 0 }} />
+        )}
+        {isPaid ? (
+          <CircleDollarSign size={11} style={{ color: 'rgba(255,255,255,0.98)', flexShrink: 0 }} />
+        ) : (
+          <Wallet size={11} style={{ color: 'rgba(255,242,235,0.92)', flexShrink: 0 }} />
+        )}
+        {needsAction && (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 16,
+              height: 16,
+              borderRadius: 999,
+              background: 'rgba(255,247,240,0.92)',
+              boxShadow: '0 2px 8px rgba(74, 38, 22, 0.18)',
+              flexShrink: 0,
+            }}
+          >
+            <AlertTriangle size={10} style={{ color: '#A85A3B' }} />
+          </span>
+        )}
+      </div>
     </div>
   )
 }
@@ -266,16 +299,23 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
   }, [])
 
   // Fondo del evento: color de categoría
-  const eventPropGetter = useCallback((event: CalendarEvent) => ({
-    style: {
-      backgroundColor: CATEGORIA_CONFIG[resolverCategoria(event.resource)].bg,
-      borderRadius: '10px',
-      border: '1px solid rgba(255,250,248,0.18)',
-      color: '#fffaf8',
-      padding: '3px 8px',
-      boxShadow: '0 6px 18px rgba(60,50,70,0.16)',
+  const eventPropGetter = useCallback((event: CalendarEvent) => {
+    const isSoftPast = event.resource.estado_sesion === 'realizada' && getAppointmentEnd(event.resource) <= new Date()
+    return {
+      style: {
+        backgroundColor: CATEGORIA_CONFIG[resolverCategoria(event.resource)].bg,
+        borderRadius: '10px',
+        border: '1px solid rgba(255,250,248,0.18)',
+        color: '#fffaf8',
+        padding: '5px 8px 4px',
+        boxShadow: isSoftPast
+          ? '0 3px 10px rgba(60,50,70,0.10)'
+          : '0 6px 18px rgba(60,50,70,0.16)',
+        opacity: isSoftPast ? 0.82 : 1,
+        filter: isSoftPast ? 'saturate(85%)' : 'none',
+      }
     }
-  }), [])
+  }, [])
 
   // Fondo de cada día: festivos (tinte muy sutil) + fines de semana (mauve apenas perceptible)
   const dayPropGetter = useCallback((date: Date) => {
