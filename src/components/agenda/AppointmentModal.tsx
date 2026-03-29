@@ -21,11 +21,11 @@ interface AppointmentModalProps {
   onClose: () => void
 }
 
+// no_asistio se preserva en BD para compatibilidad pero no tiene botón visible en la UI
 const ESTADOS_SESION = [
-  { value: 'pendiente',   label: 'Pendiente' },
-  { value: 'asistio',     label: 'Asistió' },
-  { value: 'cancelo',     label: 'Canceló' },
-  { value: 'no_asistio',  label: 'No asistió' },
+  { value: 'pendiente', label: 'Pendiente'  },
+  { value: 'asistio',   label: 'Confirmada' },
+  { value: 'cancelo',   label: 'Canceló'   },
 ]
 
 const MODALIDAD_CONFIG: Record<AppointmentModalidad, {
@@ -62,6 +62,7 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
 
   const [estadoSesion, setEstadoSesion] = useState(appointment.estado_sesion)
   const [estadoPago, setEstadoPago] = useState(appointment.estado_pago)
+  const [modalidadEdit, setModalidadEdit] = useState<AppointmentModalidad | null>(appointment.modalidad)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -75,7 +76,7 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
     try {
       const { error } = await supabase
         .from('appointments')
-        .update({ estado_sesion: estadoSesion, estado_pago: estadoPago })
+        .update({ estado_sesion: estadoSesion, estado_pago: estadoPago, modalidad: modalidadEdit })
         .eq('id', appointment.id)
 
       if (error) throw error
@@ -99,15 +100,6 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
               {appointment.patient?.nombre} {appointment.patient?.apellido}
             </h2>
             <p className="text-sm mt-1 capitalize" style={{ color: 'var(--ink-cool-soft)' }}>{fechaFormateada}</p>
-            {appointment.modalidad && (() => {
-              const { label, color, Icon } = MODALIDAD_CONFIG[appointment.modalidad!]
-              return (
-                <p className="flex items-center gap-1.5 mt-1.5 text-[12px]" style={{ color: 'var(--ink-cool-soft)' }}>
-                  <Icon size={12} style={{ color }} />
-                  {label}
-                </p>
-              )
-            })()}
           </div>
           <Button variant="subtle" onClick={onClose} aria-label="Cerrar" className="p-2.5">
             <X size={18} />
@@ -118,7 +110,7 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
           {/* ── Estado de sesión ── */}
           <div>
             <SectionHeader label="Estado de la sesión" className="mb-2.5" />
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-3 gap-1.5">
               {ESTADOS_SESION.map(({ value, label }) => {
                 const isActive = estadoSesion === value
                 const s = isActive ? ACTIVE_SESSION_STYLES[value] : null
@@ -133,6 +125,31 @@ export default function AppointmentModal({ appointment, onClose }: AppointmentMo
                       border: '1px solid rgba(255,255,255,0.14)',
                     } : inactiveToggle}
                   >
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* ── Modalidad ── */}
+          <div>
+            <SectionHeader label="Modalidad" className="mb-2.5" />
+            <div className="grid grid-cols-3 gap-1.5">
+              {(Object.entries(MODALIDAD_CONFIG) as [AppointmentModalidad, typeof MODALIDAD_CONFIG[AppointmentModalidad]][]).map(([value, { label, color, Icon }]) => {
+                const isActive = modalidadEdit === value
+                return (
+                  <button
+                    key={value}
+                    onClick={() => setModalidadEdit(value)}
+                    className="py-2.5 px-3 rounded-[14px] text-[13px] font-medium transition-all flex items-center justify-center gap-1.5"
+                    style={isActive ? {
+                      background: `${color}22`,
+                      color,
+                      border: `1px solid ${color}44`,
+                    } : inactiveToggle}
+                  >
+                    <Icon size={12} style={{ color: isActive ? color : undefined }} />
                     {label}
                   </button>
                 )

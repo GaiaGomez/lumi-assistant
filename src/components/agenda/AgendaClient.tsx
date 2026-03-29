@@ -5,13 +5,14 @@
 // ============================================================
 
 import { useState, useCallback, useMemo } from 'react'
-import { Calendar, momentLocalizer, View } from 'react-big-calendar'
+import { Calendar, momentLocalizer, View, SlotInfo } from 'react-big-calendar'
 import moment from 'moment'
 import 'moment/locale/es'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { Appointment, CalendarEvent } from '@/types'
 import AppointmentModal from './AppointmentModal'
-import { ChevronLeft, ChevronRight, Monitor, MapPin, Leaf } from 'lucide-react'
+import NewAppointmentModal from './NewAppointmentModal'
+import { ChevronLeft, ChevronRight, Monitor, MapPin, Leaf, Plus } from 'lucide-react'
 import { getTodayAppointments } from '@/lib/appointments'
 
 moment.locale('es')
@@ -86,36 +87,51 @@ const CATEGORIA_CONFIG: Record<Categoria, {
 }
 
 const ESTADO_LABEL: Record<Appointment['estado_sesion'], string> = {
-  pendiente:  'Por confirmar',
+  pendiente:  'Pendiente',
   asistio:    'Confirmada',
-  cancelo:    'Canceló',
-  no_asistio: 'No asistió',
+  cancelo:    'Canceló',    // no se renderiza — las canceladas se filtran del calendario
+  no_asistio: '',           // legacy — no tiene botón en UI, se muestra vacío si existe en BD
 }
 
 // ─────────────────────────────────────────────────────────────
 // SUB-COMPONENTES DEL CALENDARIO
 // ─────────────────────────────────────────────────────────────
 
-// Evento: nombre + [icono] categoría · estado — máx 2 líneas, sin hora
+// Card de cita — dos líneas:
+//   Línea 1: [icono modalidad] Nombre Apellido  (icono comunica modalidad, nombre puede truncar)
+//   Línea 2: Estado  (sola en su línea, nunca se corta)
+// Las canceladas se filtran antes de llegar aquí
 function EventoCalendario({ event }: { event: CalendarEvent }) {
   const apt = event.resource
-  const { label, Icon } = CATEGORIA_CONFIG[resolverCategoria(apt)]
+  const { Icon } = CATEGORIA_CONFIG[resolverCategoria(apt)]
+  const estado = ESTADO_LABEL[apt.estado_sesion]
   return (
     <div style={{ lineHeight: 1.35, overflow: 'hidden', minHeight: 0 }}>
+      {/* Línea 1: icono de modalidad + nombre del paciente */}
       <p style={{
-        fontWeight: 600, fontSize: '11px', marginBottom: '1px',
-        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        fontWeight: 700, fontSize: '11px', marginBottom: '1px',
+        display: 'flex', alignItems: 'center', gap: '4px',
+        overflow: 'hidden',
       }}>
-        {event.title}
+        {Icon && (
+          <Icon size={9} style={{ color: 'white', flexShrink: 0 }} />
+        )}
+        <span style={{
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          color: 'white',
+        }}>
+          {event.title}
+        </span>
       </p>
-      <p style={{
-        fontSize: '10px', opacity: 0.82,
-        display: 'flex', alignItems: 'center', gap: '3px',
-        overflow: 'hidden', whiteSpace: 'nowrap',
-      }}>
-        {Icon && <Icon size={9} />}
-        {label} · {ESTADO_LABEL[apt.estado_sesion]}
-      </p>
+      {/* Línea 2: estado de sesión — nunca se trunca porque es lo único en su línea */}
+      {estado && (
+        <p style={{
+          fontSize: '10px', color: 'rgba(255,255,255,0.88)',
+          whiteSpace: 'nowrap', overflow: 'hidden',
+        }}>
+          {estado}
+        </p>
+      )}
     </div>
   )
 }
@@ -183,6 +199,7 @@ interface AgendaClientProps {
 
 export default function AgendaClient({ appointments }: AgendaClientProps) {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+  const [newSlotStart, setNewSlotStart] = useState<Date | null>(null)
   const [currentView, setCurrentView] = useState<View>('week')
   const [currentDate, setCurrentDate] = useState(new Date())
 
@@ -191,18 +208,25 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
   const todayCount   = useMemo(() => getTodayAppointments(appointments, refDate).length, [appointments, refDate])
   const pendingCount = useMemo(() => appointments.filter((a) => a.estado_sesion === 'pendiente').length, [appointments])
 
-  const events: CalendarEvent[] = appointments.map((apt) => ({
-    id:    apt.id,
-    title: apt.patient ? `${apt.patient.nombre} ${apt.patient.apellido}` : apt.notas ?? 'Cita',
-    start: new Date(apt.fecha_inicio),
-    end:   apt.fecha_fin
-      ? new Date(apt.fecha_fin)
-      : new Date(new Date(apt.fecha_inicio).getTime() + 60 * 60 * 1000),
-    resource: apt,
-  }))
+  // Las citas canceladas no se muestran en el calendario — siguen en BD para historial
+  const events: CalendarEvent[] = appointments
+    .filter((apt) => apt.estado_sesion !== 'cancelo')
+    .map((apt) => ({
+      id:    apt.id,
+      title: apt.patient ? `${apt.patient.nombre} ${apt.patient.apellido}` : apt.notas ?? 'Cita',
+      start: new Date(apt.fecha_inicio),
+      end:   apt.fecha_fin
+        ? new Date(apt.fecha_fin)
+        : new Date(new Date(apt.fecha_inicio).getTime() + 60 * 60 * 1000),
+      resource: apt,
+    }))
 
   const handleSelectEvent = useCallback((event: CalendarEvent) => {
     setSelectedAppointment(event.resource)
+  }, [])
+
+  const handleSelectSlot = useCallback((slotInfo: SlotInfo) => {
+    setNewSlotStart(slotInfo.start)
   }, [])
 
   // Fondo del evento: color de categoría
@@ -271,7 +295,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
           {pendingCount > 0 && <Pill dot="#B79B96" text={`${pendingCount} por confirmar`} />}
         </div>
 
-        {/* Vista + Hoy */}
+        {/* Vista + Hoy + Nueva cita */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="flex gap-0.5 p-1 rounded-full" style={{ background: 'var(--surface-glass)', border: '1px solid var(--border-glass-white)' }}>
             {(['day', 'week', 'month'] as View[]).map((v) => (
@@ -290,6 +314,13 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
           </div>
           <button onClick={() => navegar('today')} className="btn-subtle px-3 py-1.5 text-[12px]">
             Hoy
+          </button>
+          <button
+            onClick={() => setNewSlotStart(new Date())}
+            aria-label="Nueva cita"
+            className="btn-action p-2"
+          >
+            <Plus size={15} />
           </button>
         </div>
       </div>
@@ -324,6 +355,8 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
             onView={setCurrentView}
             onNavigate={setCurrentDate}
             onSelectEvent={handleSelectEvent}
+            selectable
+            onSelectSlot={handleSelectSlot}
             eventPropGetter={eventPropGetter}
             dayPropGetter={dayPropGetter}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -347,11 +380,19 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
         </div>
       </div>
 
-      {/* Modal al tocar una cita */}
+      {/* Modal al tocar una cita existente */}
       {selectedAppointment && (
         <AppointmentModal
           appointment={selectedAppointment}
           onClose={() => setSelectedAppointment(null)}
+        />
+      )}
+
+      {/* Modal para crear una cita nueva */}
+      {newSlotStart && (
+        <NewAppointmentModal
+          defaultStart={newSlotStart}
+          onClose={() => setNewSlotStart(null)}
         />
       )}
     </div>
