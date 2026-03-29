@@ -9,6 +9,10 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Appointment, ClinicalNote, Patient } from '@/types'
 import { formatDateTimeFull, formatDateOnly } from '@/lib/format'
+import {
+  APPOINTMENT_SESSION_LABEL,
+  getAppointmentSessionBadgeStatus,
+} from '@/lib/appointment-status'
 import { fetchSettings } from '@/lib/settings'
 import {
   getNextAppointment,
@@ -138,14 +142,8 @@ export default async function PatientProfilePage({ params }: Props) {
                     {formatDateTimeFull(apt.fecha_inicio)}
                   </p>
                   <div className="flex flex-wrap gap-1">
-                    <Badge status={
-                      apt.estado_sesion === 'asistio'    ? 'success'  :
-                      apt.estado_sesion === 'cancelo'    ? 'cancel'   :
-                      apt.estado_sesion === 'no_asistio' ? 'warning'  : 'inactive'
-                    }>
-                      {apt.estado_sesion === 'asistio'    ? 'Asistió'    :
-                       apt.estado_sesion === 'cancelo'    ? 'Canceló'    :
-                       apt.estado_sesion === 'no_asistio' ? 'No asistió' : 'Programada'}
+                    <Badge status={getAppointmentSessionBadgeStatus(apt.estado_sesion)}>
+                      {APPOINTMENT_SESSION_LABEL[apt.estado_sesion]}
                     </Badge>
                     <Badge status={apt.estado_pago === 'pagado' ? 'success' : 'pending'}>
                       {apt.estado_pago === 'pagado' ? 'Pagada' : 'Pendiente de pago'}

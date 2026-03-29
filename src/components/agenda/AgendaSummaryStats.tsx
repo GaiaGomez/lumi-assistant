@@ -57,7 +57,7 @@ export default function AgendaSummaryStats({
         value={pendingPaymentCount === 0 ? 'Ninguno' : `${pendingPaymentCount} pendiente${pendingPaymentCount === 1 ? '' : 's'}`}
         hint={pendingPaymentCount === 0
           ? 'No hay pagos por confirmar.'
-          : 'Sesiones asistidas sin pago confirmado.'}
+          : 'Sesiones realizadas sin pago confirmado.'}
         muted={pendingPaymentCount === 0}
       />
     </div>

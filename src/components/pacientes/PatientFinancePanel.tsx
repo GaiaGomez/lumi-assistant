@@ -2,9 +2,9 @@ import { Appointment } from '@/types'
 
 interface SessionCounts {
   total: number
-  asistio: number
+  realizadas: number
   cancelo: number
-  noAsistio: number
+  confirmadas: number
   pendientes: number
 }
 
@@ -60,9 +60,9 @@ export default function PatientFinancePanel({
 
       <div className="grid grid-cols-2 gap-2 mb-4">
         <StatChip label="Total" value={sessionCounts.total} />
-        <StatChip label="Asistió" value={sessionCounts.asistio} />
+        <StatChip label="Realizadas" value={sessionCounts.realizadas} />
         <StatChip label="Canceló" value={sessionCounts.cancelo} />
-        <StatChip label="No asistió" value={sessionCounts.noAsistio} />
+        <StatChip label="Confirmadas" value={sessionCounts.confirmadas} />
       </div>
 
       <div
@@ -99,7 +99,7 @@ export default function PatientFinancePanel({
                 {formatAppointmentDate(appointment.fecha_inicio)}
               </p>
               <p className="text-[12px] mt-1" style={{ color: 'var(--ink-cool-faint)' }}>
-                {appointment.notas || 'Sesión asistida pendiente por confirmar pago.'}
+                {appointment.notas || 'Sesión realizada pendiente por confirmar pago.'}
               </p>
             </div>
           ))

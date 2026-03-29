@@ -1,5 +1,9 @@
 import Link from 'next/link'
 import { Appointment } from '@/types'
+import {
+  APPOINTMENT_SESSION_LABEL,
+  getAppointmentSessionBadgeStatus,
+} from '@/lib/appointment-status'
 
 interface AgendaTodayListProps {
   appointments: Appointment[]
@@ -22,10 +26,7 @@ function formatDate(date: string) {
 }
 
 function sessionBadgeClass(appointment: Appointment) {
-  if (appointment.estado_sesion === 'asistio')    return 'status-badge status-badge--success'
-  if (appointment.estado_sesion === 'cancelo')    return 'status-badge status-badge--cancel'
-  if (appointment.estado_sesion === 'no_asistio') return 'status-badge status-badge--warning'
-  return 'status-badge status-badge--inactive'
+  return `status-badge status-badge--${getAppointmentSessionBadgeStatus(appointment.estado_sesion)}`
 }
 
 function paymentBadgeClass(appointment: Appointment) {
@@ -69,9 +70,7 @@ export default function AgendaTodayList({ appointments, variant }: AgendaTodayLi
 
               <div className="flex gap-1.5 flex-wrap justify-end">
                 <span className={sessionBadgeClass(appointment)}>
-                  {appointment.estado_sesion === 'asistio' ? 'Asistió' :
-                   appointment.estado_sesion === 'cancelo' ? 'Canceló' :
-                   appointment.estado_sesion === 'no_asistio' ? 'No asistió' : 'Pendiente'}
+                  {APPOINTMENT_SESSION_LABEL[appointment.estado_sesion]}
                 </span>
                 <span className={paymentBadgeClass(appointment)}>
                   {appointment.estado_pago === 'pagado' ? 'Pagado' : 'Pago pendiente'}

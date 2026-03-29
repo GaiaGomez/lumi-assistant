@@ -92,7 +92,7 @@ BEGIN
       'Proceso intermitente. Difícil de contactar entre sesiones. Pago siempre al día, eso sí.');
 
   -- ── PASO 4: citas pasadas (semana 23–27 mar 2026) ─────────
-  -- Las fechas son pasadas → permiten probar estados reales: asistio, cancelo, no_asistio
+  -- Las fechas son pasadas → permiten probar estados reales: realizada, confirmada, cancelo
 
   -- Lunes 23 mar — dos citas, mañana
   INSERT INTO appointments
@@ -100,18 +100,18 @@ BEGIN
   VALUES
     (p_scarlett, v_user_id,
       '2026-03-23 09:00:00-05', '2026-03-23 10:00:00-05',
-      'online', 'asistio', 'pagado'),
+      'online', 'realizada', 'pagado'),
     (p_ryan, v_user_id,
       '2026-03-23 11:00:00-05', '2026-03-23 12:00:00-05',
-      'medellin', 'asistio', 'pendiente');  -- pago pendiente de 1 sesión
+      'medellin', 'realizada', 'pendiente');  -- pago pendiente de 1 sesión
 
-  -- Martes 24 mar — una asistió, una canceló
+  -- Martes 24 mar — una realizada, una cancelada
   INSERT INTO appointments
     (patient_id, user_id, fecha_inicio, fecha_fin, modalidad, estado_sesion, estado_pago)
   VALUES
     (p_emma, v_user_id,
       '2026-03-24 10:00:00-05', '2026-03-24 11:00:00-05',
-      'online', 'asistio', 'pagado'),
+      'online', 'realizada', 'pagado'),
     (p_chris, v_user_id,
       '2026-03-24 15:00:00-05', '2026-03-24 16:00:00-05',
       'medellin', 'cancelo', 'pendiente');  -- canceló y pago en el aire
@@ -122,19 +122,19 @@ BEGIN
   VALUES
     (p_margot, v_user_id,
       '2026-03-25 09:00:00-05', '2026-03-25 10:00:00-05',
-      'retiro', 'asistio', 'pagado',
+      'retiro', 'realizada', 'pagado',
       'Sesión de cierre de ciclo. Trabajo somático y narrativo. Excelente proceso.');
 
-  -- Jueves 26 mar — una asistió, una no se presentó
+  -- Jueves 26 mar — una realizada, una cancelada a última hora
   INSERT INTO appointments
     (patient_id, user_id, fecha_inicio, fecha_fin, modalidad, estado_sesion, estado_pago)
   VALUES
     (p_keanu, v_user_id,
       '2026-03-26 11:00:00-05', '2026-03-26 12:00:00-05',
-      'online', 'asistio', 'pendiente'),
+      'online', 'realizada', 'pendiente'),
     (p_jennifer, v_user_id,
       '2026-03-26 17:00:00-05', '2026-03-26 18:00:00-05',
-      'online', 'no_asistio', 'pendiente');  -- no avisó, pago en el aire
+      'online', 'cancelo', 'pendiente');  -- canceló tarde, pago en el aire
 
   -- Viernes 27 mar — tres citas, tarde mezclada
   INSERT INTO appointments
@@ -142,13 +142,13 @@ BEGIN
   VALUES
     (p_brad, v_user_id,
       '2026-03-27 09:00:00-05', '2026-03-27 10:00:00-05',
-      'medellin', 'asistio', 'pagado'),
+      'medellin', 'realizada', 'pagado'),
     (p_zendaya, v_user_id,
       '2026-03-27 11:00:00-05', '2026-03-27 12:00:00-05',
-      'online', 'asistio', 'pagado'),
+      'online', 'confirmada', 'pendiente'),
     (p_leo, v_user_id,
       '2026-03-27 16:00:00-05', '2026-03-27 17:00:00-05',
-      'medellin', 'asistio', 'pendiente');  -- asistió pero aún no paga
+      'medellin', 'realizada', 'pendiente');  -- realizada pero aún no paga
 
   -- ── PASO 5: citas próximas ──────────────────────────────────
 
@@ -192,7 +192,7 @@ BEGIN
       'medellin', 'pendiente', 'pendiente', null),
     (p_zendaya, v_user_id,
       '2026-04-03 11:00:00-05', '2026-04-03 12:00:00-05',
-      'online', 'pendiente', 'pendiente', null),
+      'online', 'confirmada', 'pendiente', null),
     (p_leo, v_user_id,
       '2026-04-03 15:00:00-05', '2026-04-03 16:00:00-05',
       'retiro', 'pendiente', 'pendiente',

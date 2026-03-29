@@ -23,7 +23,7 @@ create table if not exists appointments (
   fecha_inicio     timestamptz not null,
   fecha_fin        timestamptz,
   estado_sesion    text default 'pendiente'
-                   check (estado_sesion in ('pendiente', 'asistio', 'cancelo', 'no_asistio')),
+                   check (estado_sesion in ('pendiente', 'confirmada', 'realizada', 'cancelo')),
   estado_pago      text default 'pendiente'
                    check (estado_pago in ('pendiente', 'pagado')),
   notas            text,

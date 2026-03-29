@@ -35,11 +35,11 @@ export function getLastPastAppointment(
 }
 
 /**
- * Citas con sesión asistida pero pago pendiente.
+ * Citas realizadas pero con pago pendiente.
  */
 export function getPendingPayments(appointments: Appointment[]): Appointment[] {
   return appointments.filter(
-    (a) => a.estado_sesion === 'asistio' && a.estado_pago === 'pendiente'
+    (a) => a.estado_sesion === 'realizada' && a.estado_pago === 'pendiente'
   )
 }
 

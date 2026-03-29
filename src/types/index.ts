@@ -26,7 +26,7 @@ export interface Appointment {
   fecha_inicio: string           // ISO datetime
   fecha_fin: string | null
   // Estado de la sesión: si el paciente asistió, canceló, etc.
-  estado_sesion: 'pendiente' | 'asistio' | 'cancelo' | 'no_asistio'
+  estado_sesion: 'pendiente' | 'confirmada' | 'realizada' | 'cancelo'
   // Estado del pago
   estado_pago: 'pendiente' | 'pagado'
   notas: string | null

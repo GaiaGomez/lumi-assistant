@@ -10,6 +10,7 @@ import moment from 'moment'
 import 'moment/locale/es'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { Appointment, CalendarEvent } from '@/types'
+import { APPOINTMENT_SESSION_LABEL } from '@/lib/appointment-status'
 import AppointmentModal from './AppointmentModal'
 import NewAppointmentModal from './NewAppointmentModal'
 import { ChevronLeft, ChevronRight, Monitor, MapPin, Leaf, Plus } from 'lucide-react'
@@ -86,13 +87,6 @@ const CATEGORIA_CONFIG: Record<Categoria, {
   default:  { bg: '#B2A8B4', label: 'Sesión',   Icon: null    },
 }
 
-const ESTADO_LABEL: Record<Appointment['estado_sesion'], string> = {
-  pendiente:  'Pendiente',
-  asistio:    'Confirmada',
-  cancelo:    'Canceló',    // no se renderiza — las canceladas se filtran del calendario
-  no_asistio: '',           // legacy — no tiene botón en UI, se muestra vacío si existe en BD
-}
-
 // ─────────────────────────────────────────────────────────────
 // SUB-COMPONENTES DEL CALENDARIO
 // ─────────────────────────────────────────────────────────────
@@ -104,7 +98,7 @@ const ESTADO_LABEL: Record<Appointment['estado_sesion'], string> = {
 function EventoCalendario({ event }: { event: CalendarEvent }) {
   const apt = event.resource
   const { Icon } = CATEGORIA_CONFIG[resolverCategoria(apt)]
-  const estado = ESTADO_LABEL[apt.estado_sesion]
+  const estado = apt.estado_sesion === 'cancelo' ? '' : APPOINTMENT_SESSION_LABEL[apt.estado_sesion]
   return (
     <div style={{ lineHeight: 1.35, overflow: 'hidden', minHeight: 0 }}>
       {/* Línea 1: icono de modalidad + nombre del paciente */}
@@ -425,6 +419,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
       {selectedAppointment && (
         <AppointmentModal
           appointment={selectedAppointment}
+          appointments={appointments}
           onClose={() => setSelectedAppointment(null)}
         />
       )}
