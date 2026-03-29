@@ -101,7 +101,7 @@ function EventoCalendario({ event }: { event: CalendarEvent }) {
   const isConfirmed = apt.estado_sesion === 'confirmada' || apt.estado_sesion === 'realizada'
   const isPaid = apt.estado_pago === 'pagado'
   const needsConfirmation = apt.estado_sesion === 'pendiente'
-  const needsPayment = apt.estado_sesion === 'realizada' && apt.estado_pago === 'pendiente'
+  const needsPayment = apt.estado_pago === 'pendiente'
   const needsAction = needsConfirmation || needsPayment
 
   return (
