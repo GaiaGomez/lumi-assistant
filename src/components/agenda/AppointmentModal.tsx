@@ -21,6 +21,7 @@ import {
   getAppointmentEnd,
   getAppointmentEndFromDuration,
 } from '@/lib/appointments'
+import { updateAppointmentById } from '@/lib/appointment-updates'
 import { createClient } from '@/lib/supabase/client'
 import { linkRecordatorioCita } from '@/lib/whatsapp'
 import Button from '@/components/ui/Button'
@@ -177,17 +178,14 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
     setSaving(true)
     setSaveError(null)
     try {
-      const { error } = await supabase
-        .from('appointments')
-        .update({
-          estado_sesion: estadoSesion,
-          estado_pago:   estadoPago,
-          modalidad:     modalidadEdit,
-          fecha_inicio:  nuevaInicio.toISOString(),
-          fecha_fin:     nuevaFin.toISOString(),
-          notas:         notas.trim() || null,
-        })
-        .eq('id', appointment.id)
+      const { error } = await updateAppointmentById(supabase, appointment.id, {
+        estado_sesion: estadoSesion,
+        estado_pago:   estadoPago,
+        modalidad:     modalidadEdit,
+        fecha_inicio:  nuevaInicio.toISOString(),
+        fecha_fin:     nuevaFin.toISOString(),
+        notas:         notas.trim() || null,
+      })
 
       if (error) throw error
       router.refresh()

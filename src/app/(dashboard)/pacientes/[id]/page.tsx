@@ -26,6 +26,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import PatientCaseNotesCard from '@/components/pacientes/PatientCaseNotesCard'
 import PatientHeaderCard from '@/components/pacientes/PatientHeaderCard'
 import PatientTopMosaic from '@/components/pacientes/PatientTopMosaic'
+import AppointmentQuickStateEditor from '@/components/appointments/AppointmentQuickStateEditor'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -149,6 +150,19 @@ export default async function PatientProfilePage({ params }: Props) {
                       {apt.estado_pago === 'pagado' ? 'Pagada' : 'Pendiente de pago'}
                     </Badge>
                   </div>
+                </div>
+                <div
+                  className="mt-2.5 rounded-[14px] p-2.5"
+                  style={{
+                    background: 'rgba(255,255,255,0.34)',
+                    border: '1px solid var(--border-glass-white)',
+                  }}
+                >
+                  <AppointmentQuickStateEditor
+                    appointmentId={apt.id}
+                    initialSessionState={apt.estado_sesion}
+                    initialPaymentState={apt.estado_pago}
+                  />
                 </div>
               </div>
             ))}

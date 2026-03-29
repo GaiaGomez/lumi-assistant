@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { MessageCircle } from 'lucide-react'
 import { Appointment, ClinicalNote, Patient } from '@/types'
 import { generarLinkWhatsApp } from '@/lib/whatsapp'
@@ -122,9 +121,37 @@ export default function PatientTopMosaic({
       )
     : undefined
 
-  const noWhatsAppText = 'No tiene número de WhatsApp registrado'
   const nextAppointmentText = nextAppointment ? formatAppointmentDate(nextAppointment.fecha_inicio) : null
   const lastPastAppointmentText = lastPastAppointment ? formatAppointmentDate(lastPastAppointment.fecha_inicio) : null
+  const actionCards = [
+    oldestPendingPayment && paymentHref ? {
+      key: 'payment',
+      label: 'Cobrar pago pendiente',
+      hint: 'Cobro pendiente',
+      href: paymentHref,
+      accent: 'soft' as const,
+    } : null,
+    !nextAppointment && lastPastAppointment && agendaHref ? {
+      key: 'agenda',
+      label: 'Agendar sesión',
+      hint: 'No hay próxima sesión agendada.',
+      href: agendaHref,
+      accent: 'glass' as const,
+    } : null,
+    whatsappHref ? {
+      key: 'whatsapp',
+      label: 'WhatsApp',
+      hint: 'Abrir chat',
+      href: whatsappHref,
+      accent: 'glass' as const,
+    } : null,
+  ].filter(Boolean) as Array<{
+    key: string
+    label: string
+    hint: string
+    href: string
+    accent: 'glass' | 'soft'
+  }>
 
   return (
     <div className="mb-3 space-y-[10px]">
@@ -155,24 +182,19 @@ export default function PatientTopMosaic({
         />
       </div>
 
-      <div className="grid gap-[10px] md:grid-cols-3">
-        <ActionCard
-          label="Cobrar pago pendiente"
-          hint={hasWhatsApp ? 'Cobro pendiente' : noWhatsAppText}
-          href={paymentHref}
-          accent="soft"
-        />
-        <ActionCard
-          label="Agendar sesión"
-          hint="Sin próxima sesión agendada."
-          href={agendaHref}
-        />
-        <ActionCard
-          label="WhatsApp"
-          hint={hasWhatsApp ? 'Abrir chat' : noWhatsAppText}
-          href={whatsappHref}
-        />
-      </div>
+      {actionCards.length > 0 && (
+        <div className={`grid gap-[10px] ${actionCards.length === 1 ? 'md:grid-cols-1' : actionCards.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
+          {actionCards.map((action) => (
+            <ActionCard
+              key={action.key}
+              label={action.label}
+              hint={action.hint}
+              href={action.href}
+              accent={action.accent}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
