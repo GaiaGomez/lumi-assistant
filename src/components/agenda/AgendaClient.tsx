@@ -177,18 +177,56 @@ interface AgendaClientProps {
   appointments: Appointment[]
 }
 
+type ModalidadFiltro = 'online' | 'medellin' | 'retiro'
+
 export default function AgendaClient({ appointments }: AgendaClientProps) {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
   const [newSlotStart, setNewSlotStart] = useState<Date | null>(null)
   const [currentView, setCurrentView] = useState<View>('week')
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [filtrosActivos, setFiltrosActivos] = useState<Set<ModalidadFiltro>>(new Set())
 
-  // Indicadores en tiempo real (calculados del set completo de citas)
-  const refDate = useMemo(() => new Date(), [])
-  const todayCount   = useMemo(() => getTodayAppointments(appointments, refDate).length, [appointments, refDate])
-  const pendingCount = useMemo(() => appointments.filter((a) => a.estado_sesion === 'pendiente').length, [appointments])
+  function toggleFiltro(key: ModalidadFiltro) {
+    setFiltrosActivos((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
 
-  // Las citas canceladas no se muestran en el calendario — siguen en BD para historial
+  // Rango visible según la vista activa — se actualiza al navegar
+  const { visibleStart, visibleEnd } = useMemo(() => {
+    const m = moment(currentDate)
+    if (currentView === 'day') return {
+      visibleStart: m.clone().startOf('day').toDate(),
+      visibleEnd:   m.clone().endOf('day').toDate(),
+    }
+    if (currentView === 'week') return {
+      visibleStart: m.clone().startOf('week').toDate(),
+      visibleEnd:   m.clone().endOf('week').toDate(),
+    }
+    return {
+      visibleStart: m.clone().startOf('month').toDate(),
+      visibleEnd:   m.clone().endOf('month').toDate(),
+    }
+  }, [currentView, currentDate])
+
+  // "N hoy" — siempre del día real, independiente del período navegado
+  const refDate    = useMemo(() => new Date(), [])
+  const todayCount = useMemo(() => getTodayAppointments(appointments, refDate).length, [appointments, refDate])
+
+  // "N por confirmar" — solo las pendientes dentro del período visible
+  const pendingCount = useMemo(() =>
+    appointments.filter((a) => {
+      if (a.estado_sesion !== 'pendiente') return false
+      const s = new Date(a.fecha_inicio)
+      return s >= visibleStart && s <= visibleEnd
+    }).length,
+    [appointments, visibleStart, visibleEnd]
+  )
+
+  // Las citas canceladas no se muestran — siguen en BD para historial
   const events: CalendarEvent[] = appointments
     .filter((apt) => apt.estado_sesion !== 'cancelo')
     .map((apt) => ({
@@ -200,6 +238,15 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
         : new Date(new Date(apt.fecha_inicio).getTime() + 60 * 60 * 1000),
       resource: apt,
     }))
+
+  // Aplicar filtro de modalidad — si no hay filtros activos, se muestran todos
+  const visibleEvents = useMemo(() =>
+    filtrosActivos.size === 0
+      ? events
+      : events.filter((evt) => filtrosActivos.has(resolverCategoria(evt.resource) as ModalidadFiltro)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [events, filtrosActivos]
+  )
 
   const handleSelectEvent = useCallback((event: CalendarEvent) => {
     setSelectedAppointment(event.resource)
@@ -300,19 +347,42 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
         </div>
       </div>
 
-      {/* ── Leyenda de categorías ── */}
-      <div className="flex items-center gap-4 px-2">
-        {(Object.entries(CATEGORIA_CONFIG) as [Categoria, typeof CATEGORIA_CONFIG[Categoria]][])
-          .filter(([key]) => key !== 'default')
-          .map(([key, cfg]) => {
-            const Icon = cfg.Icon
-            return (
-              <div key={key} className="flex items-center gap-1.5">
-                {Icon && <Icon size={10} style={{ color: cfg.bg }} />}
-                <span style={{ fontSize: '11px', color: 'var(--ink-cool-muted)' }}>{cfg.label}</span>
-              </div>
-            )
-          })}
+      {/* ── Filtros de modalidad ── */}
+      <div className="flex items-center gap-2 px-1">
+        {((['online', 'medellin', 'retiro'] as const)).map((key) => {
+          const cfg = CATEGORIA_CONFIG[key]
+          const Icon = cfg.Icon
+          const activo = filtrosActivos.has(key)
+          return (
+            <button
+              key={key}
+              onClick={() => toggleFiltro(key)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all"
+              style={activo ? {
+                background: cfg.bg,
+                color: 'white',
+                border: `1px solid ${cfg.bg}`,
+                boxShadow: `0 2px 8px ${cfg.bg}44`,
+              } : {
+                background: 'rgba(255,255,255,0.38)',
+                color: 'var(--ink-cool-muted)',
+                border: '1px solid transparent',
+              }}
+            >
+              {Icon && <Icon size={10} style={{ color: activo ? 'white' : cfg.bg }} />}
+              {cfg.label}
+            </button>
+          )
+        })}
+        {filtrosActivos.size > 0 && (
+          <button
+            onClick={() => setFiltrosActivos(new Set())}
+            className="text-[10px] px-2 py-1 rounded-full transition-all"
+            style={{ color: 'var(--ink-cool-faint)', background: 'transparent' }}
+          >
+            Ver todas
+          </button>
+        )}
       </div>
 
       {/* ── Calendario ── */}
@@ -320,7 +390,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
         <div className="p-4" style={{ height: '720px' }}>
           <Calendar
             localizer={localizer}
-            events={events}
+            events={visibleEvents}
             view={currentView}
             date={currentDate}
             onView={setCurrentView}
