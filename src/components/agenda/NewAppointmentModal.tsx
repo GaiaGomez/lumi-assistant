@@ -6,24 +6,26 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Plus } from 'lucide-react'
-import { Patient, AppointmentModalidad } from '@/types'
+import { X, Plus, AlertTriangle } from 'lucide-react'
+import { Appointment, Patient, AppointmentModalidad } from '@/types'
+import {
+  buildLocalAppointmentStart,
+  DEFAULT_APPOINTMENT_DURATION_MINUTES,
+  findAppointmentConflict,
+  getAppointmentDurationOptions,
+  getAppointmentEnd,
+  getAppointmentEndFromDuration,
+} from '@/lib/appointments'
 import { createClient } from '@/lib/supabase/client'
 import ModalShell from '@/components/ui/ModalShell'
 import Button from '@/components/ui/Button'
 import SectionHeader from '@/components/ui/SectionHeader'
 
 interface NewAppointmentModalProps {
+  appointments: Appointment[]
   defaultStart: Date
   onClose: () => void
 }
-
-const DURACIONES = [
-  { value: 30,  label: '30 min'   },
-  { value: 45,  label: '45 min'   },
-  { value: 60,  label: '1 hora'   },
-  { value: 90,  label: '1h 30min' },
-]
 
 const MODALIDADES: { value: AppointmentModalidad; label: string }[] = [
   { value: 'online',   label: 'Online'   },
@@ -31,16 +33,14 @@ const MODALIDADES: { value: AppointmentModalidad; label: string }[] = [
   { value: 'retiro',   label: 'Retiro'   },
 ]
 
-/** Convierte un Date a la cadena que espera <input type="datetime-local"> */
-function toDatetimeLocal(date: Date): string {
+function toDateInputValue(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0')
-  return (
-    date.getFullYear() + '-' +
-    pad(date.getMonth() + 1) + '-' +
-    pad(date.getDate()) + 'T' +
-    pad(date.getHours()) + ':' +
-    pad(date.getMinutes())
-  )
+  return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate())
+}
+
+function toTimeInputValue(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return pad(date.getHours()) + ':' + pad(date.getMinutes())
 }
 
 const selectStyle: React.CSSProperties = {
@@ -51,7 +51,35 @@ const selectStyle: React.CSSProperties = {
   boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
 }
 
-export default function NewAppointmentModal({ defaultStart, onClose }: NewAppointmentModalProps) {
+function formatTimeRange(start: Date, end: Date): string {
+  return `${start.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })} – ${end.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`
+}
+
+function formatConflictDateTime(appointment: Appointment): string {
+  const start = new Date(appointment.fecha_inicio)
+  const end = getAppointmentEnd(appointment)
+  return `${start.toLocaleDateString('es-CO', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  })} · ${formatTimeRange(start, end)}`
+}
+
+function formatDateTimeRange(start: Date, end: Date): string {
+  return `${start.toLocaleDateString('es-CO', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  })} · ${formatTimeRange(start, end)}`
+}
+
+function formatDurationLabel(value: number): string {
+  if (value < 60) return `${value} min`
+  if (value % 60 === 0) return `${value / 60} hora${value === 60 ? '' : 's'}`
+  return `${Math.floor(value / 60)}h ${value % 60}min`
+}
+
+export default function NewAppointmentModal({ appointments, defaultStart, onClose }: NewAppointmentModalProps) {
   const router = useRouter()
   const supabase = createClient()
 
@@ -60,8 +88,9 @@ export default function NewAppointmentModal({ defaultStart, onClose }: NewAppoin
   const [search, setSearch]               = useState('')
   const [showDropdown, setShowDropdown]   = useState(false)
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
-  const [fechaInicio, setFechaInicio]     = useState(toDatetimeLocal(defaultStart))
-  const [duracion, setDuracion]           = useState(60)
+  const [fechaValue, setFechaValue]       = useState(toDateInputValue(defaultStart))
+  const [horaInicioValue, setHoraInicioValue] = useState(toTimeInputValue(defaultStart))
+  const [duracion, setDuracion]           = useState(DEFAULT_APPOINTMENT_DURATION_MINUTES)
   const [modalidad, setModalidad]         = useState<AppointmentModalidad>('online')
   const [notas, setNotas]                 = useState('')
   const [saving, setSaving]               = useState(false)
@@ -91,14 +120,31 @@ export default function NewAppointmentModal({ defaultStart, onClose }: NewAppoin
     setShowDropdown(false)
   }
 
+  const startDate = buildLocalAppointmentStart(fechaValue, horaInicioValue)
+  const endDate = startDate
+    ? getAppointmentEndFromDuration(startDate, duracion)
+    : null
+
+  let scheduleError: string | null = null
+  if (!startDate || !endDate) {
+    scheduleError = 'Completa fecha y hora.'
+  } else if (duracion < 15) {
+    scheduleError = 'La duración mínima es de 15 minutos.'
+  }
+
+  const conflicto = !scheduleError && startDate && endDate
+    ? findAppointmentConflict(appointments, startDate, endDate)
+    : undefined
+
+  const isSaveBlocked = saving || !selectedPatient || !!scheduleError || !!conflicto
+  const durationOptions = getAppointmentDurationOptions(duracion)
+
   async function handleSave() {
     if (!selectedPatient) { setError('Selecciona un paciente'); return }
+    if (!startDate || !endDate || scheduleError || conflicto) return
 
     setSaving(true)
     setError(null)
-
-    const startDate = new Date(fechaInicio)
-    const endDate   = new Date(startDate.getTime() + duracion * 60 * 1000)
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setError('Sesión expirada'); setSaving(false); return }
@@ -206,14 +252,25 @@ export default function NewAppointmentModal({ defaultStart, onClose }: NewAppoin
           </div>
 
           {/* ── Fecha y hora ── */}
-          <div>
-            <SectionHeader label="Fecha y hora" className="mb-2" />
-            <input
-              type="datetime-local"
-              value={fechaInicio}
-              onChange={(e) => setFechaInicio(e.target.value)}
-              className="w-full rounded-[14px] px-3.5 py-3 text-[13px]"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <SectionHeader label="Fecha" className="mb-2" />
+              <input
+                type="date"
+                value={fechaValue}
+                onChange={(e) => setFechaValue(e.target.value)}
+                className="w-full rounded-[14px] px-3.5 py-3 text-[13px]"
+              />
+            </div>
+            <div>
+              <SectionHeader label="Hora" className="mb-2" />
+              <input
+                type="time"
+                value={horaInicioValue}
+                onChange={(e) => setHoraInicioValue(e.target.value)}
+                className="w-full rounded-[14px] px-3.5 py-3 text-[13px]"
+              />
+            </div>
           </div>
 
           {/* ── Duración + Modalidad ── */}
@@ -226,8 +283,8 @@ export default function NewAppointmentModal({ defaultStart, onClose }: NewAppoin
                 className="w-full rounded-[14px] px-3.5 py-3 text-[13px]"
                 style={selectStyle}
               >
-                {DURACIONES.map((d) => (
-                  <option key={d.value} value={d.value}>{d.label}</option>
+                {durationOptions.map((value) => (
+                  <option key={value} value={value}>{formatDurationLabel(value)}</option>
                 ))}
               </select>
             </div>
@@ -258,6 +315,38 @@ export default function NewAppointmentModal({ defaultStart, onClose }: NewAppoin
             />
           </div>
 
+          {startDate && endDate && !scheduleError && (
+            <p className="text-[12px]" style={{ color: 'var(--ink-cool-soft)' }}>
+              Horario: {formatDateTimeRange(startDate, endDate)}
+              {` · ${duracion} min`}
+            </p>
+          )}
+
+          {scheduleError && (
+            <div
+              className="flex items-center gap-2 rounded-[12px] px-3 py-2 text-[12px]"
+              style={{ background: 'var(--state-cancel-bg)', color: 'var(--state-cancel-text)' }}
+            >
+              <AlertTriangle size={13} />
+              {scheduleError}
+            </div>
+          )}
+
+          {conflicto && (
+            <div
+              className="flex items-center gap-2 rounded-[12px] px-3 py-2 text-[12px]"
+              style={{ background: 'var(--state-warning-bg)', color: 'var(--state-warning-text)' }}
+            >
+              <AlertTriangle size={13} />
+              <span>
+                Conflicto con {conflicto.patient?.nombre} {conflicto.patient?.apellido}
+                {' · '}
+                {formatConflictDateTime(conflicto)}
+                {' · '}Corrige el horario para poder guardar.
+              </span>
+            </div>
+          )}
+
           {error && (
             <p className="text-[12px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
               {error}
@@ -268,11 +357,11 @@ export default function NewAppointmentModal({ defaultStart, onClose }: NewAppoin
           <Button
             variant="action"
             onClick={handleSave}
-            disabled={saving || !selectedPatient}
+            disabled={isSaveBlocked}
             className="w-full py-3 text-xs tracking-[0.06em] uppercase gap-2"
           >
             <Plus size={14} />
-            {saving ? 'Guardando…' : 'Crear cita'}
+            {saving ? 'Guardando…' : conflicto ? 'Corrige el conflicto para crear' : 'Crear cita'}
           </Button>
 
         </div>

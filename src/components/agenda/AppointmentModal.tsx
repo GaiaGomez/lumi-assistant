@@ -13,6 +13,14 @@ import {
   APPOINTMENT_SESSION_LABEL,
   APPOINTMENT_SESSION_STATES,
 } from '@/lib/appointment-status'
+import {
+  buildLocalAppointmentStart,
+  DEFAULT_APPOINTMENT_DURATION_MINUTES,
+  findAppointmentConflict,
+  getAppointmentDurationOptions,
+  getAppointmentEnd,
+  getAppointmentEndFromDuration,
+} from '@/lib/appointments'
 import { createClient } from '@/lib/supabase/client'
 import { linkRecordatorioCita } from '@/lib/whatsapp'
 import Button from '@/components/ui/Button'
@@ -29,23 +37,15 @@ const MODALIDAD_CONFIG: Record<AppointmentModalidad, {
   label: string
   color: string
   Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>
-  contextLabel: string
-  contextPlaceholder: string
 }> = {
   online:   {
     label: 'Online',   color: '#8FA5BD', Icon: Monitor,
-    contextLabel: 'Enlace de videollamada',
-    contextPlaceholder: 'https://meet.google.com/...',
   },
   medellin: {
     label: 'Medellín', color: '#9488B0', Icon: MapPin,
-    contextLabel: 'Dirección / consultorio',
-    contextPlaceholder: 'Calle 10 #43A-50, Of. 301',
   },
   retiro:   {
     label: 'Retiro',   color: '#7EA88F', Icon: Leaf,
-    contextLabel: 'Lugar / punto de encuentro',
-    contextPlaceholder: 'Finca La Esperanza, km 3 vía...',
   },
 }
 
@@ -79,12 +79,6 @@ function toTimeInputValue(isoString: string): string {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-function buildLocalDate(dateValue: string, timeValue: string): Date | null {
-  if (!dateValue || !timeValue) return null
-  const parsed = new Date(`${dateValue}T${timeValue}`)
-  return Number.isNaN(parsed.getTime()) ? null : parsed
-}
-
 function formatSchedule(date: Date): string {
   return date.toLocaleDateString('es-CO', {
     weekday: 'long',
@@ -99,10 +93,14 @@ function formatTimeRange(start: Date, end: Date): string {
   return `${start.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })} – ${end.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`
 }
 
-function getAppointmentEnd(appointment: Appointment): Date {
+function formatConflictDateTime(appointment: Appointment): string {
   const start = new Date(appointment.fecha_inicio)
-  if (appointment.fecha_fin) return new Date(appointment.fecha_fin)
-  return new Date(start.getTime() + 60 * 60000)
+  const end = getAppointmentEnd(appointment)
+  return `${start.toLocaleDateString('es-CO', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  })} · ${formatTimeRange(start, end)}`
 }
 
 export default function AppointmentModal({ appointment, appointments, onClose }: AppointmentModalProps) {
@@ -112,9 +110,13 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
   const [estadoSesion, setEstadoSesion] = useState(appointment.estado_sesion)
   const [estadoPago, setEstadoPago] = useState(appointment.estado_pago)
   const [modalidadEdit, setModalidadEdit] = useState<AppointmentModalidad | null>(appointment.modalidad)
+  const initialDuration = Math.max(
+    15,
+    Math.round((getAppointmentEnd(appointment).getTime() - new Date(appointment.fecha_inicio).getTime()) / 60000)
+  )
   const [fechaValue, setFechaValue] = useState(toDateInputValue(appointment.fecha_inicio))
   const [horaInicioValue, setHoraInicioValue] = useState(toTimeInputValue(appointment.fecha_inicio))
-  const [horaFinValue, setHoraFinValue] = useState(toTimeInputValue(appointment.fecha_fin ?? getAppointmentEnd(appointment).toISOString()))
+  const [duracion, setDuracion] = useState(initialDuration || DEFAULT_APPOINTMENT_DURATION_MINUTES)
   const [notas, setNotas] = useState(appointment.notas ?? '')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -140,29 +142,21 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
 
   const currentStart = new Date(appointment.fecha_inicio)
   const currentEnd = getAppointmentEnd(appointment)
-  const nuevaInicio = buildLocalDate(fechaValue, horaInicioValue)
-  const nuevaFin = buildLocalDate(fechaValue, horaFinValue)
+  const nuevaInicio = buildLocalAppointmentStart(fechaValue, horaInicioValue)
+  const nuevaFin = nuevaInicio
+    ? getAppointmentEndFromDuration(nuevaInicio, duracion)
+    : null
 
   let scheduleError: string | null = null
   if (!nuevaInicio || !nuevaFin) {
-    scheduleError = 'Completa fecha, hora de inicio y hora de fin.'
-  } else if (nuevaFin <= nuevaInicio) {
-    scheduleError = 'La hora de fin debe ser posterior a la hora de inicio.'
+    scheduleError = 'Completa fecha y hora de inicio.'
+  } else if (duracion < 15) {
+    scheduleError = 'La duración mínima es de 15 minutos.'
   }
 
   const conflicto = !scheduleError && nuevaInicio && nuevaFin
-    ? appointments.find((a) => {
-    if (a.id === appointment.id) return false
-    if (a.estado_sesion === 'cancelo') return false
-    const aStart = new Date(a.fecha_inicio)
-    const aEnd = getAppointmentEnd(a)
-    return nuevaInicio < aEnd && nuevaFin > aStart
-    })
+    ? findAppointmentConflict(appointments, nuevaInicio, nuevaFin, appointment.id)
     : undefined
-
-  const durationMinutes = nuevaInicio && nuevaFin
-    ? Math.round((nuevaFin.getTime() - nuevaInicio.getTime()) / 60000)
-    : null
 
   const hasChanges =
     estadoSesion !== appointment.estado_sesion ||
@@ -222,7 +216,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
     }
   }
 
-  const contextConfig = modalidadEdit ? MODALIDAD_CONFIG[modalidadEdit] : null
+  const durationOptions = getAppointmentDurationOptions(duracion)
 
   return (
     <ModalShell onClose={onClose}>
@@ -311,12 +305,11 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
               </label>
               <label className="space-y-1">
                 <span className="text-[11px] uppercase tracking-[0.08em]" style={{ color: 'var(--ink-cool-faint)' }}>
-                  Fin
+                  Duración
                 </span>
-                <input
-                  type="time"
-                  value={horaFinValue}
-                  onChange={(e) => setHoraFinValue(e.target.value)}
+                <select
+                  value={duracion}
+                  onChange={(e) => setDuracion(Number(e.target.value))}
                   className="rounded-[12px] px-3 py-2.5 text-[13px] w-full"
                   style={{
                     background: 'rgba(255,255,255,0.52)',
@@ -324,7 +317,13 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                     color: 'var(--ink-cool-strong)',
                     outline: 'none',
                   }}
-                />
+                >
+                  {durationOptions.map((value) => (
+                    <option key={value} value={value}>
+                      {value < 60 ? `${value} min` : value % 60 === 0 ? `${value / 60} hora${value === 60 ? '' : 's'}` : `${Math.floor(value / 60)}h ${value % 60}min`}
+                    </option>
+                  ))}
+                </select>
               </label>
             </div>
 
@@ -341,7 +340,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                 </p>
                 <p className="text-[12px] mt-1" style={{ color: 'var(--ink-cool-soft)' }}>
                   {formatTimeRange(nuevaInicio, nuevaFin)}
-                  {durationMinutes !== null ? ` · ${durationMinutes} min` : ''}
+                  {` · ${duracion} min`}
                 </p>
               </div>
             )}
@@ -365,7 +364,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                 <span>
                   Conflicto con {conflicto.patient?.nombre} {conflicto.patient?.apellido}
                   {' · '}
-                  {formatTimeRange(new Date(conflicto.fecha_inicio), getAppointmentEnd(conflicto))}
+                  {formatConflictDateTime(conflicto)}
                   {' · '}Corrige el horario para poder guardar.
                 </span>
               </div>
@@ -454,25 +453,23 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
             </div>
           </div>
 
-          {/* ── Contexto según modalidad ── */}
-          {contextConfig && (
-            <div>
-              <SectionHeader label={contextConfig.contextLabel} className="mb-2.5" />
-              <textarea
-                value={notas}
-                onChange={(e) => setNotas(e.target.value)}
-                placeholder={contextConfig.contextPlaceholder}
-                rows={2}
-                className="w-full rounded-[12px] px-3 py-2.5 text-[13px] resize-none"
-                style={{
-                  background: 'rgba(255,255,255,0.52)',
-                  border: '1px solid var(--border-glass-white)',
-                  color: 'var(--ink-cool-strong)',
-                  outline: 'none',
-                }}
-              />
-            </div>
-          )}
+          {/* ── Notas ── */}
+          <div>
+            <SectionHeader label="Notas" className="mb-2.5" />
+            <textarea
+              value={notas}
+              onChange={(e) => setNotas(e.target.value)}
+              placeholder="Observaciones, contexto…"
+              rows={2}
+              className="w-full rounded-[12px] px-3 py-2.5 text-[13px] resize-none"
+              style={{
+                background: 'rgba(255,255,255,0.52)',
+                border: '1px solid var(--border-glass-white)',
+                color: 'var(--ink-cool-strong)',
+                outline: 'none',
+              }}
+            />
+          </div>
 
           {/* ── Acciones secundarias ── */}
           <div className="flex gap-2 pt-1">

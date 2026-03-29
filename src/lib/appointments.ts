@@ -6,6 +6,56 @@
 
 import type { Appointment } from '@/types'
 
+export const DEFAULT_APPOINTMENT_DURATION_MINUTES = 60
+
+const BASE_APPOINTMENT_DURATION_OPTIONS = [30, 45, 60, 90, 120, 150, 180]
+
+export function buildLocalAppointmentStart(
+  dateValue: string,
+  timeValue: string
+): Date | null {
+  if (!dateValue || !timeValue) return null
+  const parsed = new Date(`${dateValue}T${timeValue}`)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+export function getAppointmentEnd(
+  appointment: Pick<Appointment, 'fecha_inicio' | 'fecha_fin'>
+): Date {
+  const start = new Date(appointment.fecha_inicio)
+  if (appointment.fecha_fin) return new Date(appointment.fecha_fin)
+  return new Date(start.getTime() + DEFAULT_APPOINTMENT_DURATION_MINUTES * 60000)
+}
+
+export function getAppointmentEndFromDuration(
+  start: Date,
+  durationMinutes: number
+): Date {
+  return new Date(start.getTime() + durationMinutes * 60000)
+}
+
+export function getAppointmentDurationOptions(currentDuration: number): number[] {
+  return Array.from(new Set([...BASE_APPOINTMENT_DURATION_OPTIONS, currentDuration]))
+    .filter((value) => value >= 15)
+    .sort((a, b) => a - b)
+}
+
+export function findAppointmentConflict(
+  appointments: Appointment[],
+  start: Date,
+  end: Date,
+  ignoreAppointmentId?: string
+): Appointment | undefined {
+  return appointments.find((appointment) => {
+    if (ignoreAppointmentId && appointment.id === ignoreAppointmentId) return false
+    if (appointment.estado_sesion === 'cancelo') return false
+
+    const appointmentStart = new Date(appointment.fecha_inicio)
+    const appointmentEnd = getAppointmentEnd(appointment)
+    return start < appointmentEnd && end > appointmentStart
+  })
+}
+
 /**
  * Próxima cita futura (la más cercana en el tiempo).
  */

@@ -427,6 +427,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
       {/* Modal para crear una cita nueva */}
       {newSlotStart && (
         <NewAppointmentModal
+          appointments={appointments}
           defaultStart={newSlotStart}
           onClose={() => setNewSlotStart(null)}
         />
