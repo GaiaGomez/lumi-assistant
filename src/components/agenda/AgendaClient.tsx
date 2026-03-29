@@ -12,8 +12,15 @@ import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { Appointment, CalendarEvent } from '@/types'
 import AppointmentModal from './AppointmentModal'
 import NewAppointmentModal from './NewAppointmentModal'
-import { AlertTriangle, Check, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, HandCoins, Leaf, MapPin, Monitor, Plus } from 'lucide-react'
+import { AlertTriangle, Check, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, HandCoins, Plus } from 'lucide-react'
 import { getAppointmentEnd, getTodayAppointments } from '@/lib/appointments'
+import {
+  APPOINTMENT_CATEGORY_CONFIG,
+  appointmentNeedsAttention,
+  isAppointmentConfirmed,
+  isAppointmentPaid,
+  resolveAppointmentCategory,
+} from '@/lib/appointment-ui'
 
 moment.locale('es')
 const localizer = momentLocalizer(moment)
@@ -54,55 +61,19 @@ const FESTIVOS_CO: Map<string, string> = new Map([
 ])
 
 // ─────────────────────────────────────────────────────────────
-// CATEGORÍAS — fuente principal: campo `modalidad`
-// Fallback temporal: detección por notas (citas legacy sin modalidad)
-// ─────────────────────────────────────────────────────────────
-
-type Categoria = 'online' | 'medellin' | 'retiro' | 'default'
-
-/** Fallback legacy: infiere categoría desde el texto libre de notas */
-function inferirDesdeNotas(notas: string | null): Categoria {
-  const n = notas?.toLowerCase() ?? ''
-  if (n.includes('retiro')) return 'retiro'
-  if (n.includes('online') || n.includes('virtual')) return 'online'
-  if (n.includes('medell')) return 'medellin'
-  return 'default'
-}
-
-/** Fuente de verdad: modalidad del campo real; fallback a notas para datos legacy */
-function resolverCategoria(apt: Appointment): Categoria {
-  if (apt.modalidad) return apt.modalidad
-  return inferirDesdeNotas(apt.notas)
-}
-
-const CATEGORIA_CONFIG: Record<Categoria, {
-  bg: string
-  label: string
-  Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }> | null
-}> = {
-  online:   { bg: '#8FA5BD', label: 'Online',   Icon: Monitor },
-  medellin: { bg: '#9488B0', label: 'Medellín', Icon: MapPin  },
-  retiro:   { bg: '#7EA88F', label: 'Retiro',   Icon: Leaf    },
-  default:  { bg: '#B2A8B4', label: 'Sesión',   Icon: null    },
-}
-
-// ─────────────────────────────────────────────────────────────
 // SUB-COMPONENTES DEL CALENDARIO
 // ─────────────────────────────────────────────────────────────
 
-// Card de cita — tres líneas:
+// Card de cita — lectura mínima y rápida:
 //   Línea 1: Nombre del paciente
-//   Línea 2: Icono + modalidad
-//   Línea 3: Iconos compactos de confirmación / pago / alerta
+//   Línea 2: Iconos compactos de modalidad / confirmación / pago / alerta
 // Las canceladas se filtran antes de llegar aquí
 function EventoCalendario({ event }: { event: CalendarEvent }) {
   const apt = event.resource
-  const { Icon } = CATEGORIA_CONFIG[resolverCategoria(apt)]
-  const isConfirmed = apt.estado_sesion === 'confirmada' || apt.estado_sesion === 'realizada'
-  const isPaid = apt.estado_pago === 'pagado'
-  const needsConfirmation = apt.estado_sesion === 'pendiente'
-  const needsPayment = apt.estado_pago === 'pendiente'
-  const needsAction = needsConfirmation || needsPayment
+  const { Icon } = APPOINTMENT_CATEGORY_CONFIG[resolveAppointmentCategory(apt)]
+  const isConfirmed = isAppointmentConfirmed(apt)
+  const isPaid = isAppointmentPaid(apt)
+  const needsAction = appointmentNeedsAttention(apt)
 
   return (
     <div style={{ lineHeight: 1.1, overflow: 'hidden', minHeight: 0, display: 'grid', gap: '4px' }}>
@@ -151,7 +122,7 @@ function EventoCalendario({ event }: { event: CalendarEvent }) {
 }
 
 // Cabecera de fecha en vista Mes — festivo se comunica solo por el tinte del día
-function CabechaFecha({ date: _date, label }: { date: Date; label: string }) {
+function CabechaFecha({ label }: { date: Date; label: string }) {
   return (
     <div style={{ textAlign: 'right', lineHeight: 1.2 }}>
       <span>{label}</span>
@@ -272,8 +243,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
   const visibleEvents = useMemo(() =>
     filtrosActivos.size === 0
       ? events
-      : events.filter((evt) => filtrosActivos.has(resolverCategoria(evt.resource) as ModalidadFiltro)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      : events.filter((evt) => filtrosActivos.has(resolveAppointmentCategory(evt.resource) as ModalidadFiltro)),
     [events, filtrosActivos]
   )
 
@@ -290,7 +260,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
     const isSoftPast = event.resource.estado_sesion === 'realizada' && getAppointmentEnd(event.resource) <= new Date()
     return {
       style: {
-        backgroundColor: CATEGORIA_CONFIG[resolverCategoria(event.resource)].bg,
+        backgroundColor: APPOINTMENT_CATEGORY_CONFIG[resolveAppointmentCategory(event.resource)].bg,
         borderRadius: '10px',
         border: '1px solid rgba(255,250,248,0.18)',
         color: '#fffaf8',
@@ -386,7 +356,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
       {/* ── Filtros de modalidad ── */}
       <div className="flex items-center gap-2 px-1">
         {((['online', 'medellin', 'retiro'] as const)).map((key) => {
-          const cfg = CATEGORIA_CONFIG[key]
+          const cfg = APPOINTMENT_CATEGORY_CONFIG[key]
           const Icon = cfg.Icon
           const activo = filtrosActivos.has(key)
           return (

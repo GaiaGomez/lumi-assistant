@@ -20,7 +20,7 @@ export type AppointmentModalidad = 'online' | 'medellin' | 'retiro'
 
 export interface Appointment {
   id: string
-  patient_id: string
+  patient_id: string | null
   user_id: string
   doctoralia_uid: string | null  // UID del evento iCal de Doctoralia, evita duplicados
   fecha_inicio: string           // ISO datetime
@@ -34,6 +34,7 @@ export interface Appointment {
   // NULL = dato previo a esta migración; se resuelve con fallback a notas
   modalidad: AppointmentModalidad | null
   created_at: string
+  updated_at?: string
   // Relación expandida — viene del JOIN con patients
   patient?: Patient
 }

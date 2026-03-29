@@ -5,14 +5,14 @@
 // ============================================================
 
 import { useState, useEffect } from 'react'
-import type React from 'react'
 import { useRouter } from 'next/navigation'
-import { X, FileText, MessageCircle, Monitor, MapPin, Leaf, AlertTriangle, Trash2, CalendarDays, Clock3, ChevronDown } from 'lucide-react'
+import { X, FileText, MessageCircle, AlertTriangle, Trash2, CalendarDays, Clock3, ChevronDown } from 'lucide-react'
 import { Appointment, AppointmentModalidad } from '@/types'
 import {
   APPOINTMENT_SESSION_LABEL,
   APPOINTMENT_SESSION_STATES,
 } from '@/lib/appointment-status'
+import { APPOINTMENT_MODALIDAD_CONFIG } from '@/lib/appointment-ui'
 import {
   buildLocalAppointmentStart,
   DEFAULT_APPOINTMENT_DURATION_MINUTES,
@@ -32,23 +32,6 @@ interface AppointmentModalProps {
   appointment: Appointment
   appointments: Appointment[]
   onClose: () => void
-}
-
-const MODALIDAD_CONFIG: Record<AppointmentModalidad, {
-  label: string
-  color: string
-  textColor: string
-  Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>
-}> = {
-  online:   {
-    label: 'Online',   color: '#8FA5BD', textColor: '#273847', Icon: Monitor,
-  },
-  medellin: {
-    label: 'Medellín', color: '#9488B0', textColor: '#302944', Icon: MapPin,
-  },
-  retiro:   {
-    label: 'Retiro',   color: '#7EA88F', textColor: '#284236', Icon: Leaf,
-  },
 }
 
 const ACTIVE_SESSION_STYLES: Record<string, { bg: string; color: string }> = {
@@ -129,6 +112,10 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
   // Deuda del paciente — sesiones realizadas sin pagar (excluye la cita actual)
   useEffect(() => {
     async function loadDeuda() {
+      if (!appointment.patient_id) {
+        setDeudaCount(null)
+        return
+      }
       const { count } = await supabase
         .from('appointments')
         .select('id', { count: 'exact', head: true })
@@ -374,7 +361,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
           <div>
             <SectionHeader label="Modalidad" className="mb-2.5" />
             <div className="grid grid-cols-3 gap-1.5">
-              {(Object.entries(MODALIDAD_CONFIG) as [AppointmentModalidad, typeof MODALIDAD_CONFIG[AppointmentModalidad]][]).map(([value, { label, color, textColor, Icon }]) => {
+              {(Object.entries(APPOINTMENT_MODALIDAD_CONFIG) as [AppointmentModalidad, typeof APPOINTMENT_MODALIDAD_CONFIG[AppointmentModalidad]][]).map(([value, { label, color, textColor, Icon }]) => {
                 const isActive = modalidadEdit === value
                 return (
                   <button
@@ -466,14 +453,16 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
 
           {/* ── Acciones secundarias ── */}
           <div className="flex gap-2 pt-1">
-            <Button
-              variant="subtle"
-              onClick={() => router.push(`/pacientes/${appointment.patient_id}`)}
-              className="flex-1 gap-2 py-3 text-[13px]"
-            >
-              <FileText size={15} />
-              Historia clínica
-            </Button>
+            {appointment.patient_id && (
+              <Button
+                variant="subtle"
+                onClick={() => router.push(`/pacientes/${appointment.patient_id}`)}
+                className="flex-1 gap-2 py-3 text-[13px]"
+              >
+                <FileText size={15} />
+                Historia clínica
+              </Button>
+            )}
 
             {appointment.patient?.whatsapp && (
               <a

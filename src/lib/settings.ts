@@ -5,7 +5,15 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-export type SettingsMap = Record<string, string>
+export const SETTINGS_KEYS = [
+  'doctoralia_url',
+  'template_cobros',
+  'template_sin_proxima',
+  'template_retomar',
+] as const
+
+export type SettingsKey = (typeof SETTINGS_KEYS)[number]
+export type SettingsMap = Record<SettingsKey, string>
 
 // Valores por defecto si el usuario aún no ha personalizado
 export const DEFAULT_SETTINGS: SettingsMap = {
@@ -45,7 +53,9 @@ export async function fetchSettings(
 
   const result: SettingsMap = { ...DEFAULT_SETTINGS }
   for (const row of data ?? []) {
-    result[row.key] = row.value
+    if ((SETTINGS_KEYS as readonly string[]).includes(row.key)) {
+      result[row.key as SettingsKey] = row.value
+    }
   }
   return result
 }

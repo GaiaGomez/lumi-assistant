@@ -5,8 +5,9 @@
 // ============================================================
 
 import { useState, useEffect } from 'react'
+import type React from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Plus, AlertTriangle, CalendarDays, Clock3, ChevronDown, UserRound, Monitor, MapPin, Leaf } from 'lucide-react'
+import { X, Plus, AlertTriangle, CalendarDays, Clock3, ChevronDown, UserRound } from 'lucide-react'
 import { Appointment, Patient, AppointmentModalidad } from '@/types'
 import {
   buildLocalAppointmentStart,
@@ -16,6 +17,7 @@ import {
   getAppointmentEnd,
   getAppointmentEndFromDuration,
 } from '@/lib/appointments'
+import { APPOINTMENT_MODALIDAD_CONFIG } from '@/lib/appointment-ui'
 import { createClient } from '@/lib/supabase/client'
 import ModalShell from '@/components/ui/ModalShell'
 import Button from '@/components/ui/Button'
@@ -25,16 +27,6 @@ interface NewAppointmentModalProps {
   appointments: Appointment[]
   defaultStart: Date
   onClose: () => void
-}
-
-const MODALIDAD_CONFIG: Record<AppointmentModalidad, {
-  label: string
-  color: string
-  Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>
-}> = {
-  online: { label: 'Online', color: '#8FA5BD', Icon: Monitor },
-  medellin: { label: 'Medellín', color: '#9488B0', Icon: MapPin },
-  retiro: { label: 'Retiro', color: '#7EA88F', Icon: Leaf },
 }
 
 function toDateInputValue(date: Date): string {
@@ -319,7 +311,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
             <div>
               <SectionHeader label="Modalidad" className="mb-2" />
               <div className="grid grid-cols-3 gap-1.5">
-                {(Object.entries(MODALIDAD_CONFIG) as [AppointmentModalidad, typeof MODALIDAD_CONFIG[AppointmentModalidad]][]).map(([value, { label, color, Icon }]) => {
+                {(Object.entries(APPOINTMENT_MODALIDAD_CONFIG) as [AppointmentModalidad, typeof APPOINTMENT_MODALIDAD_CONFIG[AppointmentModalidad]][]).map(([value, { label, color, Icon }]) => {
                   const isActive = modalidad === value
                   return (
                     <button
