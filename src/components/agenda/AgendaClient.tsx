@@ -12,7 +12,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { Appointment, CalendarEvent } from '@/types'
 import AppointmentModal from './AppointmentModal'
 import NewAppointmentModal from './NewAppointmentModal'
-import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Leaf, MapPin, Monitor, Plus, Wallet } from 'lucide-react'
+import { AlertTriangle, BadgeDollarSign, CheckCircle2, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Leaf, MapPin, Monitor, Plus } from 'lucide-react'
 import { getAppointmentEnd, getTodayAppointments } from '@/lib/appointments'
 
 moment.locale('es')
@@ -105,7 +105,7 @@ function EventoCalendario({ event }: { event: CalendarEvent }) {
   const needsAction = needsConfirmation || needsPayment
 
   return (
-    <div style={{ lineHeight: 1.2, overflow: 'hidden', minHeight: 0, display: 'grid', gap: '3px' }}>
+    <div style={{ lineHeight: 1.15, overflow: 'hidden', minHeight: 0, display: 'grid', gap: '2px' }}>
       <p style={{
         fontWeight: 700,
         fontSize: '11px',
@@ -130,7 +130,7 @@ function EventoCalendario({ event }: { event: CalendarEvent }) {
         {Icon && <Icon size={10} style={{ color: 'rgba(255,255,255,0.94)', flexShrink: 0 }} />}
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minHeight: '14px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minHeight: '16px', paddingTop: '1px' }}>
         {isConfirmed ? (
           <CheckCircle2 size={11} style={{ color: 'rgba(255,255,255,0.98)', flexShrink: 0 }} />
         ) : (
@@ -139,7 +139,7 @@ function EventoCalendario({ event }: { event: CalendarEvent }) {
         {isPaid ? (
           <CircleDollarSign size={11} style={{ color: 'rgba(255,255,255,0.98)', flexShrink: 0 }} />
         ) : (
-          <Wallet size={11} style={{ color: 'rgba(255,242,235,0.92)', flexShrink: 0 }} />
+          <BadgeDollarSign size={11} style={{ color: 'rgba(255,242,235,0.92)', flexShrink: 0 }} />
         )}
         {needsAction && (
           <span
@@ -307,7 +307,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
         borderRadius: '10px',
         border: '1px solid rgba(255,250,248,0.18)',
         color: '#fffaf8',
-        padding: '5px 8px 4px',
+        padding: '4px 8px 6px',
         boxShadow: isSoftPast
           ? '0 3px 10px rgba(60,50,70,0.10)'
           : '0 6px 18px rgba(60,50,70,0.16)',
