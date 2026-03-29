@@ -227,9 +227,22 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
           <div>
             <SectionHeader label="Detalle de cita" className="mb-2" />
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="editorial-title text-[1.4rem]" style={{ color: 'var(--ink-cool-strong)' }}>
-                {appointment.patient?.nombre} {appointment.patient?.apellido}
-              </h2>
+              {appointment.patient_id ? (
+                <button
+                  type="button"
+                  onClick={() => router.push(`/pacientes/${appointment.patient_id}`)}
+                  className="editorial-title text-[1.4rem] transition-opacity"
+                  style={{ color: 'var(--ink-cool-strong)', cursor: 'pointer' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.78' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+                >
+                  {appointment.patient?.nombre} {appointment.patient?.apellido}
+                </button>
+              ) : (
+                <h2 className="editorial-title text-[1.4rem]" style={{ color: 'var(--ink-cool-strong)' }}>
+                  {appointment.patient?.nombre} {appointment.patient?.apellido}
+                </h2>
+              )}
               {deudaCount !== null && deudaCount > 0 && (
                 <span
                   className="text-[11px] font-medium px-2 py-0.5 rounded-full"
