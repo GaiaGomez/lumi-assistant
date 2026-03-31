@@ -243,9 +243,11 @@ export default function ClinicalNoteEditor({
     if (!isCanvasEditorOpen) return
 
     const previousOverflow = document.body.style.overflow
+    document.body.classList.add('canvas-editor-open')
     document.body.style.overflow = 'hidden'
 
     return () => {
+      document.body.classList.remove('canvas-editor-open')
       document.body.style.overflow = previousOverflow
     }
   }, [isCanvasEditorOpen])

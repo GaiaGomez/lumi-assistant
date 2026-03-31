@@ -258,6 +258,12 @@ textarea {
   text-transform: uppercase;
 }
 
+body.canvas-editor-open .dashboard-shell-nav,
+body.canvas-editor-open .dashboard-shell-sidebar {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;

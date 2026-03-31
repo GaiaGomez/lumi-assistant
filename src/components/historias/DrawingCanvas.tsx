@@ -137,14 +137,14 @@ export default function DrawingCanvas({
   return (
     <div className="space-y-3.5">
       <div
-        className="rounded-[22px] p-3"
+        className="rounded-[22px] p-2.5"
         style={{
           background: 'linear-gradient(180deg, rgba(255,255,255,0.58) 0%, rgba(255,255,255,0.34) 100%)',
           border: '1px solid rgba(255,255,255,0.42)',
           boxShadow: '0 14px 36px rgba(124, 108, 128, 0.08)',
         }}
       >
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 lg:flex-nowrap">
           {[
             { id: 'pen', label: 'Lapiz', icon: Pen },
             { id: 'highlighter', label: 'Marcador', icon: Highlighter },
@@ -158,7 +158,7 @@ export default function DrawingCanvas({
                 key={item.id}
                 type="button"
                 onClick={() => handleToolChange(item.id as DrawingTool)}
-                className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm"
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm whitespace-nowrap shrink-0"
                 style={active ? {
                   background: 'rgba(255,255,255,0.88)',
                   color: 'var(--ink-cool-strong)',
@@ -176,91 +176,80 @@ export default function DrawingCanvas({
             )
           })}
 
+          <div className="flex flex-wrap items-center gap-1.5">
+            {COLOR_OPTIONS.map((option) => {
+              const active = strokeColor === option.value
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setStrokeColor(option.value)}
+                  className="h-8 w-8 rounded-full shrink-0"
+                  style={{
+                    background: option.value,
+                    border: active ? '2px solid rgba(255,255,255,0.92)' : '1px solid rgba(255,255,255,0.42)',
+                    boxShadow: active ? '0 0 0 2px rgba(120, 106, 130, 0.24)' : 'none',
+                  }}
+                  aria-label={`Usar ${option.label}`}
+                />
+              )
+            })}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {STROKE_OPTIONS.map((width) => (
+              <button
+                key={width}
+                type="button"
+                onClick={() => setStrokeWidth(width)}
+                className="flex h-8 min-w-8 items-center justify-center rounded-full px-2 shrink-0"
+                style={strokeWidth === width ? {
+                  background: 'rgba(255,255,255,0.88)',
+                  border: '1px solid rgba(255,255,255,0.64)',
+                  color: 'var(--ink-cool-strong)',
+                } : {
+                  background: 'rgba(255,255,255,0.24)',
+                  border: '1px solid rgba(255,255,255,0.24)',
+                  color: 'var(--ink-cool-soft)',
+                }}
+                aria-label={`Grosor ${width}`}
+              >
+                <span
+                  className="rounded-full"
+                  style={{ width: width * 2 + 1, height: width * 2 + 1, background: 'currentColor' }}
+                />
+              </button>
+            ))}
+          </div>
+
           <div className="ml-auto flex flex-wrap items-center gap-1.5">
             <button
               type="button"
               onClick={handleUndo}
-              className="flex h-9 w-9 items-center justify-center rounded-full"
+              className="flex h-8 w-8 items-center justify-center rounded-full shrink-0"
               style={{ background: 'rgba(255,255,255,0.32)', color: 'var(--ink-cool-soft)' }}
               aria-label="Deshacer"
             >
-              <Undo2 size={16} />
+              <Undo2 size={15} />
             </button>
             <button
               type="button"
               onClick={handleRedo}
-              className="flex h-9 w-9 items-center justify-center rounded-full"
+              className="flex h-8 w-8 items-center justify-center rounded-full shrink-0"
               style={{ background: 'rgba(255,255,255,0.32)', color: 'var(--ink-cool-soft)' }}
               aria-label="Rehacer"
             >
-              <Redo2 size={16} />
+              <Redo2 size={15} />
             </button>
             <button
               type="button"
               onClick={handleClear}
-              className="flex h-9 w-9 items-center justify-center rounded-full"
+              className="flex h-8 w-8 items-center justify-center rounded-full shrink-0"
               style={{ background: 'rgba(255,255,255,0.32)', color: 'var(--state-cancel-text)' }}
-              aria-label="Limpiar trazos"
+              aria-label="Eliminar dibujo"
             >
-              <Trash2 size={16} />
+              <Trash2 size={15} />
             </button>
-          </div>
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
-              Tinta
-            </span>
-            <div className="flex items-center gap-1.5">
-              {COLOR_OPTIONS.map((option) => {
-                const active = strokeColor === option.value
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setStrokeColor(option.value)}
-                    className="h-7 w-7 rounded-full"
-                    style={{
-                      background: option.value,
-                      border: active ? '2px solid rgba(255,255,255,0.92)' : '1px solid rgba(255,255,255,0.42)',
-                      boxShadow: active ? '0 0 0 2px rgba(120, 106, 130, 0.24)' : 'none',
-                    }}
-                    aria-label={`Usar ${option.label}`}
-                  />
-                )
-              })}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
-              Grosor
-            </span>
-            <div className="flex items-center gap-1.5">
-              {STROKE_OPTIONS.map((width) => (
-                <button
-                  key={width}
-                  type="button"
-                  onClick={() => setStrokeWidth(width)}
-                  className="flex h-8 min-w-8 items-center justify-center rounded-full px-2"
-                  style={strokeWidth === width ? {
-                    background: 'rgba(255,255,255,0.88)',
-                    border: '1px solid rgba(255,255,255,0.64)',
-                    color: 'var(--ink-cool-strong)',
-                  } : {
-                    background: 'rgba(255,255,255,0.24)',
-                    border: '1px solid rgba(255,255,255,0.24)',
-                    color: 'var(--ink-cool-soft)',
-                  }}
-                >
-                  <span
-                    className="rounded-full"
-                    style={{ width: width * 2 + 1, height: width * 2 + 1, background: 'currentColor' }}
-                  />
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       </div>
