@@ -135,9 +135,8 @@ export default function PatientTopMosaic({
 
   const nextAppointmentText = nextAppointment ? formatAppointmentDate(nextAppointment.fecha_inicio) : null
   const lastPastAppointmentText = lastPastAppointment ? formatAppointmentDate(lastPastAppointment.fecha_inicio) : null
-  const hasBookingUrl = !!settings['doctoralia_url']?.trim()
   const showRetomarAction = !nextAppointment && !!lastPastAppointment && daysInactive !== null && daysInactive > REACTIVATION_INACTIVITY_DAYS
-  const showSinProximaAction = !nextAppointment && !!lastPastAppointment && hasBookingUrl
+  const showSinProximaAction = !nextAppointment && !!lastPastAppointment
 
   const actionCards = [
     oldestPendingPayment && paymentHref ? {
