@@ -1,7 +1,7 @@
 // ============================================================
 // APPOINTMENTS — lógica de dominio sobre citas
 // Centraliza los cálculos derivados que estaban duplicados en
-// pacientes/[id]/page.tsx, whatsapp/page.tsx y agenda/page.tsx
+// pacientes/[id]/page.tsx, pendientes y agenda/page.tsx
 // ============================================================
 
 import type { Appointment } from '@/types'

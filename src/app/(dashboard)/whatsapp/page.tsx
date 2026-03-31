@@ -1,4 +1,6 @@
 export const dynamic = 'force-dynamic'
+// Ruta legacy: el producto hoy la presenta como "Pendientes".
+// La mantenemos por compatibilidad mientras no hagamos un rename de URLs.
 
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
