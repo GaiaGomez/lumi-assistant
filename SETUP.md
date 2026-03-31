@@ -1,88 +1,124 @@
-# Lu Assistant — Guía de Setup
+# Lumi / lu-assistant — Setup real
 
-## Paso 1: Crear el proyecto en Supabase
+Guía corta para levantar el proyecto con el estado actual del repo.
 
-1. Ve a [supabase.com](https://supabase.com) y crea un proyecto nuevo
-2. Nombre: `lu-assistant` | Región: `South America (São Paulo)` — la más cercana a Colombia
-3. Espera que termine de inicializar (~2 minutos)
-4. Ve a **SQL Editor** y pega el contenido de `src/lib/supabase/schema.sql`
-5. Ejecuta el script (botón Run)
-
-## Paso 2: Conseguir las credenciales de Supabase
-
-Ve a tu proyecto → **Settings → API**:
-- `NEXT_PUBLIC_SUPABASE_URL` → Project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` → Project API keys → anon / public
-- `SUPABASE_SERVICE_ROLE_KEY` → Project API keys → service_role (para los cron jobs)
-
-## Paso 3: Configurar .env.local
-
-Abre el archivo `.env.local` en la raíz del proyecto y rellena:
-```
-NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
-CRON_SECRET=una-clave-larga-que-inventes
-```
-
-## Paso 4: Crear el usuario de Lu en Supabase Auth
-
-1. Supabase → **Authentication → Users → Add user**
-2. Email: el email de Lu
-3. Password: una contraseña segura
-4. ¡Guárdalos en un lugar seguro para dárselos a Lu!
-
-## Paso 5: Agregar los íconos PWA
-
-Crea dos imágenes en `public/icons/`:
-- `icon-192.png` (192×192px) — puede ser el logo de Lu Assistant
-- `icon-512.png` (512×512px) — mismo logo más grande
-
-## Paso 6: Correr en local para probar
+## 1. Instalar dependencias
 
 ```bash
-cd lu-assistant
+npm install
+```
+
+## 2. Configurar variables de entorno
+
+Copia el archivo de ejemplo:
+
+```bash
+cp .env.example .env.local
+```
+
+Completa estas variables:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+CRON_SECRET=
+NEXT_PUBLIC_DOCTORALIA_URL=
+```
+
+Qué hace cada una:
+- `NEXT_PUBLIC_SUPABASE_URL`: URL del proyecto Supabase
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: clave pública usada por SSR y client components
+- `SUPABASE_SERVICE_ROLE_KEY`: usada por el cron server-side
+- `CRON_SECRET`: token esperado por `src/app/api/cron/recordatorio/route.ts`
+- `NEXT_PUBLIC_DOCTORALIA_URL`: valor por defecto para `doctoralia_url` en settings
+
+## 3. Crear el proyecto en Supabase
+
+1. Crea un proyecto nuevo en Supabase.
+2. Ve a **SQL Editor**.
+3. Ejecuta primero:
+
+```sql
+-- src/lib/supabase/schema.sql
+```
+
+Esto crea:
+- `patients`
+- `appointments`
+- `clinical_notes`
+- `settings`
+- políticas RLS
+- bucket de storage para canvas
+
+## 4. Revisar migraciones manuales relevantes
+
+Si tu base ya existía de antes, revisa estas migraciones del repo:
+
+- `src/lib/supabase/migration_add_modalidad.sql`
+- `src/lib/supabase/migration_add_confirmada.sql`
+- `src/lib/supabase/migration_consolidate_base.sql`
+- `src/lib/supabase/migration_fix_canvas_notes_privacy.sql`
+
+Cuándo aplicarlas:
+- `migration_add_modalidad.sql`: si tu tabla `appointments` todavía no tiene `modalidad`
+- `migration_add_confirmada.sql`: si tu entorno todavía no quedó alineado con el modelo nuevo de estados
+- `migration_consolidate_base.sql`: si el entorno no tiene la tabla `settings`, `updated_at` o la unicidad nueva de `doctoralia_uid`
+- `migration_fix_canvas_notes_privacy.sql`: si necesitas alinear storage de notas clínicas con el modelo actual de privacidad
+
+Si estás levantando un proyecto completamente nuevo y `schema.sql` ya refleja el estado actual, las migraciones sirven sobre todo como referencia histórica o para entornos viejos.
+
+## 5. Crear usuario de acceso
+
+En Supabase:
+
+1. Ve a **Authentication → Users**
+2. Crea el usuario que va a entrar a Lumi
+3. Usa ese email/contraseña en `/login`
+
+## 6. Ejecutar en local
+
+```bash
 npm run dev
 ```
 
-Abre `http://localhost:3000` y prueba con las credenciales de Lu.
+Luego abre:
 
-## Paso 7: Deploy en Vercel
-
-```bash
-npx vercel
+```text
+http://localhost:3000
 ```
 
-Cuando te pida las variables de entorno, las agregas también en:
-Vercel Dashboard → tu proyecto → **Settings → Environment Variables**
+## 7. Validaciones útiles
 
-Agrega las mismas 4 variables del `.env.local`.
+Antes de desplegar:
 
-## Paso 8: Configurar URL del iCal de Doctoralia
+```bash
+./node_modules/.bin/tsc --noEmit
+npm run lint
+npm run build
+```
 
-En Doctoralia:
-1. Inicia sesión como Lu
-2. Ve a **Calendario → Sincronizar → Exportar iCal**
-3. Copia la URL del feed
-4. Agrégala como variable de entorno: `DOCTORALIA_ICAL_URL=https://...`
+Nota:
+- el build puede depender de acceso a internet por `next/font` y la fuente Geist
 
-## Paso 9: Instalar en el iPad de Lu
+## 8. Seed de demo
 
-1. Abre Safari en el iPad
-2. Ve a la URL de Vercel (ej: `lu-assistant.vercel.app`)
-3. Toca el botón de compartir (cuadrado con flecha)
-4. Selecciona **"Agregar a pantalla de inicio"**
-5. ¡Lu ya tiene la app instalada como una app nativa!
+Si necesitas datos demo para probar agenda y paciente:
 
----
+- revisa `src/lib/supabase/seed_demo.sql`
+- usa `src/lib/supabase/cleanup_old_data.sql` para limpiar datos viejos del demo antes de volver a sembrar
 
-## Stack técnico
+## 9. Qué hace hoy cada área principal
 
-- **Next.js 14** (App Router) — framework full stack
-- **TypeScript** — tipado estático
-- **Tailwind CSS** — estilos
-- **Supabase** — base de datos PostgreSQL + autenticación + storage
-- **react-big-calendar** — calendario interactivo
-- **react-sketch-canvas** — canvas con Apple Pencil
-- **ical.js** — parser del feed iCal de Doctoralia
-- **Vercel** — deploy + cron jobs
+- `/agenda`: calendario, creación y edición de citas
+- `/whatsapp`: bandeja de pendientes reales del sistema
+- `/pacientes`: listado y perfil de pacientes
+- `/configuracion`: plantillas de WhatsApp y sesión
+- `/historias`: hoy redirige a pacientes; las notas se crean desde el perfil del paciente
+
+## 10. Cosas que esta guía no asume
+
+No estoy documentando como ya implementado:
+- sync automático de Doctoralia/iCal
+- envíos automáticos reales por cron
+- variables de entorno para iCal que no aparecen usadas hoy en el código

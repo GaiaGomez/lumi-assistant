@@ -1,36 +1,125 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lumi / lu-assistant
 
-## Getting Started
+Suite clínica privada para gestionar agenda, pacientes, notas clínicas, pagos pendientes y seguimiento por WhatsApp.
 
-First, run the development server:
+Hoy el proyecto ya cubre estos flujos reales:
+- agenda con calendario y modal de cita
+- creación, edición, reagendado y eliminación de citas
+- pantalla de pendientes con acciones operativas reales
+- perfil de paciente con historial, notas y actualización rápida de estados
+- configuración de plantillas de WhatsApp y link de agenda
+- notas clínicas con texto y canvas
+
+## Stack actual
+
+- Next.js 16.2.1
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- Supabase SSR + Supabase JS
+- react-big-calendar
+- react-sketch-canvas
+- ical.js
+
+## Scripts
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
+npm run start
+npm run lint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Estructura principal
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+src/app
+  (dashboard)/agenda
+  (dashboard)/pacientes
+  (dashboard)/whatsapp
+  (dashboard)/configuracion
+  (dashboard)/historias
+  login
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+src/components
+  agenda
+  appointments
+  pacientes
+  historias
+  configuracion
+  ui
 
-## Learn More
+src/lib
+  appointments.ts
+  appointment-status.ts
+  appointment-ui.ts
+  appointment-updates.ts
+  pending-actions.ts
+  settings.ts
+  whatsapp.ts
+  supabase/
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Variables de entorno
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Copia `.env.example` a `.env.local` y completa los valores reales:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+cp .env.example .env.local
+```
 
-## Deploy on Vercel
+Variables usadas hoy por el código:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `CRON_SECRET`
+- `NEXT_PUBLIC_DOCTORALIA_URL`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Cómo corre la app
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/proxy.ts` protege todas las rutas privadas y redirige a `/login` si no hay sesión.
+- Las páginas del dashboard usan Supabase server-side para leer datos.
+- Las mutaciones rápidas viven en client components y persisten en Supabase.
+- La navegación visible del producto hoy es:
+  - `/agenda`
+  - `/pacientes`
+  - `/whatsapp` (UI: Pendientes)
+  - `/configuracion`
+
+## Base de datos y SQL
+
+Los archivos relevantes están en [`src/lib/supabase`](/Users/gaiagomez/Documents/Claude/Projects/Dev/lu-assistant/src/lib/supabase):
+
+- `schema.sql`
+- `migration_add_modalidad.sql`
+- `migration_add_confirmada.sql`
+- `migration_consolidate_base.sql`
+- `migration_fix_canvas_notes_privacy.sql`
+- `seed_demo.sql`
+- `cleanup_old_data.sql`
+
+`schema.sql` representa la base esperada para una instalación nueva.  
+Si tu proyecto Supabase ya existía antes de las últimas fases, revisa también las migraciones manuales para dejarlo alineado.
+
+## Estado actual del producto
+
+Lo que está operativo hoy:
+- agenda con filtros, cards visuales y estados
+- modal de cita con reagendado y validación de conflicto
+- pendientes como lista de acciones reales
+- perfil del paciente con quick actions sobre citas/pagos
+- ajustes de mensajes de WhatsApp
+
+Lo que todavía no está cerrado como integración completa:
+- sincronización automática con Doctoralia / iCal
+- automatización real de envíos desde cron
+
+## Notas útiles
+
+- `src/app/(dashboard)/historias/page.tsx` redirige a pacientes; no es una bandeja independiente.
+- El cron actual en `src/app/api/cron/recordatorio/route.ts` lista citas para debug y verificación; no hace envíos automáticos.
+- El proyecto usa `next/font` con Geist en `src/app/layout.tsx`. En entornos sin salida a internet, el build puede fallar al descargar la fuente.
+
+## Siguiente paso recomendado
+
+Si vas a levantar el proyecto desde cero, sigue [`SETUP.md`](/Users/gaiagomez/Documents/Claude/Projects/Dev/lu-assistant/SETUP.md).
