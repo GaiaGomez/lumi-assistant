@@ -3,6 +3,9 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 const CLINICAL_NOTES_BUCKET = 'canvas-notes'
 const CLINICAL_NOTE_SIGNED_URL_TTL_SECONDS = 3600
 
+// Compatibilidad:
+// - registros nuevos guardan solo el path privado del archivo
+// - registros legacy pueden seguir teniendo una URL pública completa
 export function extractCanvasPath(canvasUrl: string): string {
   const marker = '/canvas-notes/'
   const index = canvasUrl.indexOf(marker)

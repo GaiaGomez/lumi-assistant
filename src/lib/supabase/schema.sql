@@ -120,6 +120,8 @@ create policy "settings: solo el dueño puede borrar" on settings for delete usi
 
 -- ============================================================
 -- STORAGE BUCKET — para guardar las imágenes del canvas
+-- Regla actual: bucket privado, sin lectura pública.
+-- La app guarda solo el path y lee con signed URLs temporales.
 -- ============================================================
 
 insert into storage.buckets (id, name, public)
