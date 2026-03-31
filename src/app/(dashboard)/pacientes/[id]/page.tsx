@@ -6,8 +6,7 @@ export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
-import Link from 'next/link'
-import { formatDateTimeFull, formatDateOnly } from '@/lib/format'
+import { formatDateTimeFull } from '@/lib/format'
 import {
   APPOINTMENT_SESSION_LABEL,
   getAppointmentSessionBadgeStatus,
@@ -30,6 +29,7 @@ import PatientCaseNotesCard from '@/components/pacientes/PatientCaseNotesCard'
 import PatientHeaderCard from '@/components/pacientes/PatientHeaderCard'
 import PatientTopMosaic from '@/components/pacientes/PatientTopMosaic'
 import AppointmentQuickStateEditor from '@/components/appointments/AppointmentQuickStateEditor'
+import ClinicalNoteSummaryCard from '@/components/historias/ClinicalNoteSummaryCard'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -52,7 +52,7 @@ export default async function PatientProfilePage({ params }: Props) {
       .order('fecha_inicio', { ascending: false }),
     supabase
       .from('clinical_notes')
-      .select('id, patient_id, appointment_id, user_id, texto, canvas_url, created_at, updated_at')
+      .select('id, patient_id, appointment_id, user_id, texto, canvas_url, canvas_paths, template_kind, template_data, created_at, updated_at')
       .eq('patient_id', id)
       .order('created_at', { ascending: false }),
   ])
@@ -100,24 +100,7 @@ export default async function PatientProfilePage({ params }: Props) {
           <div className="space-y-2">
             {patientNotes.length === 0 && <EmptyState message="No hay notas clínicas aún" />}
             {patientNotes.map((note) => (
-              <Link
-                key={note.id}
-                href={`/historias/${note.id}`}
-                className="block rounded-[14px] p-[10px] transition-all hover:translate-y-[-1px]"
-                style={{
-                  minHeight: '52px',
-                  background: 'rgba(255,255,255,0.30)',
-                  border: '1px solid var(--border-glass-white)',
-                  boxShadow: '0 8px 28px rgba(124, 108, 128, 0.08)',
-                }}
-              >
-                <p className="mb-0.5 text-[11px] capitalize tracking-[0.03em]" style={{ color: 'var(--ink-cool-faint)' }}>
-                  {formatDateOnly(note.created_at)}
-                </p>
-                <p className="line-clamp-2 text-[12px] leading-5" style={{ color: 'var(--ink-cool)' }}>
-                  {note.canvas_url ? 'Nota manuscrita' : 'Nota de sesión'}
-                </p>
-              </Link>
+              <ClinicalNoteSummaryCard key={note.id} note={note} />
             ))}
           </div>
         </section>

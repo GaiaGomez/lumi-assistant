@@ -18,6 +18,32 @@ export interface Patient {
 
 export type AppointmentModalidad = 'online' | 'medellin' | 'retiro'
 
+export type ClinicalNoteTemplateKind = 'dap'
+export type ClinicalNoteRiskLevel = 'sin-riesgo-agudo' | 'monitoreo' | 'atencion-prioritaria'
+
+export interface ClinicalNoteTemplateData {
+  format: ClinicalNoteTemplateKind
+  focus: string
+  riskLevel: ClinicalNoteRiskLevel | null
+  data: string
+  assessment: string
+  plan: string
+}
+
+export interface ClinicalCanvasPoint {
+  x: number
+  y: number
+}
+
+export interface ClinicalCanvasPath {
+  drawMode: boolean
+  strokeColor: string
+  strokeWidth: number
+  paths: ClinicalCanvasPoint[]
+  startTimestamp?: number
+  endTimestamp?: number
+}
+
 export interface Appointment {
   id: string
   patient_id: string | null
@@ -46,6 +72,9 @@ export interface ClinicalNote {
   user_id: string
   texto: string | null           // notas escritas con teclado
   canvas_url: string | null      // path privado del canvas en Storage (o URL legacy)
+  canvas_paths: ClinicalCanvasPath[] | null
+  template_kind: ClinicalNoteTemplateKind | null
+  template_data: ClinicalNoteTemplateData | null
   created_at: string
   updated_at: string
   // Relaciones expandidas

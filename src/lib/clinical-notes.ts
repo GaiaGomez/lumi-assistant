@@ -1,4 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { ClinicalCanvasPath, ClinicalNoteTemplateData } from '@/types'
+import { CLINICAL_NOTE_TEMPLATE_KIND, serializeClinicalNoteTemplateData } from '@/lib/clinical-note-template'
 
 const CLINICAL_NOTES_BUCKET = 'canvas-notes'
 const CLINICAL_NOTE_SIGNED_URL_TTL_SECONDS = 3600
@@ -16,17 +18,21 @@ export function extractCanvasPath(canvasUrl: string): string {
 export async function uploadClinicalNoteCanvas(
   supabase: SupabaseClient,
   userId: string,
-  canvasDataUrl: string
+  canvasDataUrl: string,
+  fileName?: string
 ): Promise<string | null> {
   if (!canvasDataUrl) return null
 
   const response = await fetch(canvasDataUrl)
   const blob = await response.blob()
-  const fileName = `${userId}/${Date.now()}.png`
+  const storagePath = fileName ?? `${userId}/${Date.now()}.png`
 
   const { data, error } = await supabase.storage
     .from(CLINICAL_NOTES_BUCKET)
-    .upload(fileName, blob, { contentType: 'image/png' })
+    .upload(storagePath, blob, {
+      contentType: 'image/png',
+      upsert: true,
+    })
 
   if (error) {
     throw new Error(`No se pudo subir la nota manuscrita: ${error.message}`)
@@ -42,16 +48,49 @@ export async function createClinicalNote(
     userId: string
     texto: string
     canvasPath: string | null
+    canvasPaths?: ClinicalCanvasPath[] | null
+    templateData?: ClinicalNoteTemplateData | null
     appointmentId?: string | null
   }
 ) {
+  const templateData = serializeClinicalNoteTemplateData(input.templateData)
+
   return supabase.from('clinical_notes').insert({
     patient_id: input.patientId,
     appointment_id: input.appointmentId ?? null,
     user_id: input.userId,
     texto: input.texto.trim() || null,
     canvas_url: input.canvasPath,
+    canvas_paths: input.canvasPaths ?? null,
+    template_kind: templateData ? CLINICAL_NOTE_TEMPLATE_KIND : null,
+    template_data: templateData,
   })
+}
+
+export async function updateClinicalNote(
+  supabase: SupabaseClient,
+  input: {
+    id: string
+    appointmentId?: string | null
+    texto: string
+    canvasPath: string | null
+    canvasPaths?: ClinicalCanvasPath[] | null
+    templateData?: ClinicalNoteTemplateData | null
+  }
+) {
+  const templateData = serializeClinicalNoteTemplateData(input.templateData)
+
+  return supabase
+    .from('clinical_notes')
+    .update({
+      appointment_id: input.appointmentId ?? null,
+      texto: input.texto.trim() || null,
+      canvas_url: input.canvasPath,
+      canvas_paths: input.canvasPaths ?? null,
+      template_kind: templateData ? CLINICAL_NOTE_TEMPLATE_KIND : null,
+      template_data: templateData,
+    })
+    .eq('id', input.id)
 }
 
 export async function createClinicalNoteCanvasSignedUrl(
@@ -64,4 +103,21 @@ export async function createClinicalNoteCanvasSignedUrl(
     .createSignedUrl(path, CLINICAL_NOTE_SIGNED_URL_TTL_SECONDS)
 
   return data?.signedUrl ?? null
+}
+
+export async function deleteClinicalNoteCanvas(
+  supabase: SupabaseClient,
+  canvasUrl: string | null | undefined
+) {
+  if (!canvasUrl) return
+
+  const path = extractCanvasPath(canvasUrl)
+  await supabase.storage.from(CLINICAL_NOTES_BUCKET).remove([path])
+}
+
+export async function deleteClinicalNoteById(
+  supabase: SupabaseClient,
+  noteId: string
+) {
+  return supabase.from('clinical_notes').delete().eq('id', noteId)
 }

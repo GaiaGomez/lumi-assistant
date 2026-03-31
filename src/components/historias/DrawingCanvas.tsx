@@ -1,158 +1,383 @@
 'use client'
-// ============================================================
-// DRAWING CANVAS — canvas de escritura con Apple Pencil
-// react-sketch-canvas: maneja automáticamente eventos de stylus en iPad
-// Detecta presión y ángulo del Pencil via Pointer Events API
-// ============================================================
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { CanvasPath } from 'react-sketch-canvas'
 import { ReactSketchCanvas, ReactSketchCanvasRef } from 'react-sketch-canvas'
-import { Trash2, Undo2, Pen, Eraser } from 'lucide-react'
+import {
+  Eraser,
+  Grid3X3,
+  Highlighter,
+  Pen,
+  Plus,
+  Redo2,
+  Rows3,
+  Trash2,
+  Undo2,
+} from 'lucide-react'
+import type { ClinicalCanvasPath } from '@/types'
+
+type DrawingTool = 'pen' | 'highlighter' | 'eraser'
+type GuideStyle = 'none' | 'lines' | 'grid'
 
 interface DrawingCanvasProps {
-  // onChange se llama cada vez que Lu termina un trazo
-  // recibe la imagen en base64 para que el padre pueda guardarla
-  onChange: (dataUrl: string) => void
+  onChange: (snapshot: { dataUrl: string; paths: ClinicalCanvasPath[] }) => void
+  initialPaths?: ClinicalCanvasPath[] | null
+  backgroundImage?: string | null
+  initialHeight?: number
 }
 
-export default function DrawingCanvas({ onChange }: DrawingCanvasProps) {
-  // useRef: acceso directo al DOM del canvas para llamar métodos como undo(), clearCanvas()
+const COLOR_OPTIONS = [
+  { label: 'Cafe', value: '#3D2E22' },
+  { label: 'Taupe', value: '#7B685F' },
+  { label: 'Rosado', value: '#B98F95' },
+  { label: 'Lavanda', value: '#9081A4' },
+]
+
+const STROKE_OPTIONS = [2, 4, 7, 10]
+const HEIGHT_OPTIONS = [420, 640, 920]
+
+const GUIDE_BACKGROUND: Record<GuideStyle, string> = {
+  none: 'transparent',
+  lines: 'repeating-linear-gradient(to bottom, rgba(154, 141, 149, 0.18) 0, rgba(154, 141, 149, 0.18) 1px, transparent 1px, transparent 38px)',
+  grid: 'linear-gradient(rgba(154, 141, 149, 0.14) 1px, transparent 1px), linear-gradient(90deg, rgba(154, 141, 149, 0.14) 1px, transparent 1px)',
+}
+
+function castPaths(paths: CanvasPath[]): ClinicalCanvasPath[] {
+  return paths as ClinicalCanvasPath[]
+}
+
+export default function DrawingCanvas({
+  onChange,
+  initialPaths,
+  backgroundImage,
+  initialHeight = 640,
+}: DrawingCanvasProps) {
   const canvasRef = useRef<ReactSketchCanvasRef>(null)
-  const [tool, setTool] = useState<'pen' | 'eraser'>('pen')
-  const [strokeWidth, setStrokeWidth] = useState(3)
+  const currentPathsRef = useRef<ClinicalCanvasPath[]>(initialPaths ?? [])
 
-  // Se ejecuta cuando termina cada trazo — exporta el canvas como base64 PNG
-  async function handleStrokeEnd() {
-    const dataUrl = await canvasRef.current?.exportImage('png')
-    if (dataUrl) onChange(dataUrl)
+  const [tool, setTool] = useState<DrawingTool>('pen')
+  const [strokeWidth, setStrokeWidth] = useState(4)
+  const [strokeColor, setStrokeColor] = useState(COLOR_OPTIONS[0].value)
+  const [guideStyle, setGuideStyle] = useState<GuideStyle>('lines')
+  const [canvasHeight, setCanvasHeight] = useState(initialHeight)
+  const [strokeCount, setStrokeCount] = useState<number | null>(null)
+
+  useEffect(() => {
+    canvasRef.current?.eraseMode(tool === 'eraser')
+  }, [tool])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    canvas.resetCanvas()
+    if (initialPaths && initialPaths.length > 0) {
+      canvas.loadPaths(initialPaths as CanvasPath[])
+      currentPathsRef.current = initialPaths
+      return
+    }
+
+    currentPathsRef.current = []
+  }, [backgroundImage, initialPaths])
+
+  async function emitSnapshot() {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const paths = castPaths(await canvas.exportPaths())
+    currentPathsRef.current = paths
+    setStrokeCount(paths.length)
+
+    const dataUrl = paths.length > 0 ? await canvas.exportImage('png') : ''
+    onChange({
+      dataUrl: dataUrl ?? '',
+      paths,
+    })
   }
 
-  function handleUndo() {
+  function handleToolChange(nextTool: DrawingTool) {
+    setTool(nextTool)
+  }
+
+  async function handleUndo() {
     canvasRef.current?.undo()
-    handleStrokeEnd()  // re-exportamos después de deshacer
+    await emitSnapshot()
   }
 
-  function handleClear() {
-    canvasRef.current?.clearCanvas()
-    onChange('')  // canvas vacío
+  async function handleRedo() {
+    canvasRef.current?.redo()
+    await emitSnapshot()
   }
+
+  async function handleClear() {
+    canvasRef.current?.clearCanvas()
+    currentPathsRef.current = []
+    setStrokeCount(0)
+    onChange({ dataUrl: '', paths: [] })
+  }
+
+  const visibleStrokeCount = strokeCount ?? initialPaths?.length ?? 0
 
   return (
-    <div className="space-y-3">
-
-      {/* ── Barra de herramientas — glass neutro ── */}
+    <div className="space-y-3.5">
       <div
-        className="flex items-center gap-2 rounded-xl p-2"
-        style={{ background: 'rgba(235,232,240,0.60)' }}
+        className="rounded-[22px] p-3"
+        style={{
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.58) 0%, rgba(255,255,255,0.34) 100%)',
+          border: '1px solid rgba(255,255,255,0.42)',
+          boxShadow: '0 14px 36px rgba(124, 108, 128, 0.08)',
+        }}
       >
-        {/* Lápiz */}
-        <button
-          onClick={() => setTool('pen')}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all"
-          style={tool === 'pen' ? {
-            background: 'rgba(255,255,255,0.85)',
-            color: '#444444',
-            boxShadow: '0 1px 6px rgba(120,110,130,0.12)',
-          } : {
-            color: '#AAAAAA',
-          }}
-        >
-          <Pen size={16} />
-          Lápiz
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {[
+            { id: 'pen', label: 'Lapiz', icon: Pen },
+            { id: 'highlighter', label: 'Marcador', icon: Highlighter },
+            { id: 'eraser', label: 'Borrador', icon: Eraser },
+          ].map((item) => {
+            const Icon = item.icon
+            const active = tool === item.id
 
-        {/* Borrador */}
-        <button
-          onClick={() => setTool('eraser')}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all"
-          style={tool === 'eraser' ? {
-            background: 'rgba(255,255,255,0.85)',
-            color: '#444444',
-            boxShadow: '0 1px 6px rgba(120,110,130,0.12)',
-          } : {
-            color: '#AAAAAA',
-          }}
-        >
-          <Eraser size={16} />
-          Borrador
-        </button>
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleToolChange(item.id as DrawingTool)}
+                className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm"
+                style={active ? {
+                  background: 'rgba(255,255,255,0.88)',
+                  color: 'var(--ink-cool-strong)',
+                  border: '1px solid rgba(255,255,255,0.62)',
+                  boxShadow: '0 10px 22px rgba(124, 108, 128, 0.10)',
+                } : {
+                  background: 'rgba(255,255,255,0.22)',
+                  color: 'var(--ink-cool-soft)',
+                  border: '1px solid rgba(255,255,255,0.24)',
+                }}
+              >
+                <Icon size={15} />
+                {item.label}
+              </button>
+            )
+          })}
 
-        {/* Grosor del trazo */}
-        <div className="flex items-center gap-2 ml-2">
-          <span className="text-xs" style={{ color: '#AAAAAA' }}>Grosor:</span>
-          {[2, 4, 8].map((w) => (
+          <div className="ml-auto flex flex-wrap items-center gap-1.5">
             <button
-              key={w}
-              onClick={() => setStrokeWidth(w)}
-              className="w-6 h-6 rounded-full flex items-center justify-center transition-all"
-              style={strokeWidth === w ? {
-                background: 'rgba(150,140,165,0.18)',
-                outline: '2px solid #B0A0BC',
-                outlineOffset: '1px',
-              } : {
-                background: 'rgba(180,175,190,0.20)',
-              }}
+              type="button"
+              onClick={handleUndo}
+              className="flex h-9 w-9 items-center justify-center rounded-full"
+              style={{ background: 'rgba(255,255,255,0.32)', color: 'var(--ink-cool-soft)' }}
+              aria-label="Deshacer"
             >
-              {/* Punto visual que escala con el grosor */}
-              <span
-                className="rounded-full"
-                style={{ width: w * 1.5, height: w * 1.5, background: '#666666' }}
-              />
+              <Undo2 size={16} />
             </button>
-          ))}
+            <button
+              type="button"
+              onClick={handleRedo}
+              className="flex h-9 w-9 items-center justify-center rounded-full"
+              style={{ background: 'rgba(255,255,255,0.32)', color: 'var(--ink-cool-soft)' }}
+              aria-label="Rehacer"
+            >
+              <Redo2 size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={handleClear}
+              className="flex h-9 w-9 items-center justify-center rounded-full"
+              style={{ background: 'rgba(255,255,255,0.32)', color: 'var(--state-cancel-text)' }}
+              aria-label="Limpiar trazos"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
         </div>
 
-        <div className="ml-auto flex gap-1">
-          {/* Deshacer */}
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+              Tinta
+            </span>
+            <div className="flex items-center gap-1.5">
+              {COLOR_OPTIONS.map((option) => {
+                const active = strokeColor === option.value
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setStrokeColor(option.value)}
+                    className="h-7 w-7 rounded-full"
+                    style={{
+                      background: option.value,
+                      border: active ? '2px solid rgba(255,255,255,0.92)' : '1px solid rgba(255,255,255,0.42)',
+                      boxShadow: active ? '0 0 0 2px rgba(120, 106, 130, 0.24)' : 'none',
+                    }}
+                    aria-label={`Usar ${option.label}`}
+                  />
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+              Grosor
+            </span>
+            <div className="flex items-center gap-1.5">
+              {STROKE_OPTIONS.map((width) => (
+                <button
+                  key={width}
+                  type="button"
+                  onClick={() => setStrokeWidth(width)}
+                  className="flex h-8 min-w-8 items-center justify-center rounded-full px-2"
+                  style={strokeWidth === width ? {
+                    background: 'rgba(255,255,255,0.88)',
+                    border: '1px solid rgba(255,255,255,0.64)',
+                    color: 'var(--ink-cool-strong)',
+                  } : {
+                    background: 'rgba(255,255,255,0.24)',
+                    border: '1px solid rgba(255,255,255,0.24)',
+                    color: 'var(--ink-cool-soft)',
+                  }}
+                >
+                  <span
+                    className="rounded-full"
+                    style={{ width: width + 2, height: width + 2, background: 'currentColor' }}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+              Guia
+            </span>
+            <div className="flex items-center gap-1.5">
+              {[
+                { id: 'none', label: 'Libre', icon: Pen },
+                { id: 'lines', label: 'Lineas', icon: Rows3 },
+                { id: 'grid', label: 'Cuadricula', icon: Grid3X3 },
+              ].map((option) => {
+                const Icon = option.icon
+                const active = guideStyle === option.id
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setGuideStyle(option.id as GuideStyle)}
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs"
+                    style={active ? {
+                      background: 'rgba(255,255,255,0.88)',
+                      border: '1px solid rgba(255,255,255,0.64)',
+                      color: 'var(--ink-cool-strong)',
+                    } : {
+                      background: 'rgba(255,255,255,0.24)',
+                      border: '1px solid rgba(255,255,255,0.24)',
+                      color: 'var(--ink-cool-soft)',
+                    }}
+                  >
+                    <Icon size={13} />
+                    {option.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+            Lienzo
+          </span>
+          {HEIGHT_OPTIONS.map((height) => (
+            <button
+              key={height}
+              type="button"
+              onClick={() => setCanvasHeight(height)}
+              className="rounded-full px-3 py-1.5 text-xs"
+              style={canvasHeight === height ? {
+                background: 'rgba(255,255,255,0.88)',
+                border: '1px solid rgba(255,255,255,0.64)',
+                color: 'var(--ink-cool-strong)',
+              } : {
+                background: 'rgba(255,255,255,0.24)',
+                border: '1px solid rgba(255,255,255,0.24)',
+                color: 'var(--ink-cool-soft)',
+              }}
+            >
+              {height === 420 ? 'Breve' : height === 640 ? 'Amplio' : 'Extenso'}
+            </button>
+          ))}
           <button
-            onClick={handleUndo}
-            className="p-2 rounded-lg transition-all"
-            style={{ color: '#AAAAAA' }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.7)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            type="button"
+            onClick={() => setCanvasHeight((height) => height + 240)}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs"
+            style={{
+              background: 'rgba(255,255,255,0.24)',
+              border: '1px solid rgba(255,255,255,0.24)',
+              color: 'var(--ink-cool-soft)',
+            }}
           >
-            <Undo2 size={16} />
-          </button>
-          {/* Limpiar todo */}
-          <button
-            onClick={handleClear}
-            className="p-2 rounded-lg transition-all"
-            style={{ color: '#AAAAAA' }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.7)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-          >
-            <Trash2 size={16} />
+            <Plus size={13} />
+            Mas espacio
           </button>
         </div>
       </div>
 
-      {/* ── El canvas — fondo blanco cálido ── */}
-      {/* touchAction="none" — crucial para que el iPad no haga scroll mientras escribe */}
       <div
-        className="rounded-xl overflow-hidden cursor-crosshair"
+        className="relative overflow-hidden rounded-[24px]"
         style={{
+          minHeight: canvasHeight,
           touchAction: 'none',
-          boxShadow: '0 2px 16px rgba(120,110,130,0.08)',
-          overflow: 'hidden',
+          background: '#FAF7F4',
+          border: '1px solid rgba(255,255,255,0.42)',
+          boxShadow: '0 18px 42px rgba(120,110,130,0.10)',
         }}
       >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: GUIDE_BACKGROUND[guideStyle],
+            backgroundSize: guideStyle === 'grid' ? '36px 36px' : undefined,
+            opacity: guideStyle === 'none' ? 0 : 1,
+          }}
+        />
+
         <ReactSketchCanvas
           ref={canvasRef}
           width="100%"
-          height="400px"
-          strokeWidth={tool === 'eraser' ? strokeWidth * 4 : strokeWidth}
-          strokeColor={tool === 'eraser' ? '#FAF8F5' : '#3D2E22'}
+          height={`${canvasHeight}px`}
+          strokeWidth={tool === 'highlighter' ? strokeWidth + 5 : strokeWidth}
+          strokeColor={tool === 'eraser' ? '#FAF7F4' : tool === 'highlighter' ? `${strokeColor}66` : strokeColor}
           eraserWidth={strokeWidth * 4}
-          canvasColor="#FAF8F5"   // warm-white — más suave a la vista que blanco puro
-          onStroke={handleStrokeEnd}
+          canvasColor="#FAF7F4"
+          backgroundImage={backgroundImage ?? undefined}
+          exportWithBackgroundImage={Boolean(backgroundImage)}
+          preserveBackgroundImageAspectRatio="none"
+          onChange={(updatedPaths) => {
+            currentPathsRef.current = castPaths(updatedPaths)
+            setStrokeCount(updatedPaths.length)
+          }}
+          onStroke={async () => {
+            await emitSnapshot()
+          }}
           allowOnlyPointerType="all"
-          style={{ borderRadius: '10px' }}
+          style={{
+            borderRadius: '24px',
+            position: 'relative',
+            background: 'transparent',
+          }}
         />
       </div>
 
-      <p className="text-xs text-center" style={{ color: '#AAAAAA' }}>
-        Escribe con Apple Pencil • Usa el dedo para hacer scroll
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+        <p className="text-xs" style={{ color: 'var(--ink-cool-faint)' }}>
+          {visibleStrokeCount === 0 ? 'Listo para escribir con Apple Pencil o mouse.' : `${visibleStrokeCount} trazos guardados en esta nota.`}
+        </p>
+        <p className="text-xs" style={{ color: 'var(--ink-cool-muted)' }}>
+          Amplia el lienzo cuando necesites mas espacio visual.
+        </p>
+      </div>
     </div>
   )
 }

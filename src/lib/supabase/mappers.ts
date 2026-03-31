@@ -1,4 +1,8 @@
 import type { Appointment, ClinicalNote, Patient } from '@/types'
+import {
+  normalizeClinicalCanvasPaths,
+  normalizeClinicalNoteTemplateData,
+} from '@/lib/clinical-note-template'
 
 type SupabaseRow = Record<string, unknown>
 
@@ -84,6 +88,9 @@ export function mapClinicalNoteRow(row: unknown): ClinicalNote {
     user_id: expectString(record.user_id, 'clinical_note.user_id'),
     texto: optionalString(record.texto),
     canvas_url: optionalString(record.canvas_url),
+    canvas_paths: normalizeClinicalCanvasPaths(record.canvas_paths),
+    template_kind: record.template_kind === 'dap' ? 'dap' : null,
+    template_data: normalizeClinicalNoteTemplateData(record.template_data),
     created_at: expectString(record.created_at, 'clinical_note.created_at'),
     updated_at: expectString(record.updated_at, 'clinical_note.updated_at'),
     patient: optionalPatient(record.patient),

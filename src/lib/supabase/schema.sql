@@ -58,6 +58,9 @@ create table if not exists clinical_notes (
   user_id        uuid references auth.users(id) on delete cascade not null,
   texto          text,       -- notas escritas con teclado
   canvas_url     text,       -- path privado del canvas en Storage (o URL legacy hasta migrarlo)
+  canvas_paths   jsonb,      -- trazos serializados para permitir edicion real del canvas
+  template_kind  text check (template_kind in ('dap')),
+  template_data  jsonb,      -- estructura clinica de progreso (DAP)
   created_at     timestamptz default now(),
   updated_at     timestamptz default now()
 );
