@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import type React from 'react'
 import { useRouter } from 'next/navigation'
 import {
   AlertTriangle,
@@ -10,7 +9,6 @@ import {
   Clock3,
   Plus,
   Repeat2,
-  Tag,
   Type,
   UserRound,
   X,
@@ -18,7 +16,6 @@ import {
 import type {
   Appointment,
   AppointmentEventType,
-  AppointmentModalidad,
   AppointmentRecurrencePreset,
   AppointmentRecurrenceRule,
   AppointmentRecurrenceUnit,
@@ -33,7 +30,6 @@ import {
   getAppointmentScheduleError,
 } from '@/lib/appointments'
 import { createAppointments } from '@/lib/appointment-updates'
-import { APPOINTMENT_MODALIDAD_CONFIG, GENERAL_EVENT_COLOR_PRESETS } from '@/lib/appointment-ui'
 import { mapPatientRows } from '@/lib/supabase/mappers'
 import { createClient } from '@/lib/supabase/client'
 import ModalShell from '@/components/ui/ModalShell'
@@ -107,14 +103,6 @@ function formatConflictDateTime(appointment: Appointment): string {
   })} · ${formatTimeRange(start, end)}`
 }
 
-function formatDateTimeRange(start: Date, end: Date): string {
-  return `${start.toLocaleDateString('es-CO', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  })} · ${formatTimeRange(start, end)}`
-}
-
 function formatOccurrenceCount(count: number): string {
   return `${count} evento${count === 1 ? '' : 's'}`
 }
@@ -131,23 +119,18 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
 
   const [patients, setPatients] = useState<Patient[]>([])
   const [loadingPatients, setLoadingPatients] = useState(true)
-  const [eventType, setEventType] = useState<AppointmentEventType>('patient')
   const [search, setSearch] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [title, setTitle] = useState('')
-  const [category, setCategory] = useState('')
-  const [color, setColor] = useState<string | null>(null)
   const [fechaValue, setFechaValue] = useState(toDateInputValue(defaultStart))
   const [horaInicioValue, setHoraInicioValue] = useState(toTimeInputValue(defaultStart))
   const [horaFinValue, setHoraFinValue] = useState(toTimeInputValue(defaultEnd))
-  const [modalidad, setModalidad] = useState<AppointmentModalidad>('online')
   const [recurrencePreset, setRecurrencePreset] = useState<AppointmentRecurrencePreset>('none')
   const [recurrenceUntilDate, setRecurrenceUntilDate] = useState('')
   const [selectedWeekdays, setSelectedWeekdays] = useState<AppointmentWeekday[]>([getWeekdayFromDate(defaultStart)])
   const [customInterval, setCustomInterval] = useState('2')
   const [customUnit, setCustomUnit] = useState<AppointmentRecurrenceUnit>('week')
-  const [notas, setNotas] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -254,24 +237,18 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
       .find(Boolean)
   }, [appointments, occurrences])
 
+  const eventType: AppointmentEventType = selectedPatient ? 'patient' : 'general'
+
   const titleError = eventType === 'general' && !title.trim()
-    ? 'Escribe un titulo para el evento.'
+    ? 'Escribe un titulo o selecciona un paciente.'
     : null
 
-  const patientError = eventType === 'patient' && !selectedPatient
-    ? 'Selecciona un paciente.'
-    : null
-
-  const isSaveBlocked = saving || !!scheduleError || !!recurrenceError || !!conflict || !!titleError || !!patientError || occurrences.length === 0
+  const isSaveBlocked = saving || !!scheduleError || !!recurrenceError || !!conflict || !!titleError || occurrences.length === 0
 
   async function handleSave() {
     if (!startDate || !endDate || scheduleError || recurrenceError || conflict) return
-    if (eventType === 'patient' && !selectedPatient) {
-      setError('Selecciona un paciente.')
-      return
-    }
     if (eventType === 'general' && !title.trim()) {
-      setError('Escribe un titulo para el evento.')
+      setError('Escribe un titulo o selecciona un paciente.')
       return
     }
 
@@ -292,14 +269,14 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
       user_id: user.id,
       event_type: eventType,
       title: title.trim() || null,
-      category: eventType === 'general' ? category.trim() || null : null,
-      color: eventType === 'general' ? color : null,
+      category: null,
+      color: null,
       recurrence_group_id: recurrenceGroupId,
       recurrence_rule: recurrenceRule,
       fecha_inicio: occurrence.start.toISOString(),
       fecha_fin: occurrence.end.toISOString(),
-      modalidad: eventType === 'patient' ? modalidad : null,
-      notas,
+      modalidad: eventType === 'patient' ? ('online' as const) : null,
+      notas: null,
     }))
 
     const { error: insertError } = await createAppointments(supabase, payload)
@@ -330,136 +307,89 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
 
         <div className="px-5 pb-5 space-y-4">
           <div>
-            <SectionHeader label="Tipo de evento" className="mb-2" />
-            <div className="grid grid-cols-2 gap-1.5">
-              {[
-                { value: 'patient' as const, label: 'Cita con paciente' },
-                { value: 'general' as const, label: 'Evento general' },
-              ].map((option) => {
-                const active = eventType === option.value
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setEventType(option.value)}
-                    className="rounded-[14px] px-3 py-3 text-[13px] font-medium transition-all"
-                    style={active ? {
-                      background: 'rgba(200, 188, 205, 0.30)',
-                      color: 'var(--ink-cool-strong)',
-                      border: '1px solid var(--border-glass-muted)',
-                    } : inactiveToggle}
-                  >
-                    {option.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {eventType === 'patient' ? (
-            <div>
-              <SectionHeader label="Paciente" className="mb-2" />
-              {selectedPatient ? (
-                <div className="lumi-control-shell">
-                  <div className="lumi-control-field flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="lumi-control-icon" aria-hidden="true" style={{ position: 'static', transform: 'none' }}>
-                        <UserRound size={14} />
-                      </span>
-                      <span className="text-[13px] truncate" style={{ color: 'var(--ink-cool-strong)' }}>
-                        {selectedPatient.nombre} {selectedPatient.apellido}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => setSelectedPatient(null)}
-                      className="text-[11px] ml-2 shrink-0"
-                      style={{ color: 'var(--ink-cool-muted)' }}
-                    >
-                      Cambiar
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="relative">
-                  <span className="lumi-control-shell">
-                    <span className="lumi-control-icon" aria-hidden="true">
+            <SectionHeader label="Paciente (opcional)" className="mb-2" />
+            {selectedPatient ? (
+              <div className="lumi-control-shell">
+                <div className="lumi-control-field flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="lumi-control-icon" aria-hidden="true" style={{ position: 'static', transform: 'none' }}>
                       <UserRound size={14} />
                     </span>
-                    <input
-                      type="text"
-                      placeholder={loadingPatients ? 'Cargando pacientes…' : 'Buscar paciente…'}
-                      value={search}
-                      onChange={(event) => { setSearch(event.target.value); setShowDropdown(true) }}
-                      onFocus={() => setShowDropdown(true)}
-                      className="lumi-control-field w-full"
-                      disabled={loadingPatients}
-                      autoComplete="off"
-                    />
-                  </span>
-                  {showDropdown && search && (
-                    <div
-                      className="absolute left-0 right-0 z-10 mt-1 rounded-[14px] overflow-hidden"
-                      style={{ background: 'rgba(255,250,247,0.98)', border: '1px solid var(--border-glass-white)', boxShadow: 'var(--shadow-float)', maxHeight: '180px', overflowY: 'auto' }}
-                    >
-                      {filteredPatients.length === 0 ? (
-                        <p className="px-3.5 py-3 text-[12px]" style={{ color: 'var(--ink-cool-muted)' }}>
-                          Sin resultados
-                        </p>
-                      ) : (
-                        filteredPatients.slice(0, 8).map((patient) => (
-                          <button
-                            key={patient.id}
-                            type="button"
-                            onMouseDown={() => selectPatient(patient)}
-                            className="w-full text-left px-3.5 py-2.5 text-[13px] transition-colors"
-                            style={{ color: 'var(--ink-strong)' }}
-                            onMouseEnter={(event) => (event.currentTarget.style.background = 'rgba(148,136,176,0.10)')}
-                            onMouseLeave={(event) => (event.currentTarget.style.background = 'transparent')}
-                          >
-                            {patient.nombre} {patient.apellido}
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
+                    <span className="text-[13px] truncate" style={{ color: 'var(--ink-cool-strong)' }}>
+                      {selectedPatient.nombre} {selectedPatient.apellido}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setSelectedPatient(null)}
+                    className="text-[11px] ml-2 shrink-0"
+                    style={{ color: 'var(--ink-cool-muted)' }}
+                  >
+                    Quitar
+                  </button>
                 </div>
-              )}
-            </div>
-          ) : (
-            <div>
-              <SectionHeader label="Titulo" className="mb-2" />
-              <span className="lumi-control-shell">
-                <span className="lumi-control-icon" aria-hidden="true">
-                  <Type size={14} />
+              </div>
+            ) : (
+              <div className="relative">
+                <span className="lumi-control-shell">
+                  <span className="lumi-control-icon" aria-hidden="true">
+                    <UserRound size={14} />
+                  </span>
+                  <input
+                    type="text"
+                    placeholder={loadingPatients ? 'Cargando pacientes…' : 'Buscar paciente…'}
+                    value={search}
+                    onChange={(event) => { setSearch(event.target.value); setShowDropdown(true) }}
+                    onFocus={() => setShowDropdown(true)}
+                    className="lumi-control-field w-full"
+                    disabled={loadingPatients}
+                    autoComplete="off"
+                  />
                 </span>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  placeholder="Ej. Almuerzo, Grupo DBT, Reunión…"
-                  className="lumi-control-field w-full"
-                />
-              </span>
-            </div>
-          )}
+                {showDropdown && search && (
+                  <div
+                    className="absolute left-0 right-0 z-10 mt-1 rounded-[14px] overflow-hidden"
+                    style={{ background: 'rgba(255,250,247,0.98)', border: '1px solid var(--border-glass-white)', boxShadow: 'var(--shadow-float)', maxHeight: '180px', overflowY: 'auto' }}
+                  >
+                    {filteredPatients.length === 0 ? (
+                      <p className="px-3.5 py-3 text-[12px]" style={{ color: 'var(--ink-cool-muted)' }}>
+                        Sin resultados
+                      </p>
+                    ) : (
+                      filteredPatients.slice(0, 8).map((patient) => (
+                        <button
+                          key={patient.id}
+                          type="button"
+                          onMouseDown={() => selectPatient(patient)}
+                          className="w-full text-left px-3.5 py-2.5 text-[13px] transition-colors"
+                          style={{ color: 'var(--ink-strong)' }}
+                          onMouseEnter={(event) => (event.currentTarget.style.background = 'rgba(148,136,176,0.10)')}
+                          onMouseLeave={(event) => (event.currentTarget.style.background = 'transparent')}
+                        >
+                          {patient.nombre} {patient.apellido}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
-          {eventType === 'patient' && (
-            <div>
-              <SectionHeader label="Titulo (opcional)" className="mb-2" />
-              <span className="lumi-control-shell">
-                <span className="lumi-control-icon" aria-hidden="true">
-                  <Type size={14} />
-                </span>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  placeholder="Ej. Primera valoración, seguimiento, cierre…"
-                  className="lumi-control-field w-full"
-                />
+          <div>
+            <SectionHeader label="Titulo" className="mb-2" />
+            <span className="lumi-control-shell">
+              <span className="lumi-control-icon" aria-hidden="true">
+                <Type size={14} />
               </span>
-            </div>
-          )}
+              <input
+                type="text"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder={selectedPatient ? 'Opcional si quieres personalizar la cita…' : 'Ej. Almuerzo, Grupo DBT, Reunión…'}
+                className="lumi-control-field w-full"
+              />
+            </span>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
@@ -507,78 +437,6 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
               </span>
             </div>
           </div>
-
-          {eventType === 'patient' && (
-            <div>
-              <SectionHeader label="Modalidad" className="mb-2" />
-              <div className="grid grid-cols-3 gap-1.5">
-                {(Object.entries(APPOINTMENT_MODALIDAD_CONFIG) as [AppointmentModalidad, typeof APPOINTMENT_MODALIDAD_CONFIG[AppointmentModalidad]][]).map(([value, { label, color: itemColor, Icon }]) => {
-                  const isActive = modalidad === value
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setModalidad(value)}
-                      className="py-2.5 px-3 rounded-[14px] text-[13px] font-medium transition-all flex items-center justify-center gap-1.5"
-                      style={isActive ? {
-                        background: `${itemColor}22`,
-                        color: itemColor,
-                        border: `1px solid ${itemColor}44`,
-                      } : inactiveToggle}
-                    >
-                      <Icon size={12} style={{ color: isActive ? itemColor : undefined }} />
-                      {label}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {eventType === 'general' && (
-            <>
-              <div>
-                <SectionHeader label="Categoria (opcional)" className="mb-2" />
-                <span className="lumi-control-shell">
-                  <span className="lumi-control-icon" aria-hidden="true">
-                    <Tag size={14} />
-                  </span>
-                  <input
-                    type="text"
-                    value={category}
-                    onChange={(event) => setCategory(event.target.value)}
-                    placeholder="Ej. Personal, Equipo, Formación…"
-                    className="lumi-control-field w-full"
-                  />
-                </span>
-              </div>
-
-              <div>
-                <SectionHeader label="Color (opcional)" className="mb-2" />
-                <div className="grid grid-cols-5 gap-1.5">
-                  {GENERAL_EVENT_COLOR_PRESETS.map((preset) => {
-                    const active = color === preset.value
-                    return (
-                      <button
-                        key={preset.value}
-                        type="button"
-                        onClick={() => setColor((current) => current === preset.value ? null : preset.value)}
-                        className="rounded-[14px] px-3 py-3 flex items-center justify-center gap-1.5 text-[12px] font-medium"
-                        style={active ? {
-                          background: `${preset.value}22`,
-                          color: preset.textColor,
-                          border: `1px solid ${preset.value}44`,
-                        } : inactiveToggle}
-                      >
-                        <preset.Icon size={12} style={{ color: active ? preset.value : undefined }} />
-                        {preset.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            </>
-          )}
 
           <div>
             <SectionHeader label="Recurrencia" className="mb-2" />
@@ -683,43 +541,19 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
             </div>
           </div>
 
-          <div>
-            <SectionHeader label="Notas (opcional)" className="mb-2" />
-            <textarea
-              value={notas}
-              onChange={(event) => setNotas(event.target.value)}
-              placeholder="Observaciones, contexto…"
-              rows={2}
-              className="lumi-control-field w-full rounded-[14px] px-3.5 py-3 text-[13px] resize-none"
-            />
-          </div>
-
-          {occurrences.length > 0 && !scheduleError && !recurrenceError && (
-            <div
-              className="rounded-[10px] px-3 py-2"
-              style={{ background: 'rgba(143,165,189,0.10)', border: '1px solid rgba(143,165,189,0.16)' }}
-            >
-              <p className="text-[11px] uppercase tracking-[0.08em]" style={{ color: 'var(--ink-cool-faint)' }}>
-                {recurrenceRule ? 'Serie' : 'Horario'}
-              </p>
-              <p className="text-[13px] font-medium capitalize mt-1" style={{ color: 'var(--ink-cool-strong)' }}>
-                {formatDateTimeRange(occurrences[0].start, occurrences[0].end)}
-              </p>
-              {occurrences.length > 1 && (
-                <p className="text-[12px] mt-1" style={{ color: 'var(--ink-cool-soft)' }}>
-                  {formatOccurrenceCount(occurrences.length)} · última ocurrencia el {occurrences[occurrences.length - 1].start.toLocaleDateString('es-CO')}
-                </p>
-              )}
-            </div>
+          {occurrences.length > 1 && !scheduleError && !recurrenceError && (
+            <p className="text-[12px]" style={{ color: 'var(--ink-cool-soft)' }}>
+              {formatOccurrenceCount(occurrences.length)} · última ocurrencia el {occurrences[occurrences.length - 1].start.toLocaleDateString('es-CO')}
+            </p>
           )}
 
-          {(scheduleError || recurrenceError || titleError || patientError) && (
+          {(scheduleError || recurrenceError || titleError) && (
             <div
               className="flex items-center gap-2 rounded-[12px] px-3 py-2 text-[12px]"
               style={{ background: 'var(--state-cancel-bg)', color: 'var(--state-cancel-text)' }}
             >
               <AlertTriangle size={13} />
-              {scheduleError || recurrenceError || titleError || patientError}
+              {scheduleError || recurrenceError || titleError}
             </div>
           )}
 
@@ -751,7 +585,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
             className="w-full py-3 text-xs tracking-[0.06em] uppercase gap-2"
           >
             <Plus size={14} />
-            {saving ? 'Guardando…' : `Crear ${recurrenceRule ? 'serie' : eventType === 'patient' ? 'cita' : 'evento'}`}
+            {saving ? 'Guardando…' : `Crear ${recurrenceRule ? 'serie' : 'evento'}`}
           </Button>
         </div>
       </div>
