@@ -7,6 +7,7 @@
 import type { Appointment } from '@/types'
 
 export const DEFAULT_APPOINTMENT_DURATION_MINUTES = 60
+export const REACTIVATION_INACTIVITY_DAYS = 30
 
 const BASE_APPOINTMENT_DURATION_OPTIONS = [30, 45, 60, 90, 120, 150, 180]
 

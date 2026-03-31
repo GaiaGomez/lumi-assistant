@@ -20,13 +20,13 @@ export const DEFAULT_SETTINGS: SettingsMap = {
   doctoralia_url: process.env.NEXT_PUBLIC_DOCTORALIA_URL ?? '',
 
   template_cobros:
-    'Hola, {first_name}, espero que estés bien. Te escribo para recordarte que sigue pendiente el pago de la sesión del {session_date}. Cuando puedas, me confirmas por favor.',
+    'Hola, {first_name}, espero que estés bien. Te escribo para recordarte que sigue pendiente el pago de la última sesión. Cuando puedas, me confirmas por favor.',
 
   template_sin_proxima:
     'Hola, {first_name}. ¿Cuándo nos vemos? Te dejo el enlace a mi agenda para que mires qué horario te queda mejor y agendar una próxima sesión: {booking_url}',
 
   template_retomar:
-    'Hola, {first_name}. Han pasado {days_inactive} días desde nuestra última sesión y quería saber cómo estás. ¿Quieres que agendemos una nueva cita?',
+    'Hola, {first_name}. Hace mucho no nos vemos y quería saber cómo estás.',
 }
 
 /**

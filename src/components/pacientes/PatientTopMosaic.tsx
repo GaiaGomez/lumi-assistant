@@ -1,5 +1,6 @@
 import { MessageCircle } from 'lucide-react'
 import { Appointment, ClinicalNote, Patient } from '@/types'
+import { getDaysInactive, REACTIVATION_INACTIVITY_DAYS } from '@/lib/appointments'
 import { generarLinkWhatsApp } from '@/lib/whatsapp'
 import { interpolate, type SettingsMap } from '@/lib/settings'
 import { formatDateTimeFull } from '@/lib/format'
@@ -121,21 +122,43 @@ export default function PatientTopMosaic({
       )
     : undefined
 
+  const daysInactive = getDaysInactive(lastPastAppointment)
+  const retomarHref = hasWhatsApp && lastPastAppointment
+    ? generarLinkWhatsApp(
+        patient.whatsapp,
+        interpolate(settings['template_retomar'], {
+          first_name: patient.nombre,
+          days_inactive: String(daysInactive ?? ''),
+        })
+      )
+    : undefined
+
   const nextAppointmentText = nextAppointment ? formatAppointmentDate(nextAppointment.fecha_inicio) : null
   const lastPastAppointmentText = lastPastAppointment ? formatAppointmentDate(lastPastAppointment.fecha_inicio) : null
+  const hasBookingUrl = !!settings['doctoralia_url']?.trim()
+  const showRetomarAction = !nextAppointment && !!lastPastAppointment && daysInactive !== null && daysInactive > REACTIVATION_INACTIVITY_DAYS
+  const showSinProximaAction = !nextAppointment && !!lastPastAppointment && daysInactive !== null && daysInactive <= REACTIVATION_INACTIVITY_DAYS && hasBookingUrl
+
   const actionCards = [
     oldestPendingPayment && paymentHref ? {
       key: 'payment',
-      label: 'Cobrar pago pendiente',
+      label: 'Cobro pendiente',
       hint: 'Cobro pendiente',
       href: paymentHref,
       accent: 'soft' as const,
     } : null,
-    !nextAppointment && lastPastAppointment && agendaHref ? {
-      key: 'agenda',
-      label: 'Agendar sesión',
-      hint: 'No hay próxima sesión agendada.',
+    showSinProximaAction && agendaHref ? {
+      key: 'no-next',
+      label: 'Sin próxima sesión',
+      hint: 'Última sesión asistida sin una nueva cita agendada.',
       href: agendaHref,
+      accent: 'glass' as const,
+    } : null,
+    showRetomarAction && retomarHref ? {
+      key: 'resume',
+      label: 'Retomar proceso',
+      hint: daysInactive ? `${daysInactive} días sin una nueva cita agendada.` : 'Hace tiempo no agenda una nueva cita.',
+      href: retomarHref,
       accent: 'glass' as const,
     } : null,
     whatsappHref ? {

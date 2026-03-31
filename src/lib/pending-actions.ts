@@ -6,6 +6,7 @@ import {
   getLastPastAppointment,
   getNextAppointment,
   getPendingPayments,
+  REACTIVATION_INACTIVITY_DAYS,
   getTodayAppointments,
   getTomorrowPendingAppointments,
 } from '@/lib/appointments'
@@ -171,7 +172,7 @@ export function buildPendingActions(
     const daysWithoutSchedule = getDaysInactive(lastPastAppointment, now)
     if (daysWithoutSchedule === null) return
 
-    if (daysWithoutSchedule >= 20) {
+    if (daysWithoutSchedule > REACTIVATION_INACTIVITY_DAYS) {
       const message = interpolate(settings['template_retomar'], {
         first_name: patient.nombre,
         days_inactive: String(daysWithoutSchedule),
