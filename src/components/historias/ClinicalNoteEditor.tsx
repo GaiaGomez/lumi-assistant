@@ -350,8 +350,8 @@ export default function ClinicalNoteEditor({
   }
 
   return (
-    <div className="mx-auto max-w-[1100px] space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="mx-auto max-w-[920px] space-y-5 pb-8">
+      <div className="flex flex-wrap items-start gap-3 pt-1">
         <button
           type="button"
           onClick={() => router.push(cancelHref)}
@@ -378,16 +378,6 @@ export default function ClinicalNoteEditor({
               : 'Registro de sesion con plantilla DAP y canvas manuscrito.'}
           </p>
         </div>
-
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={!canSave || saving}
-          className="btn-action inline-flex items-center gap-2 px-4 py-2.5 text-sm disabled:opacity-45"
-        >
-          {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {saving ? 'Guardando...' : 'Guardar nota'}
-        </button>
       </div>
 
       {saveError && (
@@ -399,199 +389,108 @@ export default function ClinicalNoteEditor({
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="space-y-4">
-          <section className="glass rounded-[28px] p-4 sm:p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
-                  Plantilla escrita
-                </p>
-                <h2 className="mt-1 text-[1.15rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
-                  DAP integrada al flujo
-                </h2>
-                <p className="mt-1 max-w-[54ch] text-sm leading-6" style={{ color: 'var(--ink-cool-soft)' }}>
-                  Un formato breve de progreso para salud mental: datos de sesion, lectura clinica y plan claro de continuidad.
-                </p>
-              </div>
-
-              <div
-                className="rounded-[18px] px-3 py-2 text-xs"
-                style={{
-                  background: 'rgba(255,255,255,0.52)',
-                  border: '1px solid rgba(255,255,255,0.42)',
-                  color: 'var(--ink-cool-soft)',
-                }}
+      <div className="space-y-5">
+        <section className="glass rounded-[30px] p-5 sm:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-[62ch]">
+              <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+                Canvas manuscrito
+              </p>
+              <h2 className="mt-1 text-[1.18rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
+                Lienzo flexible y editable
+              </h2>
+              <p className="mt-1 text-sm leading-6" style={{ color: 'var(--ink-cool-soft)' }}>
+                El espacio principal de la nota. Toma apuntes a mano con más aire, más superficie y una secuencia visual más natural.
+              </p>
+            </div>
+            {(canvasPaths?.length || canvasBackgroundImage || note?.canvas_url) && (
+              <button
+                type="button"
+                onClick={handleRemoveCanvas}
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs"
+                style={{ background: 'rgba(176,124,132,0.12)', color: 'var(--state-cancel-text)' }}
               >
-                Siempre disponible aunque prefieras escribir libre.
-              </div>
-            </div>
+                <Trash2 size={13} />
+                Quitar manuscrito
+              </button>
+            )}
+          </div>
 
-            <div className="mt-4 grid gap-3 md:grid-cols-[1.15fr_0.85fr]">
-              <label className="block space-y-2">
-                <span className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
-                  Foco de sesion
-                </span>
-                <input
-                  value={template.focus}
-                  onChange={(event) => setTemplate((current) => ({ ...current, focus: event.target.value }))}
-                  placeholder="Ej. regulacion emocional tras conflicto familiar"
-                  className="w-full rounded-[18px] px-4 py-3 text-sm focus:outline-none"
-                  style={{
-                    background: 'rgba(255,255,255,0.66)',
-                    border: '1px solid rgba(255,255,255,0.46)',
-                    color: 'var(--ink-cool-strong)',
-                    boxShadow: '0 10px 28px rgba(124,108,128,0.06)',
-                  }}
-                />
-              </label>
-
-              <SelectField
-                label="Riesgo clinico"
-                value={template.riskLevel ?? ''}
-                onChange={(value) => setTemplate((current) => ({
-                  ...current,
-                  riskLevel: value ? value as ClinicalNoteTemplateData['riskLevel'] : null,
-                }))}
-              >
-                <option value="">Sin marcar</option>
-                {Object.entries(CLINICAL_NOTE_RISK_META).map(([value, meta]) => (
-                  <option key={value} value={value}>
-                    {meta.label}
-                  </option>
-                ))}
-              </SelectField>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              <TextField
-                label="D · Data"
-                helper="Lo observado y lo reportado"
-                value={template.data}
-                onChange={(value) => setTemplate((current) => ({ ...current, data: value }))}
-                rows={5}
-                placeholder="Sintomas, temas abordados, cambios relevantes, intervenciones aplicadas, respuesta del paciente."
-              />
-              <TextField
-                label="A · Assessment"
-                helper="Lectura clinica breve"
-                value={template.assessment}
-                onChange={(value) => setTemplate((current) => ({ ...current, assessment: value }))}
-                rows={4}
-                placeholder="Hipotesis clinica, progreso, nivel de insight, adherencia, factores protectores o alertas."
-              />
-              <TextField
-                label="P · Plan"
-                helper="Siguiente paso concreto"
-                value={template.plan}
-                onChange={(value) => setTemplate((current) => ({ ...current, plan: value }))}
-                rows={4}
-                placeholder="Acuerdos, tareas, seguimiento, objetivo para proxima sesion, coordinaciones necesarias."
-              />
-            </div>
-
+          {canvasBackgroundImage && !(canvasPaths && canvasPaths.length > 0) && (
             <div
-              className="mt-4 rounded-[20px] px-4 py-3 text-sm"
-              style={{ background: 'rgba(207,196,209,0.18)', color: 'var(--ink-cool-soft)' }}
+              className="mt-4 rounded-[18px] px-4 py-3 text-sm leading-6"
+              style={{ background: 'rgba(255,255,255,0.5)', color: 'var(--ink-cool-soft)' }}
             >
-              DAP mantiene la nota breve y usable en practica real sin mezclarla con notas privadas de proceso.
+              Esta nota viene de un canvas legacy sin trazos editables. Puedes escribir encima para actualizarla o quitarla por completo.
             </div>
-          </section>
+          )}
 
-          <section className="glass rounded-[28px] p-4 sm:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
-                  Notas complementarias
-                </p>
-                <h2 className="mt-1 text-[1.05rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
-                  Texto libre
-                </h2>
-              </div>
-              <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs" style={{ background: 'rgba(255,255,255,0.44)', color: 'var(--ink-cool-soft)' }}>
-                <Sparkles size={13} />
-                Util para contexto adicional
-              </div>
+          <div className="mt-5">
+            <DrawingCanvas
+              key={`${note?.id ?? 'new'}-${canvasBackgroundImage ? 'background' : 'plain'}-${canvasInitialPaths?.length ?? 0}`}
+              initialPaths={canvasInitialPaths}
+              backgroundImage={canvasBackgroundImage}
+              onChange={({ dataUrl, paths }) => {
+                setCanvasTouched(true)
+                setCanvasRemoved(false)
+                setCanvasDataUrl(dataUrl)
+                setCanvasPaths(paths.length > 0 ? paths : null)
+              }}
+            />
+          </div>
+        </section>
+
+        <section className="glass rounded-[30px] p-5 sm:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-[62ch]">
+              <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+                Notas libres
+              </p>
+              <h2 className="mt-1 text-[1.08rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
+                Texto complementario
+              </h2>
+              <p className="mt-1 text-sm leading-6" style={{ color: 'var(--ink-cool-soft)' }}>
+                Para contexto adicional, recordatorios clínicos o detalles operativos que quieras dejar por escrito.
+              </p>
             </div>
+            <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs" style={{ background: 'rgba(255,255,255,0.44)', color: 'var(--ink-cool-soft)' }}>
+              <Sparkles size={13} />
+              Flexible y opcional
+            </div>
+          </div>
 
+          <div className="mt-5 space-y-4">
             <TextField
               label="Observaciones extra"
               value={textoLibre}
               onChange={setTextoLibre}
-              rows={6}
+              rows={7}
               placeholder="Contexto que no quieras incluir en la estructura DAP, recordatorios clinicos o acuerdos operativos."
             />
-          </section>
-        </div>
 
-        <div className="space-y-4">
-          <section className="glass rounded-[28px] p-4 sm:p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
-                  Canvas manuscrito
-                </p>
-                <h2 className="mt-1 text-[1.1rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
-                  Lienzo flexible y editable
-                </h2>
-              </div>
-              {(canvasPaths?.length || canvasBackgroundImage || note?.canvas_url) && (
-                <button
-                  type="button"
-                  onClick={handleRemoveCanvas}
-                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs"
-                  style={{ background: 'rgba(176,124,132,0.12)', color: 'var(--state-cancel-text)' }}
-                >
-                  <Trash2 size={13} />
-                  Quitar manuscrito
-                </button>
-              )}
-            </div>
-
-            {canvasBackgroundImage && !(canvasPaths && canvasPaths.length > 0) && (
+            <div className="grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
               <div
-                className="mt-3 rounded-[18px] px-4 py-3 text-sm leading-6"
-                style={{ background: 'rgba(255,255,255,0.5)', color: 'var(--ink-cool-soft)' }}
+                className="rounded-[20px] p-4"
+                style={{ background: 'rgba(255,255,255,0.48)', border: '1px solid rgba(255,255,255,0.42)' }}
               >
-                Esta nota viene de un canvas legacy sin trazos editables. Puedes escribir encima para actualizarla o quitarla por completo.
+                <div className="flex items-center gap-2">
+                  <CalendarDays size={16} style={{ color: 'var(--ink-cool-soft)' }} />
+                  <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+                    Sesion asociada
+                  </p>
+                </div>
+                <div className="mt-3">
+                  <SelectField label="Vinculo de agenda" value={appointmentId} onChange={setAppointmentId}>
+                    <option value="">Sin vincular</option>
+                    {appointments.map((appointment) => (
+                      <option key={appointment.id} value={appointment.id}>
+                        {formatAppointmentOption(appointment)}
+                      </option>
+                    ))}
+                  </SelectField>
+                </div>
               </div>
-            )}
 
-            <div className="mt-4">
-              <DrawingCanvas
-                key={`${note?.id ?? 'new'}-${canvasBackgroundImage ? 'background' : 'plain'}-${canvasInitialPaths?.length ?? 0}`}
-                initialPaths={canvasInitialPaths}
-                backgroundImage={canvasBackgroundImage}
-                onChange={({ dataUrl, paths }) => {
-                  setCanvasTouched(true)
-                  setCanvasRemoved(false)
-                  setCanvasDataUrl(dataUrl)
-                  setCanvasPaths(paths.length > 0 ? paths : null)
-                }}
-              />
-            </div>
-          </section>
-
-          <section className="glass rounded-[28px] p-4 sm:p-5">
-            <div className="flex items-center gap-2">
-              <CalendarDays size={16} style={{ color: 'var(--ink-cool-soft)' }} />
-              <h2 className="text-[1rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
-                Vinculo con sesion
-              </h2>
-            </div>
-
-            <div className="mt-3">
-              <SelectField label="Sesion asociada" value={appointmentId} onChange={setAppointmentId}>
-                <option value="">Sin vincular</option>
-                {appointments.map((appointment) => (
-                  <option key={appointment.id} value={appointment.id}>
-                    {formatAppointmentOption(appointment)}
-                  </option>
-                ))}
-              </SelectField>
-            </div>
-
-            <div className="mt-4 grid gap-3">
               <div
                 className="rounded-[20px] p-4"
                 style={{ background: 'rgba(255,255,255,0.48)', border: '1px solid rgba(255,255,255,0.42)' }}
@@ -600,7 +499,6 @@ export default function ClinicalNoteEditor({
                   Resumen de guardado
                 </p>
                 <div className="mt-3 space-y-2 text-sm" style={{ color: 'var(--ink-cool-soft)' }}>
-                  <p>{isClinicalNoteTemplateEmpty(template) ? 'Plantilla DAP vacia.' : 'Plantilla DAP lista para guardarse.'}</p>
                   <p>{textoLibre.trim() ? 'Incluye texto libre complementario.' : 'Sin texto libre adicional.'}</p>
                   <p>
                     {canvasRemoved
@@ -609,32 +507,144 @@ export default function ClinicalNoteEditor({
                         ? 'La nota conserva manuscrito.'
                         : 'Sin canvas manuscrito.'}
                   </p>
+                  <p>{appointmentId ? 'La nota quedara vinculada a una sesion.' : 'La nota quedara sin vinculo de agenda.'}</p>
                 </div>
               </div>
-
-              {template.riskLevel && (
-                <div
-                  className="inline-flex w-fit items-center gap-2 rounded-full px-3 py-2 text-xs"
-                  style={{
-                    background: CLINICAL_NOTE_RISK_META[template.riskLevel].tone === 'success'
-                      ? 'var(--state-success-bg)'
-                      : CLINICAL_NOTE_RISK_META[template.riskLevel].tone === 'warning'
-                        ? 'var(--state-warning-bg)'
-                        : 'var(--state-cancel-bg)',
-                    color: CLINICAL_NOTE_RISK_META[template.riskLevel].tone === 'success'
-                      ? 'var(--state-success-text)'
-                      : CLINICAL_NOTE_RISK_META[template.riskLevel].tone === 'warning'
-                        ? 'var(--state-warning-text)'
-                        : 'var(--state-cancel-text)',
-                  }}
-                >
-                  <ShieldAlert size={13} />
-                  {CLINICAL_NOTE_RISK_META[template.riskLevel].label}
-                </div>
-              )}
             </div>
-          </section>
-        </div>
+          </div>
+        </section>
+
+        <section className="glass rounded-[30px] p-5 sm:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-[62ch]">
+              <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+                Plantilla escrita
+              </p>
+              <h2 className="mt-1 text-[1.12rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
+                DAP como apoyo estructurado
+              </h2>
+              <p className="mt-1 text-sm leading-6" style={{ color: 'var(--ink-cool-soft)' }}>
+                Queda al final para completar la nota con una estructura clínica profesional cuando la necesites.
+              </p>
+            </div>
+
+            <div
+              className="rounded-[18px] px-3 py-2 text-xs"
+              style={{
+                background: 'rgba(255,255,255,0.52)',
+                border: '1px solid rgba(255,255,255,0.42)',
+                color: 'var(--ink-cool-soft)',
+              }}
+            >
+              Siempre disponible, sin imponerse al flujo.
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-[1.15fr_0.85fr]">
+            <label className="block space-y-2">
+              <span className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+                Foco de sesion
+              </span>
+              <input
+                value={template.focus}
+                onChange={(event) => setTemplate((current) => ({ ...current, focus: event.target.value }))}
+                placeholder="Ej. regulacion emocional tras conflicto familiar"
+                className="w-full rounded-[18px] px-4 py-3 text-sm focus:outline-none"
+                style={{
+                  background: 'rgba(255,255,255,0.66)',
+                  border: '1px solid rgba(255,255,255,0.46)',
+                  color: 'var(--ink-cool-strong)',
+                  boxShadow: '0 10px 28px rgba(124,108,128,0.06)',
+                }}
+              />
+            </label>
+
+            <SelectField
+              label="Riesgo clinico"
+              value={template.riskLevel ?? ''}
+              onChange={(value) => setTemplate((current) => ({
+                ...current,
+                riskLevel: value ? value as ClinicalNoteTemplateData['riskLevel'] : null,
+              }))}
+            >
+              <option value="">Sin marcar</option>
+              {Object.entries(CLINICAL_NOTE_RISK_META).map(([value, meta]) => (
+                <option key={value} value={value}>
+                  {meta.label}
+                </option>
+              ))}
+            </SelectField>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            <TextField
+              label="D · Data"
+              helper="Lo observado y lo reportado"
+              value={template.data}
+              onChange={(value) => setTemplate((current) => ({ ...current, data: value }))}
+              rows={5}
+              placeholder="Sintomas, temas abordados, cambios relevantes, intervenciones aplicadas, respuesta del paciente."
+            />
+            <TextField
+              label="A · Assessment"
+              helper="Lectura clinica breve"
+              value={template.assessment}
+              onChange={(value) => setTemplate((current) => ({ ...current, assessment: value }))}
+              rows={4}
+              placeholder="Hipotesis clinica, progreso, nivel de insight, adherencia, factores protectores o alertas."
+            />
+            <TextField
+              label="P · Plan"
+              helper="Siguiente paso concreto"
+              value={template.plan}
+              onChange={(value) => setTemplate((current) => ({ ...current, plan: value }))}
+              rows={4}
+              placeholder="Acuerdos, tareas, seguimiento, objetivo para proxima sesion, coordinaciones necesarias."
+            />
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <div
+              className="rounded-[20px] px-4 py-3 text-sm"
+              style={{ background: 'rgba(207,196,209,0.18)', color: 'var(--ink-cool-soft)' }}
+            >
+              DAP mantiene la nota breve y usable en practica real sin mezclarla con notas privadas de proceso.
+            </div>
+
+            {template.riskLevel && (
+              <div
+                className="inline-flex w-fit items-center gap-2 rounded-full px-3 py-2 text-xs"
+                style={{
+                  background: CLINICAL_NOTE_RISK_META[template.riskLevel].tone === 'success'
+                    ? 'var(--state-success-bg)'
+                    : CLINICAL_NOTE_RISK_META[template.riskLevel].tone === 'warning'
+                      ? 'var(--state-warning-bg)'
+                      : 'var(--state-cancel-bg)',
+                  color: CLINICAL_NOTE_RISK_META[template.riskLevel].tone === 'success'
+                    ? 'var(--state-success-text)'
+                    : CLINICAL_NOTE_RISK_META[template.riskLevel].tone === 'warning'
+                      ? 'var(--state-warning-text)'
+                      : 'var(--state-cancel-text)',
+                }}
+              >
+                <ShieldAlert size={13} />
+                {CLINICAL_NOTE_RISK_META[template.riskLevel].label}
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+
+      <div className="sticky bottom-4 z-10 flex justify-end pt-1">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!canSave || saving}
+          className="btn-action inline-flex items-center gap-2 px-5 py-3 text-sm disabled:opacity-45"
+        >
+          {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          {saving ? 'Guardando...' : 'Guardar nota'}
+        </button>
       </div>
     </div>
   )
