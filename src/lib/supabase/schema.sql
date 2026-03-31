@@ -151,3 +151,14 @@ create policy "canvas: solo el dueño puede borrar"
     bucket_id = 'canvas-notes'
     and auth.uid()::text = (storage.foldername(name))[1]
   );
+
+create policy "canvas: solo el dueño puede actualizar"
+  on storage.objects for update
+  using (
+    bucket_id = 'canvas-notes'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  )
+  with check (
+    bucket_id = 'canvas-notes'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );

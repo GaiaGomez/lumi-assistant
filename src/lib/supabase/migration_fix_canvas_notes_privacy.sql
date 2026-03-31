@@ -20,6 +20,7 @@ drop policy if exists "canvas: lectura pública" on storage.objects;
 drop policy if exists "canvas: solo el dueño puede subir" on storage.objects;
 drop policy if exists "canvas: solo el dueño puede ver" on storage.objects;
 drop policy if exists "canvas: solo el dueño puede borrar" on storage.objects;
+drop policy if exists "canvas: solo el dueño puede actualizar" on storage.objects;
 
 create policy "canvas: solo el dueño puede subir"
   on storage.objects for insert
@@ -38,6 +39,17 @@ create policy "canvas: solo el dueño puede ver"
 create policy "canvas: solo el dueño puede borrar"
   on storage.objects for delete
   using (
+    bucket_id = 'canvas-notes'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+create policy "canvas: solo el dueño puede actualizar"
+  on storage.objects for update
+  using (
+    bucket_id = 'canvas-notes'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  )
+  with check (
     bucket_id = 'canvas-notes'
     and auth.uid()::text = (storage.foldername(name))[1]
   );
