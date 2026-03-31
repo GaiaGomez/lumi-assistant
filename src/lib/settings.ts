@@ -59,3 +59,22 @@ export async function fetchSettings(
   }
   return result
 }
+
+export async function upsertSettingValue(
+  supabase: SupabaseClient,
+  userId: string,
+  key: SettingsKey,
+  value: string
+) {
+  return supabase
+    .from('settings')
+    .upsert(
+      {
+        user_id: userId,
+        key,
+        value,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,key' }
+    )
+}

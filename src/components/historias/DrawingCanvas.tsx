@@ -13,11 +13,9 @@ interface DrawingCanvasProps {
   // onChange se llama cada vez que Lu termina un trazo
   // recibe la imagen en base64 para que el padre pueda guardarla
   onChange: (dataUrl: string) => void
-  // imagen inicial si estamos editando una nota existente
-  initialImage?: string
 }
 
-export default function DrawingCanvas({ onChange, initialImage }: DrawingCanvasProps) {
+export default function DrawingCanvas({ onChange }: DrawingCanvasProps) {
   // useRef: acceso directo al DOM del canvas para llamar métodos como undo(), clearCanvas()
   const canvasRef = useRef<ReactSketchCanvasRef>(null)
   const [tool, setTool] = useState<'pen' | 'eraser'>('pen')

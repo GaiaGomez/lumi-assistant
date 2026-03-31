@@ -57,7 +57,7 @@ create table if not exists clinical_notes (
   appointment_id uuid references appointments(id) on delete set null,
   user_id        uuid references auth.users(id) on delete cascade not null,
   texto          text,       -- notas escritas con teclado
-  canvas_url     text,       -- URL pública de la imagen guardada en Supabase Storage
+  canvas_url     text,       -- path privado del canvas en Storage (o URL legacy hasta migrarlo)
   created_at     timestamptz default now(),
   updated_at     timestamptz default now()
 );
@@ -123,18 +123,26 @@ create policy "settings: solo el dueño puede borrar" on settings for delete usi
 -- ============================================================
 
 insert into storage.buckets (id, name, public)
-values ('canvas-notes', 'canvas-notes', true)
+values ('canvas-notes', 'canvas-notes', false)
 on conflict do nothing;
 
--- Solo el dueño puede subir/ver/borrar sus imágenes
 create policy "canvas: solo el dueño puede subir"
   on storage.objects for insert
-  with check (bucket_id = 'canvas-notes' and auth.uid()::text = (storage.foldername(name))[1]);
+  with check (
+    bucket_id = 'canvas-notes'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
 
-create policy "canvas: lectura pública"
+create policy "canvas: solo el dueño puede ver"
   on storage.objects for select
-  using (bucket_id = 'canvas-notes');
+  using (
+    bucket_id = 'canvas-notes'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
 
 create policy "canvas: solo el dueño puede borrar"
   on storage.objects for delete
-  using (bucket_id = 'canvas-notes' and auth.uid()::text = (storage.foldername(name))[1]);
+  using (
+    bucket_id = 'canvas-notes'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );

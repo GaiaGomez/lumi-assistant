@@ -20,8 +20,9 @@ import {
   getAppointmentDurationOptions,
   getAppointmentEnd,
   getAppointmentEndFromDuration,
+  getAppointmentScheduleError,
 } from '@/lib/appointments'
-import { updateAppointmentById } from '@/lib/appointment-updates'
+import { deleteAppointmentById, updateAppointmentById } from '@/lib/appointment-updates'
 import { createClient } from '@/lib/supabase/client'
 import { linkRecordatorioCita } from '@/lib/whatsapp'
 import Button from '@/components/ui/Button'
@@ -136,12 +137,10 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
     ? getAppointmentEndFromDuration(nuevaInicio, duracion)
     : null
 
-  let scheduleError: string | null = null
-  if (!nuevaInicio || !nuevaFin) {
-    scheduleError = 'Completa fecha y hora de inicio.'
-  } else if (duracion < 15) {
-    scheduleError = 'La duración mínima es de 15 minutos.'
-  }
+  const scheduleErrorBase = getAppointmentScheduleError(nuevaInicio, nuevaFin, duracion)
+  const scheduleError = scheduleErrorBase === 'Completa fecha y hora.'
+    ? 'Completa fecha y hora de inicio.'
+    : scheduleErrorBase
 
   const conflicto = !scheduleError && nuevaInicio && nuevaFin
     ? findAppointmentConflict(appointments, nuevaInicio, nuevaFin, appointment.id)
@@ -187,10 +186,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
   async function eliminarCita() {
     setDeleting(true)
     try {
-      const { error } = await supabase
-        .from('appointments')
-        .delete()
-        .eq('id', appointment.id)
+      const { error } = await deleteAppointmentById(supabase, appointment.id)
       if (error) throw error
       router.refresh()
       onClose()

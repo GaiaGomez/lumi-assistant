@@ -7,7 +7,8 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import { ClinicalNote, Patient } from '@/types'
+import { createClinicalNoteCanvasSignedUrl } from '@/lib/clinical-notes'
+import { mapClinicalNoteRow } from '@/lib/supabase/mappers'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -25,7 +26,18 @@ export default async function HistoriaPage({ params }: Props) {
 
   if (!note) notFound()
 
-  const clinicalNote = note as ClinicalNote & { patient: Patient }
+  const clinicalNote = mapClinicalNoteRow(note)
+
+  // ── Signed URL para la imagen del canvas ──────────────────────────────────
+  let canvasSignedUrl: string | null = null
+  if (clinicalNote.canvas_url) {
+    canvasSignedUrl = await createClinicalNoteCanvasSignedUrl(
+      supabase,
+      clinicalNote.canvas_url
+    )
+  }
+
+  if (!clinicalNote.patient) notFound()
 
   return (
     <div>
@@ -52,14 +64,14 @@ export default async function HistoriaPage({ params }: Props) {
       </div>
 
       <div className="space-y-4">
-        {/* Canvas manuscrito */}
-        {clinicalNote.canvas_url && (
+        {/* Canvas manuscrito — usa signed URL, nunca la URL pública */}
+        {canvasSignedUrl && (
           <div className="glass rounded-2xl p-4">
             <p className="text-xs font-medium tracking-widest uppercase mb-3" style={{ color: '#888888' }}>
               ✏️ Nota manuscrita
             </p>
             <img
-              src={clinicalNote.canvas_url}
+              src={canvasSignedUrl}
               alt="Nota manuscrita"
               className="w-full rounded-2xl"
             />

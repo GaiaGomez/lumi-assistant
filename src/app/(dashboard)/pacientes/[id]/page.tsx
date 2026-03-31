@@ -7,7 +7,6 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Appointment, ClinicalNote, Patient } from '@/types'
 import { formatDateTimeFull, formatDateOnly } from '@/lib/format'
 import {
   APPOINTMENT_SESSION_LABEL,
@@ -20,6 +19,11 @@ import {
   getPendingPayments,
   getOldestPendingPayment,
 } from '@/lib/appointments'
+import {
+  mapAppointmentRows,
+  mapClinicalNoteRows,
+  mapPatientRow,
+} from '@/lib/supabase/mappers'
 import PageBlobs from '@/components/ui/PageBlobs'
 import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
@@ -44,12 +48,12 @@ export default async function PatientProfilePage({ params }: Props) {
     supabase.from('patients').select('*').eq('id', id).single(),
     supabase
       .from('appointments')
-      .select('id, patient_id, fecha_inicio, fecha_fin, estado_sesion, estado_pago')
+      .select('id, patient_id, user_id, doctoralia_uid, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at')
       .eq('patient_id', id)
       .order('fecha_inicio', { ascending: false }),
     supabase
       .from('clinical_notes')
-      .select('id, patient_id, texto, canvas_url, created_at')
+      .select('id, patient_id, appointment_id, user_id, texto, canvas_url, created_at, updated_at')
       .eq('patient_id', id)
       .order('created_at', { ascending: false }),
   ])
@@ -58,9 +62,9 @@ export default async function PatientProfilePage({ params }: Props) {
 
   if (!patient) notFound()
 
-  const p = patient as Patient
-  const patientAppointments = (appointments as Appointment[]) ?? []
-  const patientNotes = (notes as ClinicalNote[]) ?? []
+  const p = mapPatientRow(patient)
+  const patientAppointments = mapAppointmentRows(appointments)
+  const patientNotes = mapClinicalNoteRows(notes)
 
   const nextAppointment = getNextAppointment(patientAppointments)
   const lastPastAppointment = getLastPastAppointment(patientAppointments)

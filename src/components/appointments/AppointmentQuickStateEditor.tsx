@@ -109,6 +109,14 @@ export default function AppointmentQuickStateEditor({
   }, [initialPaymentState])
 
   async function updateField(
+    field: 'estado_sesion',
+    value: Appointment['estado_sesion']
+  ): Promise<void>
+  async function updateField(
+    field: 'estado_pago',
+    value: Appointment['estado_pago']
+  ): Promise<void>
+  async function updateField(
     field: 'estado_sesion' | 'estado_pago',
     value: Appointment['estado_sesion'] | Appointment['estado_pago']
   ) {

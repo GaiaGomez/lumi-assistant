@@ -16,8 +16,11 @@ import {
   getAppointmentDurationOptions,
   getAppointmentEnd,
   getAppointmentEndFromDuration,
+  getAppointmentScheduleError,
 } from '@/lib/appointments'
+import { createAppointment } from '@/lib/appointment-updates'
 import { APPOINTMENT_MODALIDAD_CONFIG } from '@/lib/appointment-ui'
+import { mapPatientRows } from '@/lib/supabase/mappers'
 import { createClient } from '@/lib/supabase/client'
 import ModalShell from '@/components/ui/ModalShell'
 import Button from '@/components/ui/Button'
@@ -96,7 +99,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
       .select('*')
       .order('nombre', { ascending: true })
       .then(({ data }) => {
-        setPatients((data as Patient[]) ?? [])
+        setPatients(mapPatientRows(data))
         setLoadingPatients(false)
       })
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -119,12 +122,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
     ? getAppointmentEndFromDuration(startDate, duracion)
     : null
 
-  let scheduleError: string | null = null
-  if (!startDate || !endDate) {
-    scheduleError = 'Completa fecha y hora.'
-  } else if (duracion < 15) {
-    scheduleError = 'La duración mínima es de 15 minutos.'
-  }
+  const scheduleError = getAppointmentScheduleError(startDate, endDate, duracion)
 
   const conflicto = !scheduleError && startDate && endDate
     ? findAppointmentConflict(appointments, startDate, endDate)
@@ -143,16 +141,13 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setError('Sesión expirada'); setSaving(false); return }
 
-    const { error: insertError } = await supabase.from('appointments').insert({
-      patient_id:     selectedPatient.id,
-      user_id:        user.id,
-      fecha_inicio:   startDate.toISOString(),
-      fecha_fin:      endDate.toISOString(),
+    const { error: insertError } = await createAppointment(supabase, {
+      patient_id: selectedPatient.id,
+      user_id: user.id,
+      fecha_inicio: startDate.toISOString(),
+      fecha_fin: endDate.toISOString(),
       modalidad,
-      estado_sesion:  'pendiente',
-      estado_pago:    'pendiente',
-      notas:          notas.trim() || null,
-      doctoralia_uid: null,
+      notas,
     })
 
     if (insertError) {

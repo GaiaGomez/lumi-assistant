@@ -1,6 +1,12 @@
 import type React from 'react'
 import { Leaf, MapPin, Monitor } from 'lucide-react'
 import type { Appointment, AppointmentModalidad } from '@/types'
+import {
+  appointmentHasPendingPayment as appointmentHasPendingPaymentDomain,
+  appointmentNeedsAttention as appointmentNeedsAttentionDomain,
+  appointmentNeedsConfirmation as appointmentNeedsConfirmationDomain,
+  isConfirmedAppointment,
+} from '@/lib/appointments'
 
 export type AppointmentCategory = AppointmentModalidad | 'default'
 
@@ -69,7 +75,7 @@ export function resolveAppointmentCategory(
 export function isAppointmentConfirmed(
   appointment: Pick<Appointment, 'estado_sesion'>
 ): boolean {
-  return appointment.estado_sesion === 'confirmada' || appointment.estado_sesion === 'realizada'
+  return isConfirmedAppointment(appointment)
 }
 
 export function isAppointmentPaid(
@@ -81,17 +87,17 @@ export function isAppointmentPaid(
 export function appointmentNeedsConfirmation(
   appointment: Pick<Appointment, 'estado_sesion'>
 ): boolean {
-  return appointment.estado_sesion === 'pendiente'
+  return appointmentNeedsConfirmationDomain(appointment)
 }
 
 export function appointmentHasPendingPayment(
   appointment: Pick<Appointment, 'estado_pago'>
 ): boolean {
-  return appointment.estado_pago === 'pendiente'
+  return appointmentHasPendingPaymentDomain(appointment)
 }
 
 export function appointmentNeedsAttention(
   appointment: Pick<Appointment, 'estado_sesion' | 'estado_pago'>
 ): boolean {
-  return appointmentNeedsConfirmation(appointment) || appointmentHasPendingPayment(appointment)
+  return appointmentNeedsAttentionDomain(appointment)
 }

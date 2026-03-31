@@ -10,6 +10,54 @@ export const DEFAULT_APPOINTMENT_DURATION_MINUTES = 60
 
 const BASE_APPOINTMENT_DURATION_OPTIONS = [30, 45, 60, 90, 120, 150, 180]
 
+export function isCancelledAppointment(
+  appointment: Pick<Appointment, 'estado_sesion'>
+): boolean {
+  return appointment.estado_sesion === 'cancelo'
+}
+
+export function isCompletedAppointment(
+  appointment: Pick<Appointment, 'estado_sesion'>
+): boolean {
+  return appointment.estado_sesion === 'realizada'
+}
+
+export function isConfirmedAppointment(
+  appointment: Pick<Appointment, 'estado_sesion'>
+): boolean {
+  return appointment.estado_sesion === 'confirmada' || appointment.estado_sesion === 'realizada'
+}
+
+export function isOperationalAppointment(
+  appointment: Pick<Appointment, 'estado_sesion'>
+): boolean {
+  return !isCancelledAppointment(appointment)
+}
+
+export function appointmentNeedsConfirmation(
+  appointment: Pick<Appointment, 'estado_sesion'>
+): boolean {
+  return appointment.estado_sesion === 'pendiente'
+}
+
+export function appointmentHasPendingPayment(
+  appointment: Pick<Appointment, 'estado_pago'>
+): boolean {
+  return appointment.estado_pago === 'pendiente'
+}
+
+export function appointmentHasCollectablePendingPayment(
+  appointment: Pick<Appointment, 'estado_sesion' | 'estado_pago'>
+): boolean {
+  return isCompletedAppointment(appointment) && appointmentHasPendingPayment(appointment)
+}
+
+export function appointmentNeedsAttention(
+  appointment: Pick<Appointment, 'estado_sesion' | 'estado_pago'>
+): boolean {
+  return appointmentNeedsConfirmation(appointment) || appointmentHasPendingPayment(appointment)
+}
+
 export function buildLocalAppointmentStart(
   dateValue: string,
   timeValue: string
@@ -40,6 +88,17 @@ export function getAppointmentDurationOptions(currentDuration: number): number[]
     .sort((a, b) => a - b)
 }
 
+export function getAppointmentScheduleError(
+  start: Date | null,
+  end: Date | null,
+  durationMinutes: number
+): string | null {
+  if (!start || !end) return 'Completa fecha y hora.'
+  if (durationMinutes < 15) return 'La duración mínima es de 15 minutos.'
+  if (end <= start) return 'La cita debe terminar después de la hora de inicio.'
+  return null
+}
+
 export function findAppointmentConflict(
   appointments: Appointment[],
   start: Date,
@@ -48,7 +107,7 @@ export function findAppointmentConflict(
 ): Appointment | undefined {
   return appointments.find((appointment) => {
     if (ignoreAppointmentId && appointment.id === ignoreAppointmentId) return false
-    if (appointment.estado_sesion === 'cancelo') return false
+    if (isCancelledAppointment(appointment)) return false
 
     const appointmentStart = new Date(appointment.fecha_inicio)
     const appointmentEnd = getAppointmentEnd(appointment)
@@ -57,7 +116,7 @@ export function findAppointmentConflict(
 }
 
 /**
- * Próxima cita futura (la más cercana en el tiempo).
+ * Próxima cita futura realmente activa (excluye canceladas).
  */
 export function getNextAppointment(
   appointments: Appointment[],
@@ -65,13 +124,13 @@ export function getNextAppointment(
 ): Appointment | null {
   return (
     appointments
-      .filter((a) => new Date(a.fecha_inicio) > now)
+      .filter((a) => new Date(a.fecha_inicio) > now && !isCancelledAppointment(a))
       .sort((a, b) => +new Date(a.fecha_inicio) - +new Date(b.fecha_inicio))[0] ?? null
   )
 }
 
 /**
- * Cita pasada más reciente.
+ * Última cita pasada que sí fue realizada.
  */
 export function getLastPastAppointment(
   appointments: Appointment[],
@@ -79,7 +138,7 @@ export function getLastPastAppointment(
 ): Appointment | null {
   return (
     appointments
-      .filter((a) => new Date(a.fecha_inicio) <= now)
+      .filter((a) => new Date(a.fecha_inicio) <= now && isCompletedAppointment(a))
       .sort((a, b) => +new Date(b.fecha_inicio) - +new Date(a.fecha_inicio))[0] ?? null
   )
 }
@@ -88,9 +147,7 @@ export function getLastPastAppointment(
  * Citas realizadas pero con pago pendiente.
  */
 export function getPendingPayments(appointments: Appointment[]): Appointment[] {
-  return appointments.filter(
-    (a) => a.estado_sesion === 'realizada' && a.estado_pago === 'pendiente'
-  )
+  return appointments.filter(appointmentHasCollectablePendingPayment)
 }
 
 /**
@@ -105,7 +162,7 @@ export function getOldestPendingPayment(appointments: Appointment[]): Appointmen
 }
 
 /**
- * Días completos desde la última cita pasada, null si no hay ninguna.
+ * Días completos desde la última cita pasada realizada, null si no hay ninguna.
  */
 export function getDaysInactive(
   lastPastAppointment: Appointment | null,
@@ -119,7 +176,7 @@ export function getDaysInactive(
 }
 
 /**
- * Citas de hoy (dentro del día calendario actual).
+ * Citas de hoy operativas (excluye canceladas).
  */
 export function getTodayAppointments(
   appointments: Appointment[],
@@ -129,7 +186,9 @@ export function getTodayAppointments(
   start.setHours(0, 0, 0, 0)
   const end = new Date(now)
   end.setHours(23, 59, 59, 999)
+
   return appointments.filter((a) => {
+    if (isCancelledAppointment(a)) return false
     const d = new Date(a.fecha_inicio)
     return d >= start && d <= end
   })
@@ -148,8 +207,9 @@ export function getTomorrowPendingAppointments(
   start.setHours(0, 0, 0, 0)
   const end = new Date(tomorrow)
   end.setHours(23, 59, 59, 999)
+
   return appointments.filter((a) => {
     const d = new Date(a.fecha_inicio)
-    return a.estado_sesion === 'pendiente' && d >= start && d <= end
+    return isOperationalAppointment(a) && appointmentNeedsConfirmation(a) && d >= start && d <= end
   })
 }

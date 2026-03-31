@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import AgendaClient from '@/components/agenda/AgendaClient'
-import { Appointment } from '@/types'
+import { mapAppointmentRows } from '@/lib/supabase/mappers'
 
 export default async function AgendaPage() {
   const supabase = await createClient()
@@ -12,15 +12,15 @@ export default async function AgendaPage() {
 
   const { data: appointments, error } = await supabase
     .from('appointments')
-    .select('*, patient:patients(id, nombre, apellido, whatsapp)')
+    .select('*, patient:patients(*)')
     .eq('user_id', user.id)
     .order('fecha_inicio', { ascending: true })
 
-  if (error) {
-    console.error('Error cargando citas:', error)
-  }
+  // Si hay error de Supabase, lo lanzamos para que lo capture el error.tsx más cercano.
+  // Antes solo se logueaba → agenda aparecía vacía sin explicación para Lu.
+  if (error) throw new Error(`Error cargando citas: ${error.message}`)
 
-  const allAppointments = (appointments as unknown as Appointment[]) ?? []
+  const allAppointments = mapAppointmentRows(appointments)
 
   return (
     <div>

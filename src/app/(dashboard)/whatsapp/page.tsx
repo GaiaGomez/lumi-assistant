@@ -6,6 +6,7 @@ import { ArrowUpRight, MessageCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Appointment, Patient } from '@/types'
 import { fetchSettings } from '@/lib/settings'
+import { mapAppointmentRows, mapPatientRows } from '@/lib/supabase/mappers'
 import PageBlobs from '@/components/ui/PageBlobs'
 import EmptyState from '@/components/ui/EmptyState'
 import AppointmentQuickStateEditor from '@/components/appointments/AppointmentQuickStateEditor'
@@ -17,7 +18,7 @@ import {
   type PendingActionType,
 } from '@/lib/pending-actions'
 
-type AppointmentWithPatient = Appointment & { patient: Patient | null }
+type AppointmentWithPatient = Appointment & { patient?: Patient | null }
 
 function countSummary(actions: PendingAction[]) {
   return {
@@ -180,7 +181,7 @@ export default async function PendingPage() {
   const [{ data: appointments }, { data: patients }] = await Promise.all([
     supabase
       .from('appointments')
-      .select('id, patient_id, user_id, doctoralia_uid, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, patient:patients(id, nombre, apellido, whatsapp)')
+      .select('*, patient:patients(*)')
       .eq('user_id', user.id)
       .order('fecha_inicio', { ascending: false }),
     supabase
@@ -192,8 +193,8 @@ export default async function PendingPage() {
 
   const settings = await settingsPromise
 
-  const allAppointments = (appointments as unknown as AppointmentWithPatient[]) ?? []
-  const allPatients = (patients as Patient[]) ?? []
+  const allAppointments: AppointmentWithPatient[] = mapAppointmentRows(appointments)
+  const allPatients = mapPatientRows(patients)
   const pendingActions = buildPendingActions(allAppointments, allPatients, settings)
   const summary = countSummary(pendingActions)
 

@@ -45,7 +45,7 @@ export interface ClinicalNote {
   appointment_id: string | null
   user_id: string
   texto: string | null           // notas escritas con teclado
-  canvas_url: string | null      // URL de la imagen del canvas en Supabase Storage
+  canvas_url: string | null      // path privado del canvas en Storage (o URL legacy)
   created_at: string
   updated_at: string
   // Relaciones expandidas

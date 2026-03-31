@@ -1,6 +1,14 @@
 import type { Appointment, Patient } from '@/types'
 import { formatDateTimeFull } from '@/lib/format'
-import { getDaysInactive, getLastPastAppointment, getNextAppointment, getPendingPayments, getTodayAppointments, getTomorrowPendingAppointments } from '@/lib/appointments'
+import {
+  appointmentNeedsConfirmation,
+  getDaysInactive,
+  getLastPastAppointment,
+  getNextAppointment,
+  getPendingPayments,
+  getTodayAppointments,
+  getTomorrowPendingAppointments,
+} from '@/lib/appointments'
 import { interpolate, type SettingsMap } from '@/lib/settings'
 import { generarLinkWhatsApp, linkRecordatorioCita, mensajeRecordatorioCita } from '@/lib/whatsapp'
 
@@ -74,7 +82,7 @@ export function buildPendingActions(
   const appointmentActions = appointments.filter(hasPatient)
 
   getTodayAppointments(appointmentActions, now)
-    .filter((appointment) => appointment.estado_sesion === 'pendiente')
+    .filter(appointmentNeedsConfirmation)
     .forEach((appointment) => {
       if (!appointment.patient) return
       const patient = appointment.patient

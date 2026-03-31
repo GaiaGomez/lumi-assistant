@@ -5,10 +5,9 @@
 // ============================================================
 
 import { useState } from 'react'
-import type { ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Check, AlertCircle } from 'lucide-react'
-import { interpolate, type SettingsMap } from '@/lib/settings'
+import { interpolate, type SettingsKey, type SettingsMap, upsertSettingValue } from '@/lib/settings'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
@@ -21,7 +20,7 @@ interface Props {
 }
 
 interface TemplateConfig {
-  key: string
+  key: Exclude<SettingsKey, 'doctoralia_url'>
   label: string
   description: string
   variables: { name: string; hint: string }[]
@@ -74,15 +73,10 @@ export default function TemplateEditor({ settings, userId }: Props) {
   })
   const [saveStates, setSaveStates] = useState<Record<string, SaveState>>({})
 
-  async function saveField(key: string, value: string) {
+  async function saveField(key: SettingsKey, value: string) {
     setSaveStates(prev => ({ ...prev, [key]: 'saving' }))
     try {
-      const { error } = await supabase
-        .from('settings')
-        .upsert(
-          { user_id: userId, key, value, updated_at: new Date().toISOString() },
-          { onConflict: 'user_id,key' }
-        )
+      const { error } = await upsertSettingValue(supabase, userId, key, value)
       if (error) throw error
       setSaveStates(prev => ({ ...prev, [key]: 'saved' }))
       setTimeout(() => setSaveStates(prev => ({ ...prev, [key]: 'idle' })), 2500)

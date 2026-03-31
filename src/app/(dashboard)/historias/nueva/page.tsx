@@ -4,18 +4,20 @@
 // Recibe ?paciente=uuid en la URL para asociar la nota al paciente
 // ============================================================
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import DrawingCanvas from '@/components/historias/DrawingCanvas'
 import { ArrowLeft, Save } from 'lucide-react'
 import { Patient } from '@/types'
+import { createClinicalNote, uploadClinicalNoteCanvas } from '@/lib/clinical-notes'
+import { mapPatientRow } from '@/lib/supabase/mappers'
 
 export default function NuevaHistoriaPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const pacienteId = searchParams.get('paciente')  // viene de la URL
-  const supabase = createClient()
+  const [supabase] = useState(() => createClient())
 
   const [patient, setPatient] = useState<Patient | null>(null)
   const [texto, setTexto] = useState('')
@@ -27,8 +29,8 @@ export default function NuevaHistoriaPage() {
   useEffect(() => {
     if (!pacienteId) return
     supabase.from('patients').select('*').eq('id', pacienteId).single()
-      .then(({ data }) => setPatient(data))
-  }, [pacienteId])
+      .then(({ data }) => setPatient(data ? mapPatientRow(data) : null))
+  }, [pacienteId, supabase])
 
   async function handleSave() {
     if (!pacienteId) return
@@ -39,30 +41,13 @@ export default function NuevaHistoriaPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setSaveError('Sesión expirada. Recarga la página.'); return }
 
-      let canvas_url: string | null = null
+      const canvasPath = await uploadClinicalNoteCanvas(supabase, user.id, canvasDataUrl)
 
-      if (canvasDataUrl) {
-        const response = await fetch(canvasDataUrl)
-        const blob = await response.blob()
-        const fileName = `${user.id}/${Date.now()}.png`
-
-        const { data: uploadData } = await supabase.storage
-          .from('canvas-notes')
-          .upload(fileName, blob, { contentType: 'image/png' })
-
-        if (uploadData) {
-          const { data: { publicUrl } } = supabase.storage
-            .from('canvas-notes')
-            .getPublicUrl(uploadData.path)
-          canvas_url = publicUrl
-        }
-      }
-
-      const { error } = await supabase.from('clinical_notes').insert({
-        patient_id: pacienteId,
-        user_id: user.id,
-        texto: texto || null,
-        canvas_url,
+      const { error } = await createClinicalNote(supabase, {
+        patientId: pacienteId,
+        userId: user.id,
+        texto,
+        canvasPath,
       })
 
       if (error) throw error
