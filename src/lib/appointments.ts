@@ -5,6 +5,10 @@
 // ============================================================
 
 import type { Appointment } from '@/types'
+export {
+  buildAppointmentDisplayTitle,
+  buildRecurringAppointmentWindows,
+} from '@/lib/appointment-recurrence'
 
 export const DEFAULT_APPOINTMENT_DURATION_MINUTES = 60
 export const REACTIVATION_INACTIVITY_DAYS = 30

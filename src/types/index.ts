@@ -17,6 +17,26 @@ export interface Patient {
 }
 
 export type AppointmentModalidad = 'online' | 'medellin' | 'retiro'
+export type AppointmentEventType = 'patient' | 'general'
+export type AppointmentRecurrencePreset =
+  | 'none'
+  | 'daily'
+  | 'weekdays'
+  | 'weekly'
+  | 'selected-weekdays'
+  | 'every-2-weeks'
+  | 'monthly'
+  | 'custom'
+export type AppointmentRecurrenceUnit = 'day' | 'week' | 'month'
+export type AppointmentWeekday = 'mo' | 'tu' | 'we' | 'th' | 'fr' | 'sa' | 'su'
+
+export interface AppointmentRecurrenceRule {
+  preset: AppointmentRecurrencePreset
+  untilDate: string | null
+  interval?: number | null
+  unit?: AppointmentRecurrenceUnit | null
+  weekdays?: AppointmentWeekday[] | null
+}
 
 export type ClinicalNoteTemplateKind = 'dap'
 export type ClinicalNoteRiskLevel = 'sin-riesgo-agudo' | 'monitoreo' | 'atencion-prioritaria'
@@ -48,6 +68,12 @@ export interface Appointment {
   id: string
   patient_id: string | null
   user_id: string
+  event_type: AppointmentEventType
+  title: string | null
+  category: string | null
+  color: string | null
+  recurrence_group_id: string | null
+  recurrence_rule: AppointmentRecurrenceRule | null
   doctoralia_uid: string | null  // UID del evento iCal de Doctoralia, evita duplicados
   fecha_inicio: string           // ISO datetime
   fecha_fin: string | null

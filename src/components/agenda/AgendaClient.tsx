@@ -12,8 +12,8 @@ import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { Appointment, CalendarEvent } from '@/types'
 import AppointmentModal from './AppointmentModal'
 import NewAppointmentModal from './NewAppointmentModal'
-import { AlertTriangle, Check, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, HandCoins, Plus } from 'lucide-react'
-import { getAppointmentEnd, getTodayAppointments } from '@/lib/appointments'
+import { AlertTriangle, Briefcase, Check, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, HandCoins, Plus } from 'lucide-react'
+import { buildAppointmentDisplayTitle, getAppointmentEnd, getTodayAppointments } from '@/lib/appointments'
 import {
   APPOINTMENT_CATEGORY_CONFIG,
   appointmentNeedsAttention,
@@ -70,6 +70,35 @@ const FESTIVOS_CO: Map<string, string> = new Map([
 // Las canceladas se filtran antes de llegar aquí
 function EventoCalendario({ event }: { event: CalendarEvent }) {
   const apt = event.resource
+  if (apt.event_type === 'general') {
+    return (
+      <div style={{ lineHeight: 1.1, overflow: 'hidden', minHeight: 0, display: 'grid', gap: '4px' }}>
+        <p style={{
+          fontWeight: 700,
+          fontSize: '11px',
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          textOverflow: 'ellipsis',
+          color: 'white',
+        }}>
+          {event.title}
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', minHeight: '18px', paddingTop: '1px' }}>
+          <Briefcase size={12} style={{ color: 'rgba(255,255,255,0.96)', flexShrink: 0 }} />
+          <span style={{
+            fontSize: '10px',
+            color: 'rgba(255,255,255,0.94)',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis',
+          }}>
+            {apt.category || apt.notas || 'Evento general'}
+          </span>
+        </div>
+      </div>
+    )
+  }
+
   const { Icon } = APPOINTMENT_CATEGORY_CONFIG[resolveAppointmentCategory(apt)]
   const isConfirmed = isAppointmentConfirmed(apt)
   const isPaid = isAppointmentPaid(apt)
@@ -231,7 +260,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
     .filter((apt) => apt.estado_sesion !== 'cancelo')
     .map((apt) => ({
       id:    apt.id,
-      title: apt.patient ? `${apt.patient.nombre} ${apt.patient.apellido}` : apt.notas ?? 'Cita',
+      title: buildAppointmentDisplayTitle(apt),
       start: new Date(apt.fecha_inicio),
       end:   apt.fecha_fin
         ? new Date(apt.fecha_fin)
@@ -258,9 +287,12 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
   // Fondo del evento: color de categoría
   const eventPropGetter = useCallback((event: CalendarEvent) => {
     const isSoftPast = event.resource.estado_sesion === 'realizada' && getAppointmentEnd(event.resource) <= new Date()
+    const backgroundColor = event.resource.event_type === 'general' && event.resource.color
+      ? event.resource.color
+      : APPOINTMENT_CATEGORY_CONFIG[resolveAppointmentCategory(event.resource)].bg
     return {
       style: {
-        backgroundColor: APPOINTMENT_CATEGORY_CONFIG[resolveAppointmentCategory(event.resource)].bg,
+        backgroundColor,
         borderRadius: '10px',
         border: '1px solid rgba(255,250,248,0.18)',
         color: '#fffaf8',

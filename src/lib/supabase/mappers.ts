@@ -3,6 +3,7 @@ import {
   normalizeClinicalCanvasPaths,
   normalizeClinicalNoteTemplateData,
 } from '@/lib/clinical-note-template'
+import { normalizeAppointmentRecurrenceRule } from '@/lib/appointment-recurrence'
 
 type SupabaseRow = Record<string, unknown>
 
@@ -61,6 +62,12 @@ export function mapAppointmentRow(row: unknown): Appointment {
     id: expectString(record.id, 'appointment.id'),
     patient_id: optionalString(record.patient_id),
     user_id: expectString(record.user_id, 'appointment.user_id'),
+    event_type: record.event_type === 'general' ? 'general' : 'patient',
+    title: optionalString(record.title),
+    category: optionalString(record.category),
+    color: optionalString(record.color),
+    recurrence_group_id: optionalString(record.recurrence_group_id),
+    recurrence_rule: normalizeAppointmentRecurrenceRule(record.recurrence_rule),
     doctoralia_uid: optionalString(record.doctoralia_uid),
     fecha_inicio: expectString(record.fecha_inicio, 'appointment.fecha_inicio'),
     fecha_fin: optionalString(record.fecha_fin),

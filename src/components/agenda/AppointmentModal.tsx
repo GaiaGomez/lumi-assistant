@@ -6,14 +6,15 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, FileText, MessageCircle, AlertTriangle, Trash2, CalendarDays, Clock3, ChevronDown } from 'lucide-react'
+import { X, FileText, MessageCircle, AlertTriangle, Trash2, CalendarDays, Clock3, ChevronDown, Tag, Type } from 'lucide-react'
 import { Appointment, AppointmentModalidad } from '@/types'
 import {
   APPOINTMENT_SESSION_LABEL,
   APPOINTMENT_SESSION_STATES,
 } from '@/lib/appointment-status'
-import { APPOINTMENT_MODALIDAD_CONFIG } from '@/lib/appointment-ui'
+import { APPOINTMENT_MODALIDAD_CONFIG, GENERAL_EVENT_COLOR_PRESETS } from '@/lib/appointment-ui'
 import {
+  buildAppointmentDisplayTitle,
   buildLocalAppointmentStart,
   DEFAULT_APPOINTMENT_DURATION_MINUTES,
   findAppointmentConflict,
@@ -96,6 +97,9 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
   const [estadoSesion, setEstadoSesion] = useState(appointment.estado_sesion)
   const [estadoPago, setEstadoPago] = useState(appointment.estado_pago)
   const [modalidadEdit, setModalidadEdit] = useState<AppointmentModalidad | null>(appointment.modalidad)
+  const [title, setTitle] = useState(appointment.title ?? '')
+  const [category, setCategory] = useState(appointment.category ?? '')
+  const [color, setColor] = useState(appointment.color ?? null)
   const initialDuration = Math.max(
     15,
     Math.round((getAppointmentEnd(appointment).getTime() - new Date(appointment.fecha_inicio).getTime()) / 60000)
@@ -150,6 +154,9 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
     estadoSesion !== appointment.estado_sesion ||
     estadoPago !== appointment.estado_pago ||
     modalidadEdit !== appointment.modalidad ||
+    title.trim() !== (appointment.title ?? '') ||
+    category.trim() !== (appointment.category ?? '') ||
+    color !== (appointment.color ?? null) ||
     (nuevaInicio?.toISOString() ?? '') !== currentStart.toISOString() ||
     (nuevaFin?.toISOString() ?? '') !== currentEnd.toISOString() ||
     (notas.trim() || '') !== (appointment.notas ?? '')
@@ -168,6 +175,9 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
         estado_sesion: estadoSesion,
         estado_pago:   estadoPago,
         modalidad:     modalidadEdit,
+        title:         title.trim() || null,
+        category:      category.trim() || null,
+        color,
         fecha_inicio:  nuevaInicio.toISOString(),
         fecha_fin:     nuevaFin.toISOString(),
         notas:         notas.trim() || null,
@@ -222,7 +232,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                 </button>
               ) : (
                 <h2 className="editorial-title text-[1.4rem]" style={{ color: 'var(--ink-cool-strong)' }}>
-                  {appointment.patient?.nombre} {appointment.patient?.apellido}
+                  {buildAppointmentDisplayTitle(appointment)}
                 </h2>
               )}
               {deudaCount !== null && deudaCount > 0 && (
@@ -353,81 +363,154 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
             )}
           </div>
 
-          {/* ── Modalidad ── */}
-          <div>
-            <SectionHeader label="Modalidad" className="mb-2.5" />
-            <div className="grid grid-cols-3 gap-1.5">
-              {(Object.entries(APPOINTMENT_MODALIDAD_CONFIG) as [AppointmentModalidad, typeof APPOINTMENT_MODALIDAD_CONFIG[AppointmentModalidad]][]).map(([value, { label, color, textColor, Icon }]) => {
-                const isActive = modalidadEdit === value
-                return (
-                  <button
-                    key={value}
-                    onClick={() => setModalidadEdit(value)}
-                    className="py-2.5 px-3 rounded-[14px] text-[13px] font-medium transition-all flex items-center justify-center gap-1.5"
-                    style={isActive ? {
-                      background: `${color}22`,
-                      color: textColor,
-                      border: `1px solid ${color}44`,
-                    } : inactiveToggle}
-                  >
-                    <Icon size={12} style={{ color: isActive ? color : undefined }} />
-                    {label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
+          {appointment.event_type === 'general' ? (
+            <>
+              <div>
+                <SectionHeader label="Título" className="mb-2.5" />
+                <span className="lumi-control-shell">
+                  <span className="lumi-control-icon" aria-hidden="true">
+                    <Type size={14} />
+                  </span>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="lumi-control-field w-full"
+                    placeholder="Nombre del evento"
+                  />
+                </span>
+              </div>
+              <div>
+                <SectionHeader label="Categoría" className="mb-2.5" />
+                <span className="lumi-control-shell">
+                  <span className="lumi-control-icon" aria-hidden="true">
+                    <Tag size={14} />
+                  </span>
+                  <input
+                    type="text"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="lumi-control-field w-full"
+                    placeholder="Categoría opcional"
+                  />
+                </span>
+              </div>
+              <div>
+                <SectionHeader label="Color" className="mb-2.5" />
+                <div className="grid grid-cols-5 gap-1.5">
+                  {GENERAL_EVENT_COLOR_PRESETS.map((preset) => {
+                    const isActive = color === preset.value
+                    return (
+                      <button
+                        key={preset.value}
+                        onClick={() => setColor((current) => current === preset.value ? null : preset.value)}
+                        className="py-2.5 px-3 rounded-[14px] text-[12px] font-medium transition-all flex items-center justify-center gap-1.5"
+                        style={isActive ? {
+                          background: `${preset.value}22`,
+                          color: preset.textColor,
+                          border: `1px solid ${preset.value}44`,
+                        } : inactiveToggle}
+                      >
+                        <preset.Icon size={12} style={{ color: isActive ? preset.value : undefined }} />
+                        {preset.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <SectionHeader label="Título (opcional)" className="mb-2.5" />
+                <span className="lumi-control-shell">
+                  <span className="lumi-control-icon" aria-hidden="true">
+                    <Type size={14} />
+                  </span>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="lumi-control-field w-full"
+                    placeholder="Sobreescribir nombre visible"
+                  />
+                </span>
+              </div>
 
-          {/* ── Estado de sesión — 2×2 ── */}
-          <div>
-            <SectionHeader label="Estado de la sesión" className="mb-2.5" />
-            <div className="grid grid-cols-2 gap-1.5">
-              {APPOINTMENT_SESSION_STATES.map((value) => {
-                const isActive = estadoSesion === value
-                const s = isActive ? ACTIVE_SESSION_STYLES[value] : null
-                return (
-                  <button
-                    key={value}
-                    onClick={() => setEstadoSesion(value as typeof estadoSesion)}
-                    className="py-2.5 px-3 rounded-[14px] text-[13px] font-medium transition-all"
-                    style={isActive ? {
-                      background: s!.bg,
-                      color: s!.color,
-                      border: '1px solid rgba(255,255,255,0.14)',
-                    } : inactiveToggle}
-                  >
-                    {APPOINTMENT_SESSION_LABEL[value]}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
+              <div>
+                <SectionHeader label="Modalidad" className="mb-2.5" />
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(Object.entries(APPOINTMENT_MODALIDAD_CONFIG) as [AppointmentModalidad, typeof APPOINTMENT_MODALIDAD_CONFIG[AppointmentModalidad]][]).map(([value, { label, color, textColor, Icon }]) => {
+                    const isActive = modalidadEdit === value
+                    return (
+                      <button
+                        key={value}
+                        onClick={() => setModalidadEdit(value)}
+                        className="py-2.5 px-3 rounded-[14px] text-[13px] font-medium transition-all flex items-center justify-center gap-1.5"
+                        style={isActive ? {
+                          background: `${color}22`,
+                          color: textColor,
+                          border: `1px solid ${color}44`,
+                        } : inactiveToggle}
+                      >
+                        <Icon size={12} style={{ color: isActive ? color : undefined }} />
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
 
-          {/* ── Estado de pago ── */}
-          <div>
-            <SectionHeader label="Estado del pago" className="mb-2.5" />
-            <div className="grid grid-cols-2 gap-1.5">
-              {(['pendiente', 'pagado'] as const).map((value) => {
-                const isActive = estadoPago === value
-                const s = isActive ? ACTIVE_PAYMENT_STYLES[value] : null
-                const label = value === 'pagado' ? '✓ Pagado' : '⏳ Pendiente'
-                return (
-                  <button
-                    key={value}
-                    onClick={() => setEstadoPago(value)}
-                    className="py-2.5 px-3 rounded-[14px] text-[13px] font-medium transition-all"
-                    style={isActive ? {
-                      background: s!.bg,
-                      color: s!.color,
-                      border: '1px solid rgba(255,255,255,0.14)',
-                    } : inactiveToggle}
-                  >
-                    {label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
+              <div>
+                <SectionHeader label="Estado de la sesión" className="mb-2.5" />
+                <div className="grid grid-cols-2 gap-1.5">
+                  {APPOINTMENT_SESSION_STATES.map((value) => {
+                    const isActive = estadoSesion === value
+                    const s = isActive ? ACTIVE_SESSION_STYLES[value] : null
+                    return (
+                      <button
+                        key={value}
+                        onClick={() => setEstadoSesion(value as typeof estadoSesion)}
+                        className="py-2.5 px-3 rounded-[14px] text-[13px] font-medium transition-all"
+                        style={isActive ? {
+                          background: s!.bg,
+                          color: s!.color,
+                          border: '1px solid rgba(255,255,255,0.14)',
+                        } : inactiveToggle}
+                      >
+                        {APPOINTMENT_SESSION_LABEL[value]}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <SectionHeader label="Estado del pago" className="mb-2.5" />
+                <div className="grid grid-cols-2 gap-1.5">
+                  {(['pendiente', 'pagado'] as const).map((value) => {
+                    const isActive = estadoPago === value
+                    const s = isActive ? ACTIVE_PAYMENT_STYLES[value] : null
+                    const label = value === 'pagado' ? '✓ Pagado' : '⏳ Pendiente'
+                    return (
+                      <button
+                        key={value}
+                        onClick={() => setEstadoPago(value)}
+                        className="py-2.5 px-3 rounded-[14px] text-[13px] font-medium transition-all"
+                        style={isActive ? {
+                          background: s!.bg,
+                          color: s!.color,
+                          border: '1px solid rgba(255,255,255,0.14)',
+                        } : inactiveToggle}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </>
+          )}
 
           {/* ── Notas ── */}
           <div>
@@ -449,7 +532,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
 
           {/* ── Acciones secundarias ── */}
           <div className="flex gap-2 pt-1">
-            {appointment.patient_id && (
+            {appointment.patient_id && appointment.event_type === 'patient' && (
               <Button
                 variant="subtle"
                 onClick={() => router.push(`/pacientes/${appointment.patient_id}`)}
@@ -460,7 +543,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
               </Button>
             )}
 
-            {appointment.patient?.whatsapp && (
+            {appointment.patient?.whatsapp && appointment.event_type === 'patient' && (
               <a
                 href={linkRecordatorioCita(appointment.patient, appointment)}
                 target="_blank"

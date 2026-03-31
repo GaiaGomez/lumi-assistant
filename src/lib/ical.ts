@@ -26,6 +26,7 @@ export async function fetchDoctoraliaCitas(icalUrl: string, userId: string): Pro
 
     return {
       user_id: userId,
+      event_type: 'patient' as const,
       doctoralia_uid: event.uid,                    // ID único del evento en Doctoralia
       fecha_inicio: event.startDate.toJSDate().toISOString(),
       fecha_fin: event.endDate?.toJSDate().toISOString() ?? null,

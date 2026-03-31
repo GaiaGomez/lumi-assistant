@@ -19,6 +19,13 @@ create table if not exists appointments (
   id               uuid default gen_random_uuid() primary key,
   patient_id       uuid references patients(id) on delete cascade,
   user_id          uuid references auth.users(id) on delete cascade not null,
+  event_type       text default 'patient'
+                   check (event_type in ('patient', 'general')),
+  title            text,
+  category         text,
+  color            text,
+  recurrence_group_id uuid,
+  recurrence_rule  jsonb,
   doctoralia_uid   text,  -- UID del evento iCal, se deduplica por usuario
   fecha_inicio     timestamptz not null,
   fecha_fin        timestamptz,
