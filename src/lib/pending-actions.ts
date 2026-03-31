@@ -5,6 +5,7 @@ import {
   getDaysInactive,
   getLastPastAppointment,
   getNextAppointment,
+  getOldestPendingPayment,
   getPendingPayments,
   REACTIVATION_INACTIVITY_DAYS,
   getTodayAppointments,
@@ -60,6 +61,14 @@ export const PENDING_ACTION_SECTION_LABEL: Record<PendingActionType, string> = {
   reactivar_paciente: 'Reactivar seguimiento',
 }
 
+export interface PatientWhatsAppQuickAction {
+  key: 'payment' | 'no-next' | 'resume'
+  label: string
+  hint: string
+  href: string
+  accent: 'glass' | 'soft'
+}
+
 function previewMessage(message: string) {
   return message.length > 84 ? `${message.slice(0, 84)}...` : message
 }
@@ -71,6 +80,78 @@ function hasPatient(appointment: AppointmentWithPatient): appointment is Appoint
 function buildWhatsAppAction(label: string, href: string | null | undefined) {
   if (!href || href === '#') return undefined
   return { label, href }
+}
+
+export function buildPatientWhatsAppQuickActions(
+  patient: Patient,
+  appointments: Appointment[],
+  settings: SettingsMap,
+  now = new Date()
+): PatientWhatsAppQuickAction[] {
+  if (!patient.whatsapp) return []
+
+  const nextAppointment = getNextAppointment(appointments, now)
+  const lastPastAppointment = getLastPastAppointment(appointments, now)
+  const oldestPendingPayment = getOldestPendingPayment(appointments)
+  const daysInactive = getDaysInactive(lastPastAppointment, now)
+
+  const actions: PatientWhatsAppQuickAction[] = []
+
+  if (oldestPendingPayment) {
+    const message = interpolate(settings['template_cobros'], {
+      first_name: patient.nombre,
+      session_date: formatDateTimeFull(oldestPendingPayment.fecha_inicio),
+    })
+
+    const href = generarLinkWhatsApp(patient.whatsapp, message)
+    if (href !== '#') {
+      actions.push({
+        key: 'payment',
+        label: 'Cobro pendiente',
+        hint: 'Cobro pendiente',
+        href,
+        accent: 'soft',
+      })
+    }
+  }
+
+  if (lastPastAppointment && !nextAppointment) {
+    const message = interpolate(settings['template_sin_proxima'], {
+      first_name: patient.nombre,
+      booking_url: settings['doctoralia_url'],
+    })
+
+    const href = generarLinkWhatsApp(patient.whatsapp, message)
+    if (href !== '#') {
+      actions.push({
+        key: 'no-next',
+        label: 'Sin próxima sesión',
+        hint: 'Última sesión asistida sin una nueva cita agendada.',
+        href,
+        accent: 'glass',
+      })
+    }
+  }
+
+  if (lastPastAppointment && !nextAppointment && daysInactive !== null && daysInactive > REACTIVATION_INACTIVITY_DAYS) {
+    const message = interpolate(settings['template_retomar'], {
+      first_name: patient.nombre,
+      days_inactive: String(daysInactive),
+    })
+
+    const href = generarLinkWhatsApp(patient.whatsapp, message)
+    if (href !== '#') {
+      actions.push({
+        key: 'resume',
+        label: 'Retomar proceso',
+        hint: `${daysInactive} días sin una nueva cita agendada.`,
+        href,
+        accent: 'glass',
+      })
+    }
+  }
+
+  return actions
 }
 
 export function buildPendingActions(

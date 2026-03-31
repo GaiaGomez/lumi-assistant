@@ -17,7 +17,6 @@ import {
   getNextAppointment,
   getLastPastAppointment,
   getPendingPayments,
-  getOldestPendingPayment,
 } from '@/lib/appointments'
 import {
   mapAppointmentRows,
@@ -71,7 +70,6 @@ export default async function PatientProfilePage({ params }: Props) {
   const latestNote = patientNotes[0] ?? null
   const pendingPayments = getPendingPayments(patientAppointments)
   const pendingPaymentsCount = pendingPayments.length
-  const oldestPendingPayment = getOldestPendingPayment(patientAppointments)
 
   return (
     <div className="relative mx-auto max-w-[1180px] px-4 pb-1 font-sans sm:px-5">
@@ -85,11 +83,11 @@ export default async function PatientProfilePage({ params }: Props) {
 
       <PatientTopMosaic
         patient={p}
+        appointments={patientAppointments}
         nextAppointment={nextAppointment}
         lastPastAppointment={lastPastAppointment}
         latestNote={latestNote}
         pendingPaymentsCount={pendingPaymentsCount}
-        oldestPendingPayment={oldestPendingPayment}
         settings={settings}
       />
 

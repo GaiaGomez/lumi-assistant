@@ -1,18 +1,16 @@
 import { MessageCircle } from 'lucide-react'
 import { Appointment, ClinicalNote, Patient } from '@/types'
-import { getDaysInactive, REACTIVATION_INACTIVITY_DAYS } from '@/lib/appointments'
-import { generarLinkWhatsApp } from '@/lib/whatsapp'
-import { interpolate, type SettingsMap } from '@/lib/settings'
-import { formatDateTimeFull } from '@/lib/format'
+import { type SettingsMap } from '@/lib/settings'
+import { buildPatientWhatsAppQuickActions } from '@/lib/pending-actions'
 import StatCard from '@/components/ui/StatCard'
 
 interface PatientTopMosaicProps {
   patient: Patient
+  appointments: Appointment[]
   nextAppointment: Appointment | null
   lastPastAppointment: Appointment | null
   latestNote: ClinicalNote | null
   pendingPaymentsCount: number
-  oldestPendingPayment: Appointment | null
   settings: SettingsMap
 }
 
@@ -92,74 +90,22 @@ function ActionCard({
 
 export default function PatientTopMosaic({
   patient,
+  appointments,
   nextAppointment,
   lastPastAppointment,
   latestNote,
   pendingPaymentsCount,
-  oldestPendingPayment,
   settings,
 }: PatientTopMosaicProps) {
   const hasWhatsApp = !!patient.whatsapp
   const whatsappHref = hasWhatsApp ? `https://wa.me/${patient.whatsapp?.replace(/[^0-9]/g, '')}` : undefined
 
-  const paymentHref = hasWhatsApp && oldestPendingPayment
-    ? generarLinkWhatsApp(
-        patient.whatsapp,
-        interpolate(settings['template_cobros'], {
-          first_name: patient.nombre,
-          session_date: formatDateTimeFull(oldestPendingPayment.fecha_inicio),
-        })
-      )
-    : undefined
-
-  const agendaHref = hasWhatsApp
-    ? generarLinkWhatsApp(
-        patient.whatsapp,
-        interpolate(settings['template_sin_proxima'], {
-          first_name: patient.nombre,
-          booking_url: settings['doctoralia_url'],
-        })
-      )
-    : undefined
-
-  const daysInactive = getDaysInactive(lastPastAppointment)
-  const retomarHref = hasWhatsApp && lastPastAppointment
-    ? generarLinkWhatsApp(
-        patient.whatsapp,
-        interpolate(settings['template_retomar'], {
-          first_name: patient.nombre,
-          days_inactive: String(daysInactive ?? ''),
-        })
-      )
-    : undefined
-
   const nextAppointmentText = nextAppointment ? formatAppointmentDate(nextAppointment.fecha_inicio) : null
   const lastPastAppointmentText = lastPastAppointment ? formatAppointmentDate(lastPastAppointment.fecha_inicio) : null
-  const showRetomarAction = !nextAppointment && !!lastPastAppointment && daysInactive !== null && daysInactive > REACTIVATION_INACTIVITY_DAYS
-  const showSinProximaAction = !nextAppointment && !!lastPastAppointment
+  const quickActions = buildPatientWhatsAppQuickActions(patient, appointments, settings)
 
   const actionCards = [
-    oldestPendingPayment && paymentHref ? {
-      key: 'payment',
-      label: 'Cobro pendiente',
-      hint: 'Cobro pendiente',
-      href: paymentHref,
-      accent: 'soft' as const,
-    } : null,
-    showSinProximaAction && agendaHref ? {
-      key: 'no-next',
-      label: 'Sin próxima sesión',
-      hint: 'Última sesión asistida sin una nueva cita agendada.',
-      href: agendaHref,
-      accent: 'glass' as const,
-    } : null,
-    showRetomarAction && retomarHref ? {
-      key: 'resume',
-      label: 'Retomar proceso',
-      hint: daysInactive ? `${daysInactive} días sin una nueva cita agendada.` : 'Hace tiempo no agenda una nueva cita.',
-      href: retomarHref,
-      accent: 'glass' as const,
-    } : null,
+    ...quickActions,
     whatsappHref ? {
       key: 'whatsapp',
       label: 'WhatsApp',
@@ -171,8 +117,8 @@ export default function PatientTopMosaic({
     key: string
     label: string
     hint: string
-    href: string
-    accent: 'glass' | 'soft'
+      href: string
+      accent: 'glass' | 'soft'
   }>
 
   return (
