@@ -3,6 +3,7 @@ import { Leaf, MapPin, Monitor } from 'lucide-react'
 import type { Appointment, AppointmentModalidad } from '@/types'
 import {
   appointmentHasPendingPayment as appointmentHasPendingPaymentDomain,
+  appointmentNeedsChargeCollection as appointmentNeedsChargeCollectionDomain,
   appointmentNeedsAttention as appointmentNeedsAttentionDomain,
   appointmentNeedsConfirmation as appointmentNeedsConfirmationDomain,
   isConfirmedAppointment,
@@ -94,6 +95,12 @@ export function appointmentHasPendingPayment(
   appointment: Pick<Appointment, 'estado_pago'>
 ): boolean {
   return appointmentHasPendingPaymentDomain(appointment)
+}
+
+export function appointmentNeedsChargeCollection(
+  appointment: Pick<Appointment, 'estado_sesion' | 'estado_pago'>
+): boolean {
+  return appointmentNeedsChargeCollectionDomain(appointment)
 }
 
 export function appointmentNeedsAttention(

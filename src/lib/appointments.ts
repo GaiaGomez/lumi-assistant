@@ -46,16 +46,18 @@ export function appointmentHasPendingPayment(
   return appointment.estado_pago === 'pendiente'
 }
 
-export function appointmentHasCollectablePendingPayment(
+export function appointmentNeedsChargeCollection(
   appointment: Pick<Appointment, 'estado_sesion' | 'estado_pago'>
 ): boolean {
   return isCompletedAppointment(appointment) && appointmentHasPendingPayment(appointment)
 }
 
+export const appointmentHasCollectablePendingPayment = appointmentNeedsChargeCollection
+
 export function appointmentNeedsAttention(
   appointment: Pick<Appointment, 'estado_sesion' | 'estado_pago'>
 ): boolean {
-  return appointmentNeedsConfirmation(appointment) || appointmentHasPendingPayment(appointment)
+  return appointmentNeedsConfirmation(appointment) || appointmentNeedsChargeCollection(appointment)
 }
 
 export function buildLocalAppointmentStart(
@@ -147,7 +149,7 @@ export function getLastPastAppointment(
  * Citas realizadas pero con pago pendiente.
  */
 export function getPendingPayments(appointments: Appointment[]): Appointment[] {
-  return appointments.filter(appointmentHasCollectablePendingPayment)
+  return appointments.filter(appointmentNeedsChargeCollection)
 }
 
 /**
