@@ -5,19 +5,15 @@ import type { CanvasPath } from 'react-sketch-canvas'
 import { ReactSketchCanvas, ReactSketchCanvasRef } from 'react-sketch-canvas'
 import {
   Eraser,
-  Grid3X3,
   Highlighter,
   Pen,
-  Plus,
   Redo2,
-  Rows3,
   Trash2,
   Undo2,
 } from 'lucide-react'
 import type { ClinicalCanvasPath } from '@/types'
 
 type DrawingTool = 'pen' | 'highlighter' | 'eraser'
-type GuideStyle = 'none' | 'lines' | 'grid'
 
 interface DrawingCanvasProps {
   onChange: (snapshot: { dataUrl: string; paths: ClinicalCanvasPath[] }) => void
@@ -33,14 +29,9 @@ const COLOR_OPTIONS = [
   { label: 'Lavanda', value: '#9081A4' },
 ]
 
-const STROKE_OPTIONS = [2, 4, 7, 10]
-const HEIGHT_OPTIONS = [420, 640, 920]
-
-const GUIDE_BACKGROUND: Record<GuideStyle, string> = {
-  none: 'transparent',
-  lines: 'repeating-linear-gradient(to bottom, rgba(154, 141, 149, 0.18) 0, rgba(154, 141, 149, 0.18) 1px, transparent 1px, transparent 38px)',
-  grid: 'linear-gradient(rgba(154, 141, 149, 0.14) 1px, transparent 1px), linear-gradient(90deg, rgba(154, 141, 149, 0.14) 1px, transparent 1px)',
-}
+const STROKE_OPTIONS = [1.5, 2.5, 4, 5.5]
+const CANVAS_GROW_STEP = 520
+const CANVAS_GROW_OFFSET = 280
 
 function castPaths(paths: CanvasPath[]): ClinicalCanvasPath[] {
   return paths as ClinicalCanvasPath[]
@@ -53,12 +44,11 @@ export default function DrawingCanvas({
   initialHeight = 640,
 }: DrawingCanvasProps) {
   const canvasRef = useRef<ReactSketchCanvasRef>(null)
-  const currentPathsRef = useRef<ClinicalCanvasPath[]>(initialPaths ?? [])
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const [tool, setTool] = useState<DrawingTool>('pen')
-  const [strokeWidth, setStrokeWidth] = useState(4)
+  const [strokeWidth, setStrokeWidth] = useState(2.5)
   const [strokeColor, setStrokeColor] = useState(COLOR_OPTIONS[0].value)
-  const [guideStyle, setGuideStyle] = useState<GuideStyle>('lines')
   const [canvasHeight, setCanvasHeight] = useState(initialHeight)
   const [strokeCount, setStrokeCount] = useState<number | null>(null)
 
@@ -73,19 +63,37 @@ export default function DrawingCanvas({
     canvas.resetCanvas()
     if (initialPaths && initialPaths.length > 0) {
       canvas.loadPaths(initialPaths as CanvasPath[])
-      currentPathsRef.current = initialPaths
       return
     }
-
-    currentPathsRef.current = []
   }, [backgroundImage, initialPaths])
+
+  useEffect(() => {
+    function maybeGrowCanvas() {
+      const container = containerRef.current
+      if (!container) return
+
+      const rect = container.getBoundingClientRect()
+      const viewportBottom = window.innerHeight
+      if (rect.bottom - viewportBottom <= CANVAS_GROW_OFFSET) {
+        setCanvasHeight((currentHeight) => currentHeight + CANVAS_GROW_STEP)
+      }
+    }
+
+    maybeGrowCanvas()
+    window.addEventListener('scroll', maybeGrowCanvas, { passive: true })
+    window.addEventListener('resize', maybeGrowCanvas)
+
+    return () => {
+      window.removeEventListener('scroll', maybeGrowCanvas)
+      window.removeEventListener('resize', maybeGrowCanvas)
+    }
+  }, [])
 
   async function emitSnapshot() {
     const canvas = canvasRef.current
     if (!canvas) return
 
     const paths = castPaths(await canvas.exportPaths())
-    currentPathsRef.current = paths
     setStrokeCount(paths.length)
 
     const dataUrl = paths.length > 0 ? await canvas.exportImage('png') : ''
@@ -111,7 +119,6 @@ export default function DrawingCanvas({
 
   async function handleClear() {
     canvasRef.current?.clearCanvas()
-    currentPathsRef.current = []
     setStrokeCount(0)
     onChange({ dataUrl: '', paths: [] })
   }
@@ -240,90 +247,17 @@ export default function DrawingCanvas({
                 >
                   <span
                     className="rounded-full"
-                    style={{ width: width + 2, height: width + 2, background: 'currentColor' }}
+                    style={{ width: width * 2 + 1, height: width * 2 + 1, background: 'currentColor' }}
                   />
                 </button>
               ))}
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
-              Guia
-            </span>
-            <div className="flex items-center gap-1.5">
-              {[
-                { id: 'none', label: 'Libre', icon: Pen },
-                { id: 'lines', label: 'Lineas', icon: Rows3 },
-                { id: 'grid', label: 'Cuadricula', icon: Grid3X3 },
-              ].map((option) => {
-                const Icon = option.icon
-                const active = guideStyle === option.id
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => setGuideStyle(option.id as GuideStyle)}
-                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs"
-                    style={active ? {
-                      background: 'rgba(255,255,255,0.88)',
-                      border: '1px solid rgba(255,255,255,0.64)',
-                      color: 'var(--ink-cool-strong)',
-                    } : {
-                      background: 'rgba(255,255,255,0.24)',
-                      border: '1px solid rgba(255,255,255,0.24)',
-                      color: 'var(--ink-cool-soft)',
-                    }}
-                  >
-                    <Icon size={13} />
-                    {option.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
-            Lienzo
-          </span>
-          {HEIGHT_OPTIONS.map((height) => (
-            <button
-              key={height}
-              type="button"
-              onClick={() => setCanvasHeight(height)}
-              className="rounded-full px-3 py-1.5 text-xs"
-              style={canvasHeight === height ? {
-                background: 'rgba(255,255,255,0.88)',
-                border: '1px solid rgba(255,255,255,0.64)',
-                color: 'var(--ink-cool-strong)',
-              } : {
-                background: 'rgba(255,255,255,0.24)',
-                border: '1px solid rgba(255,255,255,0.24)',
-                color: 'var(--ink-cool-soft)',
-              }}
-            >
-              {height === 420 ? 'Breve' : height === 640 ? 'Amplio' : 'Extenso'}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => setCanvasHeight((height) => height + 240)}
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs"
-            style={{
-              background: 'rgba(255,255,255,0.24)',
-              border: '1px solid rgba(255,255,255,0.24)',
-              color: 'var(--ink-cool-soft)',
-            }}
-          >
-            <Plus size={13} />
-            Mas espacio
-          </button>
         </div>
       </div>
 
       <div
+        ref={containerRef}
         className="relative overflow-hidden rounded-[24px]"
         style={{
           minHeight: canvasHeight,
@@ -333,29 +267,18 @@ export default function DrawingCanvas({
           boxShadow: '0 18px 42px rgba(120,110,130,0.10)',
         }}
       >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background: GUIDE_BACKGROUND[guideStyle],
-            backgroundSize: guideStyle === 'grid' ? '36px 36px' : undefined,
-            opacity: guideStyle === 'none' ? 0 : 1,
-          }}
-        />
-
         <ReactSketchCanvas
           ref={canvasRef}
           width="100%"
           height={`${canvasHeight}px`}
-          strokeWidth={tool === 'highlighter' ? strokeWidth + 5 : strokeWidth}
+          strokeWidth={tool === 'highlighter' ? strokeWidth + 2.5 : strokeWidth}
           strokeColor={tool === 'eraser' ? '#FAF7F4' : tool === 'highlighter' ? `${strokeColor}66` : strokeColor}
-          eraserWidth={strokeWidth * 4}
+          eraserWidth={strokeWidth * 3}
           canvasColor="#FAF7F4"
           backgroundImage={backgroundImage ?? undefined}
           exportWithBackgroundImage={Boolean(backgroundImage)}
           preserveBackgroundImageAspectRatio="none"
           onChange={(updatedPaths) => {
-            currentPathsRef.current = castPaths(updatedPaths)
             setStrokeCount(updatedPaths.length)
           }}
           onStroke={async () => {
