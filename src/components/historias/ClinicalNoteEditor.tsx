@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, CalendarDays, Loader2, Save, ShieldAlert, Trash2 } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Expand, Loader2, Save, ShieldAlert, Trash2, X } from 'lucide-react'
 import type { Appointment, ClinicalCanvasPath, ClinicalNote, ClinicalNoteTemplateData, Patient } from '@/types'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -133,11 +133,15 @@ export default function ClinicalNoteEditor({
   const [textoLibre, setTextoLibre] = useState('')
 
   const [canvasBackgroundImage, setCanvasBackgroundImage] = useState<string | null>(null)
+  const [canvasHasLegacyBackground, setCanvasHasLegacyBackground] = useState(false)
+  const [canvasPreviewUrl, setCanvasPreviewUrl] = useState<string | null>(null)
   const [canvasInitialPaths, setCanvasInitialPaths] = useState<ClinicalCanvasPath[] | null>(null)
   const [canvasPaths, setCanvasPaths] = useState<ClinicalCanvasPath[] | null>(null)
   const [canvasDataUrl, setCanvasDataUrl] = useState('')
   const [canvasTouched, setCanvasTouched] = useState(false)
   const [canvasRemoved, setCanvasRemoved] = useState(false)
+  const [isCanvasEditorOpen, setIsCanvasEditorOpen] = useState(false)
+  const canvasModalScrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -167,9 +171,9 @@ export default function ClinicalNoteEditor({
             .eq('patient_id', mappedNote.patient_id)
             .order('fecha_inicio', { ascending: false })
 
-          let backgroundImage: string | null = null
-          if (mappedNote.canvas_url && !(mappedNote.canvas_paths && mappedNote.canvas_paths.length > 0)) {
-            backgroundImage = await createClinicalNoteCanvasSignedUrl(supabase, mappedNote.canvas_url)
+          let previewUrl: string | null = null
+          if (mappedNote.canvas_url) {
+            previewUrl = await createClinicalNoteCanvasSignedUrl(supabase, mappedNote.canvas_url)
           }
 
           if (cancelled) return
@@ -182,10 +186,13 @@ export default function ClinicalNoteEditor({
           setTextoLibre(mappedNote.texto ?? '')
           setCanvasInitialPaths(mappedNote.canvas_paths)
           setCanvasPaths(mappedNote.canvas_paths)
-          setCanvasBackgroundImage(backgroundImage)
+          setCanvasBackgroundImage(mappedNote.canvas_paths?.length ? null : previewUrl)
+          setCanvasHasLegacyBackground(Boolean(mappedNote.canvas_url && !(mappedNote.canvas_paths && mappedNote.canvas_paths.length > 0)))
+          setCanvasPreviewUrl(previewUrl)
           setCanvasTouched(false)
           setCanvasRemoved(false)
           setCanvasDataUrl('')
+          setIsCanvasEditorOpen(false)
         } else {
           if (!patientId) throw new Error('Falta el paciente para crear la nota.')
 
@@ -211,9 +218,12 @@ export default function ClinicalNoteEditor({
           setCanvasInitialPaths(null)
           setCanvasPaths(null)
           setCanvasBackgroundImage(null)
+          setCanvasHasLegacyBackground(false)
+          setCanvasPreviewUrl(null)
           setCanvasTouched(false)
           setCanvasRemoved(false)
           setCanvasDataUrl('')
+          setIsCanvasEditorOpen(false)
         }
       } catch (error) {
         if (cancelled) return
@@ -228,6 +238,17 @@ export default function ClinicalNoteEditor({
       cancelled = true
     }
   }, [mode, noteId, patientId, supabase])
+
+  useEffect(() => {
+    if (!isCanvasEditorOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isCanvasEditorOpen])
 
   const canSave = useMemo(() => {
     const hasTemplate = !isClinicalNoteTemplateEmpty(template)
@@ -318,7 +339,26 @@ export default function ClinicalNoteEditor({
     setCanvasPaths(null)
     setCanvasDataUrl('')
     setCanvasBackgroundImage(null)
+    setCanvasHasLegacyBackground(false)
+    setCanvasPreviewUrl(null)
   }
+
+  function openCanvasEditor() {
+    setCanvasInitialPaths(canvasPaths ?? canvasInitialPaths ?? null)
+    setCanvasBackgroundImage((currentBackgroundImage) => {
+      if (canvasHasLegacyBackground) return currentBackgroundImage ?? canvasPreviewUrl
+      return currentBackgroundImage
+    })
+    setIsCanvasEditorOpen(true)
+  }
+
+  const canvasPreviewSrc = canvasRemoved
+    ? null
+    : canvasDataUrl || canvasPreviewUrl
+
+  const hasCanvasContent = Boolean(
+    !canvasRemoved && (canvasPaths?.length || canvasDataUrl || canvasPreviewUrl)
+  )
 
   if (loading) {
     return (
@@ -413,28 +453,76 @@ export default function ClinicalNoteEditor({
             )}
           </div>
 
-          {canvasBackgroundImage && !(canvasPaths && canvasPaths.length > 0) && (
+          <button
+            type="button"
+            onClick={openCanvasEditor}
+            className="mt-5 block w-full text-left"
+          >
             <div
-              className="mt-4 rounded-[18px] px-4 py-3 text-sm leading-6"
-              style={{ background: 'rgba(255,255,255,0.5)', color: 'var(--ink-cool-soft)' }}
-            >
-              Esta nota viene de un canvas legacy sin trazos editables. Puedes escribir encima para actualizarla o quitarla por completo.
-            </div>
-          )}
-
-          <div className="mt-5">
-            <DrawingCanvas
-              key={`${note?.id ?? 'new'}-${canvasBackgroundImage ? 'background' : 'plain'}-${canvasInitialPaths?.length ?? 0}`}
-              initialPaths={canvasInitialPaths}
-              backgroundImage={canvasBackgroundImage}
-              onChange={({ dataUrl, paths }) => {
-                setCanvasTouched(true)
-                setCanvasRemoved(false)
-                setCanvasDataUrl(dataUrl)
-                setCanvasPaths(paths.length > 0 ? paths : null)
+              className="overflow-hidden rounded-[24px]"
+              style={{
+                background: 'linear-gradient(180deg, rgba(255,255,255,0.56) 0%, rgba(255,255,255,0.34) 100%)',
+                border: '1px solid rgba(255,255,255,0.42)',
+                boxShadow: '0 18px 42px rgba(120,110,130,0.08)',
               }}
-            />
-          </div>
+            >
+              {hasCanvasContent && canvasPreviewSrc ? (
+                <>
+                  <div
+                    className="h-[220px] w-full"
+                    style={{
+                      backgroundColor: '#FAF7F4',
+                      backgroundImage: `url("${canvasPreviewSrc}")`,
+                      backgroundPosition: 'top center',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: 'cover',
+                    }}
+                  />
+                  <div className="flex items-center justify-between gap-3 px-4 py-3">
+                    <div>
+                      <p className="text-sm font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
+                        Vista previa del dibujo
+                      </p>
+                      <p className="text-xs" style={{ color: 'var(--ink-cool-soft)' }}>
+                        {canvasPaths?.length ? `${canvasPaths.length} trazos listos para seguir editando.` : 'Abre el canvas para revisar o ajustar el dibujo.'}
+                      </p>
+                    </div>
+                    <span
+                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs"
+                      style={{ background: 'rgba(255,255,255,0.72)', color: 'var(--ink-cool-strong)' }}
+                    >
+                      <Expand size={13} />
+                      Abrir
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex min-h-[180px] flex-col items-center justify-center gap-3 px-6 py-8 text-center">
+                  <div
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs"
+                    style={{ background: 'rgba(255,255,255,0.62)', color: 'var(--ink-cool-soft)' }}
+                  >
+                    Canvas
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
+                      Sin dibujo aun
+                    </p>
+                    <p className="mt-1 text-xs" style={{ color: 'var(--ink-cool-soft)' }}>
+                      Abre el canvas para empezar a escribir o bosquejar.
+                    </p>
+                  </div>
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs"
+                    style={{ background: 'rgba(255,255,255,0.72)', color: 'var(--ink-cool-strong)' }}
+                  >
+                    <Expand size={13} />
+                    Abrir canvas
+                  </span>
+                </div>
+              )}
+            </div>
+          </button>
         </section>
 
         <section className="glass rounded-[30px] p-5 sm:p-6">
@@ -615,6 +703,84 @@ export default function ClinicalNoteEditor({
           {saving ? 'Guardando...' : 'Guardar nota'}
         </button>
       </div>
+
+      {isCanvasEditorOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-[rgba(52,34,35,0.22)] backdrop-blur-[10px]"
+          onClick={() => setIsCanvasEditorOpen(false)}
+        >
+          <div
+            ref={canvasModalScrollRef}
+            className="h-full overflow-y-auto px-4 py-6 sm:px-6"
+          >
+            <div
+              className="mx-auto max-w-[980px]"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div
+                className="rounded-[30px] p-4 sm:p-5"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(255,252,250,0.94) 0%, rgba(255,248,244,0.88) 100%)',
+                  border: '1px solid rgba(255,255,255,0.42)',
+                  boxShadow: '0 28px 90px rgba(70,46,43,0.18)',
+                  backdropFilter: 'blur(26px) saturate(140%)',
+                  WebkitBackdropFilter: 'blur(26px) saturate(140%)',
+                }}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+                      Canvas manuscrito
+                    </p>
+                    <h3 className="mt-1 text-[1.16rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
+                      Editor de dibujo
+                    </h3>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {(canvasPaths?.length || canvasPreviewUrl) && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveCanvas}
+                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs"
+                        style={{ background: 'rgba(176,124,132,0.12)', color: 'var(--state-cancel-text)' }}
+                      >
+                        <Trash2 size={13} />
+                        Quitar
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setIsCanvasEditorOpen(false)}
+                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs"
+                      style={{ background: 'rgba(255,255,255,0.7)', color: 'var(--ink-cool-strong)' }}
+                    >
+                      <X size={13} />
+                      Cerrar
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <DrawingCanvas
+                    key={`canvas-modal-${note?.id ?? 'new'}-${canvasHasLegacyBackground ? 'legacy' : 'clean'}`}
+                    initialPaths={canvasInitialPaths}
+                    backgroundImage={canvasBackgroundImage}
+                    scrollContainerRef={canvasModalScrollRef}
+                    onChange={({ dataUrl, paths }) => {
+                      setCanvasTouched(true)
+                      setCanvasRemoved(false)
+                      setCanvasDataUrl(dataUrl)
+                      setCanvasPaths(paths.length > 0 ? paths : null)
+                      setCanvasPreviewUrl(dataUrl || null)
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

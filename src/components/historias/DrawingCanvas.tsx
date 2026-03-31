@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type RefObject } from 'react'
 import type { CanvasPath } from 'react-sketch-canvas'
 import { ReactSketchCanvas, ReactSketchCanvasRef } from 'react-sketch-canvas'
 import {
@@ -20,6 +20,7 @@ interface DrawingCanvasProps {
   initialPaths?: ClinicalCanvasPath[] | null
   backgroundImage?: string | null
   initialHeight?: number
+  scrollContainerRef?: RefObject<HTMLElement | null>
 }
 
 const COLOR_OPTIONS = [
@@ -42,9 +43,11 @@ export default function DrawingCanvas({
   initialPaths,
   backgroundImage,
   initialHeight = 640,
+  scrollContainerRef,
 }: DrawingCanvasProps) {
   const canvasRef = useRef<ReactSketchCanvasRef>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const initialPathsRef = useRef(initialPaths)
 
   const [tool, setTool] = useState<DrawingTool>('pen')
   const [strokeWidth, setStrokeWidth] = useState(2.5)
@@ -61,11 +64,11 @@ export default function DrawingCanvas({
     if (!canvas) return
 
     canvas.resetCanvas()
-    if (initialPaths && initialPaths.length > 0) {
-      canvas.loadPaths(initialPaths as CanvasPath[])
+    if (initialPathsRef.current && initialPathsRef.current.length > 0) {
+      canvas.loadPaths(initialPathsRef.current as CanvasPath[])
       return
     }
-  }, [backgroundImage, initialPaths])
+  }, [])
 
   useEffect(() => {
     function maybeGrowCanvas() {
@@ -73,21 +76,27 @@ export default function DrawingCanvas({
       if (!container) return
 
       const rect = container.getBoundingClientRect()
-      const viewportBottom = window.innerHeight
+      const scrollContainer = scrollContainerRef?.current
+      const viewportBottom = scrollContainer
+        ? scrollContainer.getBoundingClientRect().bottom
+        : window.innerHeight
       if (rect.bottom - viewportBottom <= CANVAS_GROW_OFFSET) {
         setCanvasHeight((currentHeight) => currentHeight + CANVAS_GROW_STEP)
       }
     }
 
     maybeGrowCanvas()
-    window.addEventListener('scroll', maybeGrowCanvas, { passive: true })
+    const scrollContainer = scrollContainerRef?.current
+    const scrollTarget: Window | HTMLElement = scrollContainer ?? window
+
+    scrollTarget.addEventListener('scroll', maybeGrowCanvas, { passive: true })
     window.addEventListener('resize', maybeGrowCanvas)
 
     return () => {
-      window.removeEventListener('scroll', maybeGrowCanvas)
+      scrollTarget.removeEventListener('scroll', maybeGrowCanvas)
       window.removeEventListener('resize', maybeGrowCanvas)
     }
-  }, [])
+  }, [scrollContainerRef])
 
   async function emitSnapshot() {
     const canvas = canvasRef.current
