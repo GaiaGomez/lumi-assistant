@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, CalendarDays, Loader2, Save, ShieldAlert, Sparkles, Trash2 } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Loader2, Save, ShieldAlert, Trash2 } from 'lucide-react'
 import type { Appointment, ClinicalCanvasPath, ClinicalNote, ClinicalNoteTemplateData, Patient } from '@/types'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -372,11 +372,11 @@ export default function ClinicalNoteEditor({
           <h1 className="page-title text-[1.75rem]" style={{ color: 'var(--ink-cool-strong)' }}>
             {patient.nombre} {patient.apellido}
           </h1>
-          <p className="text-sm" style={{ color: 'var(--ink-cool-soft)' }}>
-            {mode === 'edit' && note
-              ? `Ultima actualizacion ${formatDateTimeFull(note.updated_at)}`
-              : 'Registro de sesion con plantilla DAP y canvas manuscrito.'}
-          </p>
+          {mode === 'edit' && note && (
+            <p className="text-sm" style={{ color: 'var(--ink-cool-soft)' }}>
+              {`Ultima actualizacion ${formatDateTimeFull(note.updated_at)}`}
+            </p>
+          )}
         </div>
       </div>
 
@@ -392,16 +392,13 @@ export default function ClinicalNoteEditor({
       <div className="space-y-5">
         <section className="glass rounded-[30px] p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="max-w-[62ch]">
+            <div>
               <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
                 Canvas manuscrito
               </p>
               <h2 className="mt-1 text-[1.18rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
                 Lienzo flexible y editable
               </h2>
-              <p className="mt-1 text-sm leading-6" style={{ color: 'var(--ink-cool-soft)' }}>
-                El espacio principal de la nota. Toma apuntes a mano con más aire, más superficie y una secuencia visual más natural.
-              </p>
             </div>
             {(canvasPaths?.length || canvasBackgroundImage || note?.canvas_url) && (
               <button
@@ -442,20 +439,13 @@ export default function ClinicalNoteEditor({
 
         <section className="glass rounded-[30px] p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="max-w-[62ch]">
+            <div>
               <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
                 Notas libres
               </p>
               <h2 className="mt-1 text-[1.08rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
                 Texto complementario
               </h2>
-              <p className="mt-1 text-sm leading-6" style={{ color: 'var(--ink-cool-soft)' }}>
-                Para contexto adicional, recordatorios clínicos o detalles operativos que quieras dejar por escrito.
-              </p>
-            </div>
-            <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs" style={{ background: 'rgba(255,255,255,0.44)', color: 'var(--ink-cool-soft)' }}>
-              <Sparkles size={13} />
-              Flexible y opcional
             </div>
           </div>
 
@@ -516,27 +506,13 @@ export default function ClinicalNoteEditor({
 
         <section className="glass rounded-[30px] p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="max-w-[62ch]">
+            <div>
               <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
                 Plantilla escrita
               </p>
               <h2 className="mt-1 text-[1.12rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
                 DAP como apoyo estructurado
               </h2>
-              <p className="mt-1 text-sm leading-6" style={{ color: 'var(--ink-cool-soft)' }}>
-                Queda al final para completar la nota con una estructura clínica profesional cuando la necesites.
-              </p>
-            </div>
-
-            <div
-              className="rounded-[18px] px-3 py-2 text-xs"
-              style={{
-                background: 'rgba(255,255,255,0.52)',
-                border: '1px solid rgba(255,255,255,0.42)',
-                color: 'var(--ink-cool-soft)',
-              }}
-            >
-              Siempre disponible, sin imponerse al flujo.
             </div>
           </div>
 
@@ -604,13 +580,6 @@ export default function ClinicalNoteEditor({
           </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <div
-              className="rounded-[20px] px-4 py-3 text-sm"
-              style={{ background: 'rgba(207,196,209,0.18)', color: 'var(--ink-cool-soft)' }}
-            >
-              DAP mantiene la nota breve y usable en practica real sin mezclarla con notas privadas de proceso.
-            </div>
-
             {template.riskLevel && (
               <div
                 className="inline-flex w-fit items-center gap-2 rounded-full px-3 py-2 text-xs"
