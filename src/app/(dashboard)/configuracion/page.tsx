@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server'
 import { fetchSettings } from '@/lib/settings'
 import PageBlobs from '@/components/ui/PageBlobs'
 import TemplateEditor from '@/components/configuracion/TemplateEditor'
+import DoctoraliaSync from '@/components/configuracion/DoctoraliaSync'
 
 export default async function ConfiguracionPage() {
   const supabase = await createClient()
@@ -21,13 +22,23 @@ export default async function ConfiguracionPage() {
 
       <div className="relative mb-5">
         <p className="section-kicker mb-3">Configuración</p>
-        <h1 className="page-title text-[2rem] leading-none">Mensajes de WhatsApp</h1>
+        <h1 className="page-title text-[2rem] leading-none">Ajustes</h1>
         <p className="page-subtitle mt-2">
-          Personaliza los mensajes que se envían a tus pacientes desde Pendientes y su perfil.
+          Personaliza tu agenda, mensajes y conexiones externas.
         </p>
       </div>
 
-      <TemplateEditor settings={settings} userId={user!.id} />
+      <div className="space-y-6">
+        <section>
+          <p className="section-kicker mb-3">Doctoralia</p>
+          <DoctoraliaSync settings={settings} userId={user!.id} />
+        </section>
+
+        <section>
+          <p className="section-kicker mb-3">Mensajes de WhatsApp</p>
+          <TemplateEditor settings={settings} userId={user!.id} />
+        </section>
+      </div>
     </div>
   )
 }

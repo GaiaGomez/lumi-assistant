@@ -7,6 +7,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 export const SETTINGS_KEYS = [
   'doctoralia_url',
+  'doctoralia_ical_url',
+  'doctoralia_last_sync',
   'template_cobros',
   'template_sin_proxima',
   'template_retomar',
@@ -18,6 +20,8 @@ export type SettingsMap = Record<SettingsKey, string>
 // Valores por defecto si el usuario aún no ha personalizado
 export const DEFAULT_SETTINGS: SettingsMap = {
   doctoralia_url: process.env.NEXT_PUBLIC_DOCTORALIA_URL ?? '',
+  doctoralia_ical_url: '',
+  doctoralia_last_sync: '',
 
   template_cobros:
     'Hola, {first_name}, espero que estés bien. Te escribo para recordarte que sigue pendiente el pago de la última sesión. Cuando puedas, me confirmas por favor.',
