@@ -7,10 +7,6 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { formatDateTimeFull } from '@/lib/format'
-import {
-  APPOINTMENT_SESSION_LABEL,
-  getAppointmentSessionBadgeStatus,
-} from '@/lib/appointment-status'
 import { fetchSettings } from '@/lib/settings'
 import {
   getNextAppointment,
@@ -23,7 +19,6 @@ import {
   mapPatientRow,
 } from '@/lib/supabase/mappers'
 import PageBlobs from '@/components/ui/PageBlobs'
-import Badge from '@/components/ui/Badge'
 import EmptyState from '@/components/ui/EmptyState'
 import PatientCaseNotesCard from '@/components/pacientes/PatientCaseNotesCard'
 import PatientHeaderCard from '@/components/pacientes/PatientHeaderCard'
@@ -115,28 +110,18 @@ export default async function PatientProfilePage({ params }: Props) {
             {patientAppointments.map((apt) => (
               <div
                 key={apt.id}
-                className="rounded-[14px] px-[10px] py-[9px]"
+                className="rounded-[14px] px-[10px] py-2"
                 style={{
                   background: 'linear-gradient(180deg, rgba(255,255,255,0.48) 0%, rgba(255,255,255,0.32) 100%)',
                   border: '1px solid var(--border-glass-white)',
                   boxShadow: '0 10px 24px rgba(124, 108, 128, 0.07)',
                 }}
               >
-                <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                  <p className="text-[12px] leading-5" style={{ color: 'var(--ink-cool)' }}>
-                    {formatDateTimeFull(apt.fecha_inicio)}
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    <Badge status={getAppointmentSessionBadgeStatus(apt.estado_sesion)}>
-                      {APPOINTMENT_SESSION_LABEL[apt.estado_sesion]}
-                    </Badge>
-                    <Badge status={apt.estado_pago === 'pagado' ? 'success' : 'pending'}>
-                      {apt.estado_pago === 'pagado' ? 'Pagada' : 'Pendiente de pago'}
-                    </Badge>
-                  </div>
-                </div>
+                <p className="text-[12px] leading-5" style={{ color: 'var(--ink-cool)' }}>
+                  {formatDateTimeFull(apt.fecha_inicio)}
+                </p>
                 <div
-                  className="mt-1.5 rounded-[12px] px-2 py-1.5"
+                  className="mt-1 rounded-[12px] px-2 py-1.5"
                   style={{
                     background: 'rgba(255,255,255,0.34)',
                     border: '1px solid var(--border-glass-white)',
