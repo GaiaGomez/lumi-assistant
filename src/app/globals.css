@@ -268,8 +268,8 @@ body.canvas-editor-open .dashboard-shell-sidebar {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  padding: 0.28rem 0.7rem;
-  font-size: 11px;
+  padding: 0.24rem 0.62rem;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.02em;
 }

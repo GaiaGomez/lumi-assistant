@@ -36,8 +36,8 @@ function SummaryMiniCard({ label, value }: { label: string; value: number }) {
     <div
       className="rounded-[16px]"
       style={{
-        minHeight: value === 0 ? '68px' : '76px',
-        padding: value === 0 ? '10px 12px' : '12px 14px',
+        minHeight: value === 0 ? '60px' : '66px',
+        padding: value === 0 ? '9px 11px' : '10px 12px',
         background: value === 0
           ? 'linear-gradient(180deg, rgba(255,255,255,0.42) 0%, rgba(255,255,255,0.28) 100%)'
           : 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
@@ -48,10 +48,10 @@ function SummaryMiniCard({ label, value }: { label: string; value: number }) {
         opacity: value === 0 ? 0.72 : 1,
       }}
     >
-      <p className="card-label mb-1" style={{ color: 'var(--ink-cool-faint)' }}>
+      <p className="card-label mb-0.5" style={{ color: 'var(--ink-cool-faint)' }}>
         {label}
       </p>
-      <p className="font-medium leading-none" style={{ color: value === 0 ? 'var(--ink-cool-soft)' : 'var(--ink-cool-strong)', fontSize: value === 0 ? '20px' : '24px' }}>
+      <p className="font-medium leading-none" style={{ color: value === 0 ? 'var(--ink-cool-soft)' : 'var(--ink-cool-strong)', fontSize: value === 0 ? '18px' : '22px' }}>
         {value}
       </p>
     </div>
@@ -59,11 +59,13 @@ function SummaryMiniCard({ label, value }: { label: string; value: number }) {
 }
 
 function PendingActionCard({ action }: { action: PendingAction }) {
+  const shouldShowDescription = action.type === 'reactivar_paciente'
+
   return (
     <div
       className="rounded-[16px]"
       style={{
-        padding: '11px 13px',
+        padding: '10px 11px',
         background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
         border: '1px solid var(--border-glass-white)',
         boxShadow: 'var(--shadow-glass)',
@@ -71,22 +73,29 @@ function PendingActionCard({ action }: { action: PendingAction }) {
         WebkitBackdropFilter: 'blur(22px) saturate(140%)',
       }}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="font-medium leading-snug" style={{ color: 'var(--ink-cool-strong)', fontSize: '15px' }}>
+          <p className="font-medium leading-snug" style={{ color: 'var(--ink-cool-strong)', fontSize: '14px' }}>
             {action.patient.nombre} {action.patient.apellido}
           </p>
-          <p className="mt-1 text-[12px] leading-none" style={{ color: 'var(--ink-cool-strong)' }}>
-            {action.title}
-          </p>
-          <p className="mt-1 text-[11px] leading-none" style={{ color: 'var(--ink-cool-faint)' }}>
-            {action.context}
-          </p>
-          <p className="mt-1.5 text-[11px] leading-snug" style={{ color: 'var(--ink-cool-soft)' }}>
-            {action.description}
-          </p>
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+            <p className="text-[11px] leading-none" style={{ color: 'var(--ink-cool-strong)' }}>
+              {action.title}
+            </p>
+            <span className="text-[10px] leading-none" style={{ color: 'var(--ink-cool-muted)' }}>
+              •
+            </span>
+            <p className="text-[10px] leading-none" style={{ color: 'var(--ink-cool-faint)' }}>
+              {action.context}
+            </p>
+          </div>
+          {shouldShowDescription && (
+            <p className="mt-1 text-[10px] leading-snug" style={{ color: 'var(--ink-cool-soft)' }}>
+              {action.description}
+            </p>
+          )}
           {action.preview && (
-            <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug" style={{ color: 'var(--ink-cool-soft)' }}>
+            <p className="mt-1 line-clamp-2 text-[10px] leading-snug" style={{ color: 'var(--ink-cool-soft)' }}>
               {action.preview}
             </p>
           )}
@@ -94,7 +103,7 @@ function PendingActionCard({ action }: { action: PendingAction }) {
 
         <Link
           href={`/pacientes/${action.patientId}`}
-          className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium"
+          className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium"
           style={{
             color: 'var(--ink-cool-strong)',
             background: 'rgba(255,255,255,0.58)',
@@ -103,40 +112,41 @@ function PendingActionCard({ action }: { action: PendingAction }) {
           }}
         >
           Ver paciente
-          <ArrowUpRight size={11} />
+          <ArrowUpRight size={10} />
         </Link>
       </div>
 
-      {action.appointment && (
-        <div
-          className="mt-2.5 rounded-[14px] p-2.5"
-          style={{
-            background: 'rgba(255,255,255,0.38)',
-            border: '1px solid var(--border-glass-white)',
-          }}
-        >
-          <AppointmentQuickStateEditor
-            appointmentId={action.appointment.id}
-            initialSessionState={action.appointment.estado_sesion}
-            initialPaymentState={action.appointment.estado_pago}
-          />
-        </div>
-      )}
+      <div className="mt-1.5 flex flex-wrap items-start gap-1.5">
+        {action.appointment && (
+          <div
+            className="min-w-0 flex-1 rounded-[12px] px-2 py-1.5"
+            style={{
+              background: 'rgba(255,255,255,0.38)',
+              border: '1px solid var(--border-glass-white)',
+            }}
+          >
+            <AppointmentQuickStateEditor
+              appointmentId={action.appointment.id}
+              initialSessionState={action.appointment.estado_sesion}
+              initialPaymentState={action.appointment.estado_pago}
+              compact
+            />
+          </div>
+        )}
 
-      {action.externalAction && (
-        <div className="mt-2.5">
+        {action.externalAction && (
           <a
             href={action.externalAction.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-action gap-1.5"
-            style={{ height: '30px', padding: '0 12px', fontSize: '12px' }}
+            className="btn-action shrink-0 gap-1.5 self-start"
+            style={{ height: '28px', padding: '0 10px', fontSize: '11px' }}
           >
-            <MessageCircle size={13} />
+            <MessageCircle size={12} />
             {action.externalAction.label}
           </a>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
@@ -152,7 +162,7 @@ function PendingSection({
 
   return (
     <section
-      className="rounded-[18px] p-3"
+      className="rounded-[18px] p-2.5"
       style={{
         background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
         border: '1px solid var(--border-glass-white)',
@@ -161,10 +171,10 @@ function PendingSection({
         WebkitBackdropFilter: 'blur(22px) saturate(140%)',
       }}
     >
-      <h2 className="editorial-panel-title text-[1.02rem] sm:text-[1.08rem]" style={{ color: 'var(--ink-cool-strong)' }}>
+      <h2 className="editorial-panel-title text-[0.98rem] sm:text-[1.04rem]" style={{ color: 'var(--ink-cool-strong)' }}>
         {PENDING_ACTION_SECTION_LABEL[type]}
       </h2>
-      <div className="mt-2 space-y-1.5">
+      <div className="mt-1.5 space-y-1.5">
         {actions.map((action) => (
           <PendingActionCard key={action.id} action={action} />
         ))}
@@ -205,7 +215,7 @@ export default async function PendingPage() {
       <PageBlobs />
 
       <section
-        className="relative mb-3 rounded-[18px] p-3"
+        className="relative mb-3 rounded-[18px] p-2.5"
         style={{
           background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
           border: '1px solid var(--border-glass-white)',
@@ -219,12 +229,12 @@ export default async function PendingPage() {
             <h1 className="editorial-panel-title text-[1.3rem] sm:text-[1.4rem]" style={{ color: 'var(--ink-cool-strong)' }}>
               Pendientes
             </h1>
-            <p className="mt-1 text-[12px]" style={{ color: 'var(--ink-cool-soft)' }}>
-              Bandeja operativa de acciones reales del sistema
+            <p className="mt-0.5 text-[11px]" style={{ color: 'var(--ink-cool-soft)' }}>
+              Acciones operativas listas para resolver
             </p>
           </div>
           <div
-            className="rounded-full px-2.5 py-1 text-[10px] font-medium"
+            className="rounded-full px-2.5 py-0.5 text-[10px] font-medium"
             style={{
               color: 'var(--ink-cool-soft)',
               background: 'rgba(255,255,255,0.42)',

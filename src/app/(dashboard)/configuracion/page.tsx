@@ -20,10 +20,10 @@ export default async function ConfiguracionPage() {
     <div className="relative mx-auto max-w-[860px] px-4 pb-1 font-sans sm:px-5">
       <PageBlobs />
 
-      <div className="relative mb-5">
-        <p className="section-kicker mb-3">Configuración</p>
+      <div className="relative mb-4">
+        <p className="section-kicker mb-2">Configuración</p>
         <h1 className="page-title text-[2rem] leading-none">Ajustes</h1>
-        <p className="page-subtitle mt-2">
+        <p className="page-subtitle mt-1.5 text-[0.9rem]">
           Personaliza tu agenda, mensajes y conexiones externas.
         </p>
       </div>

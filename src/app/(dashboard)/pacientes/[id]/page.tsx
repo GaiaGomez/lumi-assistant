@@ -93,11 +93,11 @@ export default async function PatientProfilePage({ params }: Props) {
 
       <div className="space-y-2.5">
         {/* ── Historia clínica ── */}
-        <section className="glass-cool relative rounded-[18px] p-3">
-          <h2 className="editorial-panel-title text-[1.12rem] sm:text-[1.2rem] mb-2" style={{ color: 'var(--ink-cool-strong)' }}>
+        <section className="glass-cool relative rounded-[18px] p-2.5">
+          <h2 className="editorial-panel-title mb-1.5 text-[1.08rem] sm:text-[1.16rem]" style={{ color: 'var(--ink-cool-strong)' }}>
             Historia clínica
           </h2>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {patientNotes.length === 0 && <EmptyState message="No hay notas clínicas aún" />}
             {patientNotes.map((note) => (
               <ClinicalNoteSummaryCard key={note.id} note={note} />
@@ -106,25 +106,24 @@ export default async function PatientProfilePage({ params }: Props) {
         </section>
 
         {/* ── Historial de citas ── */}
-        <section className="glass-cool relative rounded-[18px] p-3">
-          <h2 className="editorial-panel-title text-[1.12rem] sm:text-[1.2rem] mb-2" style={{ color: 'var(--ink-cool-strong)' }}>
+        <section className="glass-cool relative rounded-[18px] p-2.5">
+          <h2 className="editorial-panel-title mb-1.5 text-[1.08rem] sm:text-[1.16rem]" style={{ color: 'var(--ink-cool-strong)' }}>
             Historial de citas
           </h2>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {patientAppointments.length === 0 && <EmptyState message="Sin citas registradas" />}
             {patientAppointments.map((apt) => (
               <div
                 key={apt.id}
-                className="rounded-[14px] p-[10px]"
+                className="rounded-[14px] px-[10px] py-[9px]"
                 style={{
-                  minHeight: '52px',
                   background: 'linear-gradient(180deg, rgba(255,255,255,0.48) 0%, rgba(255,255,255,0.32) 100%)',
                   border: '1px solid var(--border-glass-white)',
                   boxShadow: '0 10px 24px rgba(124, 108, 128, 0.07)',
                 }}
               >
-                <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-[13px] leading-5" style={{ color: 'var(--ink-cool)' }}>
+                <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                  <p className="text-[12px] leading-5" style={{ color: 'var(--ink-cool)' }}>
                     {formatDateTimeFull(apt.fecha_inicio)}
                   </p>
                   <div className="flex flex-wrap gap-1">
@@ -137,7 +136,7 @@ export default async function PatientProfilePage({ params }: Props) {
                   </div>
                 </div>
                 <div
-                  className="mt-2.5 rounded-[14px] p-2.5"
+                  className="mt-1.5 rounded-[12px] px-2 py-1.5"
                   style={{
                     background: 'rgba(255,255,255,0.34)',
                     border: '1px solid var(--border-glass-white)',
@@ -147,6 +146,7 @@ export default async function PatientProfilePage({ params }: Props) {
                     appointmentId={apt.id}
                     initialSessionState={apt.estado_sesion}
                     initialPaymentState={apt.estado_pago}
+                    compact
                   />
                 </div>
               </div>

@@ -16,6 +16,7 @@ interface AppointmentQuickStateEditorProps {
   appointmentId: string
   initialSessionState: Appointment['estado_sesion']
   initialPaymentState: Appointment['estado_pago']
+  compact?: boolean
 }
 
 const inactiveChipStyle: React.CSSProperties = {
@@ -66,12 +67,14 @@ function ChipButton({
   onClick,
   children,
   activeStyle,
+  compact = false,
 }: {
   active: boolean
   disabled: boolean
   onClick: () => void
   children: React.ReactNode
   activeStyle: React.CSSProperties
+  compact?: boolean
 }) {
   return (
     <button
@@ -79,7 +82,9 @@ function ChipButton({
       onClick={onClick}
       disabled={disabled}
       aria-pressed={active}
-      className="rounded-full px-2.5 py-1 text-[10px] font-medium transition-all"
+      className={compact
+        ? 'rounded-full px-2 py-[3px] text-[10px] font-medium transition-all'
+        : 'rounded-full px-2.5 py-1 text-[10px] font-medium transition-all'}
       style={active ? activeStyle : inactiveChipStyle}
     >
       {children}
@@ -91,6 +96,7 @@ export default function AppointmentQuickStateEditor({
   appointmentId,
   initialSessionState,
   initialPaymentState,
+  compact = false,
 }: AppointmentQuickStateEditorProps) {
   const router = useRouter()
   const supabase = createClient()
@@ -158,12 +164,15 @@ export default function AppointmentQuickStateEditor({
   const disabled = !!savingField || isRefreshing
 
   return (
-    <div className="space-y-2">
-      <div className="space-y-1">
-        <p className="text-[10px] uppercase tracking-[0.08em]" style={{ color: 'var(--ink-cool-faint)' }}>
+    <div className={compact ? 'space-y-1.5' : 'space-y-2'}>
+      <div className={compact ? 'flex flex-wrap items-center gap-x-2 gap-y-1' : 'space-y-1'}>
+        <p
+          className={compact ? 'text-[9px] uppercase tracking-[0.08em]' : 'text-[10px] uppercase tracking-[0.08em]'}
+          style={{ color: 'var(--ink-cool-faint)' }}
+        >
           Sesión
         </p>
-        <div className="flex flex-wrap gap-1.5">
+        <div className={compact ? 'flex flex-1 flex-wrap gap-1' : 'flex flex-wrap gap-1.5'}>
           {APPOINTMENT_SESSION_STATES.map((value) => (
             <ChipButton
               key={value}
@@ -171,6 +180,7 @@ export default function AppointmentQuickStateEditor({
               disabled={disabled}
               onClick={() => updateField('estado_sesion', value)}
               activeStyle={sessionActiveStyles[value]}
+              compact={compact}
             >
               {APPOINTMENT_SESSION_LABEL[value]}
             </ChipButton>
@@ -178,11 +188,14 @@ export default function AppointmentQuickStateEditor({
         </div>
       </div>
 
-      <div className="space-y-1">
-        <p className="text-[10px] uppercase tracking-[0.08em]" style={{ color: 'var(--ink-cool-faint)' }}>
+      <div className={compact ? 'flex flex-wrap items-center gap-x-2 gap-y-1' : 'space-y-1'}>
+        <p
+          className={compact ? 'text-[9px] uppercase tracking-[0.08em]' : 'text-[10px] uppercase tracking-[0.08em]'}
+          style={{ color: 'var(--ink-cool-faint)' }}
+        >
           Pago
         </p>
-        <div className="flex flex-wrap gap-1.5">
+        <div className={compact ? 'flex flex-1 flex-wrap gap-1' : 'flex flex-wrap gap-1.5'}>
           {APPOINTMENT_PAYMENT_STATES.map((value) => (
             <ChipButton
               key={value}
@@ -190,6 +203,7 @@ export default function AppointmentQuickStateEditor({
               disabled={disabled}
               onClick={() => updateField('estado_pago', value)}
               activeStyle={paymentActiveStyles[value]}
+              compact={compact}
             >
               {APPOINTMENT_PAYMENT_LABEL[value]}
             </ChipButton>

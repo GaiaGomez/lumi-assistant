@@ -31,7 +31,7 @@ const TEMPLATES: TemplateConfig[] = [
   {
     key: 'template_cobros',
     label: 'Cobro pendiente',
-    description: 'Se envía a pacientes que asistieron a una sesión pero no han pagado.',
+    description: 'Para sesiones realizadas pendientes de pago.',
     variables: [
       { name: 'first_name', hint: 'Nombre del paciente' },
       { name: 'session_date', hint: 'Fecha y hora de la sesión (ej: Lunes 24/03/26 · 10:00 a. m.)' },
@@ -41,7 +41,7 @@ const TEMPLATES: TemplateConfig[] = [
   {
     key: 'template_sin_proxima',
     label: 'Sin próxima sesión',
-    description: 'Para pacientes que asistieron pero aún no tienen una próxima cita agendada.',
+    description: 'Para pacientes sin una nueva cita agendada.',
     variables: [
       { name: 'first_name', hint: 'Nombre del paciente' },
       { name: 'booking_url', hint: 'URL de tu agenda (se toma del campo "Link de agenda" de arriba)' },
@@ -51,7 +51,7 @@ const TEMPLATES: TemplateConfig[] = [
   {
     key: 'template_retomar',
     label: 'Retomar proceso',
-    description: 'Para pacientes con más de 20 días sin agendar su próxima cita.',
+    description: 'Para pacientes con más de 20 días sin agendar.',
     variables: [
       { name: 'first_name', hint: 'Nombre del paciente' },
       { name: 'days_inactive', hint: 'Días desde la última sesión (ej: 28)' },
@@ -86,30 +86,39 @@ export default function TemplateEditor({ settings, userId }: Props) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
 
       {/* ── URL de agenda ── */}
-      <Card className="p-4 space-y-3">
-        <div>
-          <h2 className="editorial-panel-title text-[1.05rem] mb-0.5" style={{ color: 'var(--ink-cool-strong)' }}>
-            Link de agenda
-          </h2>
-          <p className="text-[12px]" style={{ color: 'var(--ink-cool-soft)' }}>
-            Se usa como <VarChip name="booking_url" /> en las plantillas.
-          </p>
+      <Card className="space-y-2.5 p-3">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h2 className="editorial-panel-title mb-0.5 text-[1rem]" style={{ color: 'var(--ink-cool-strong)' }}>
+              Link de agenda
+            </h2>
+            <p className="text-[11px]" style={{ color: 'var(--ink-cool-soft)' }}>
+              Se usa como <VarChip name="booking_url" /> en las plantillas.
+            </p>
+          </div>
+          <FieldStatus state={saveStates['doctoralia_url'] ?? 'idle'} />
         </div>
 
-        <Input
-          type="url"
-          value={doctoraliaUrl}
-          onChange={e => setDoctoraliaUrl(e.target.value)}
-          placeholder="https://www.doctoralia.co/tu-perfil"
-        />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="sm:flex-1">
+            <Input
+              type="url"
+              value={doctoraliaUrl}
+              onChange={e => setDoctoraliaUrl(e.target.value)}
+              placeholder="https://www.doctoralia.co/tu-perfil"
+              className="py-2.5"
+            />
+          </div>
 
-        <FieldActions
-          state={saveStates['doctoralia_url'] ?? 'idle'}
-          onSave={() => saveField('doctoralia_url', doctoraliaUrl)}
-        />
+          <FieldActions
+            state={saveStates['doctoralia_url'] ?? 'idle'}
+            onSave={() => saveField('doctoralia_url', doctoraliaUrl)}
+            className="sm:shrink-0"
+          />
+        </div>
       </Card>
 
       {/* ── Plantillas ── */}
@@ -121,18 +130,20 @@ export default function TemplateEditor({ settings, userId }: Props) {
         }
 
         return (
-          <Card key={tpl.key} className="p-4 space-y-3">
-            <div>
-              <h2 className="editorial-panel-title text-[1.05rem] mb-0.5" style={{ color: 'var(--ink-cool-strong)' }}>
-                {tpl.label}
-              </h2>
-              <p className="text-[12px]" style={{ color: 'var(--ink-cool-soft)' }}>
-                {tpl.description}
-              </p>
+          <Card key={tpl.key} className="space-y-2.5 p-3">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h2 className="editorial-panel-title mb-0.5 text-[1rem]" style={{ color: 'var(--ink-cool-strong)' }}>
+                  {tpl.label}
+                </h2>
+                <p className="text-[11px]" style={{ color: 'var(--ink-cool-soft)' }}>
+                  {tpl.description}
+                </p>
+              </div>
+              <FieldStatus state={saveStates[tpl.key] ?? 'idle'} />
             </div>
 
-            {/* Variables disponibles */}
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1">
               {tpl.variables.map(v => (
                 <VarChip key={v.name} name={v.name} hint={v.hint} />
               ))}
@@ -141,29 +152,31 @@ export default function TemplateEditor({ settings, userId }: Props) {
             <Textarea
               value={currentValue}
               onChange={e => setValues(prev => ({ ...prev, [tpl.key]: e.target.value }))}
-              rows={4}
+              rows={3}
+              className="py-2.5 leading-[1.45]"
             />
 
-            {/* Vista previa en vivo */}
             {currentValue.trim() && (
               <div
-                className="rounded-[12px] px-3.5 py-3"
+                className="rounded-[12px] px-3 py-2.5"
                 style={{
                   background: 'var(--state-cancel-bg)',
                   border: '1px solid var(--border-soft)',
                 }}
               >
-                <SectionHeader label="Vista previa" className="mb-1.5" />
-                <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink-cool-soft)' }}>
+                <SectionHeader label="Vista previa" className="mb-1" />
+                <p className="text-[11px] leading-relaxed" style={{ color: 'var(--ink-cool-soft)' }}>
                   {interpolate(currentValue, previewVars)}
                 </p>
               </div>
             )}
 
-            <FieldActions
-              state={saveStates[tpl.key] ?? 'idle'}
-              onSave={() => saveField(tpl.key, currentValue)}
-            />
+            <div className="flex justify-end">
+              <FieldActions
+                state={saveStates[tpl.key] ?? 'idle'}
+                onSave={() => saveField(tpl.key, currentValue)}
+              />
+            </div>
           </Card>
         )
       })}
@@ -176,7 +189,7 @@ export default function TemplateEditor({ settings, userId }: Props) {
 function VarChip({ name, hint }: { name: string; hint?: string }) {
   return (
     <span
-      className="inline-flex items-center text-[11px] px-2 py-0.5 rounded-full font-mono font-medium cursor-default"
+      className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-mono font-medium cursor-default"
       style={{
         background: 'var(--state-cancel-bg)',
         color: 'var(--accent-wine)',
@@ -189,27 +202,45 @@ function VarChip({ name, hint }: { name: string; hint?: string }) {
   )
 }
 
-function FieldActions({ state, onSave }: { state: SaveState; onSave: () => void }) {
+function FieldStatus({ state }: { state: SaveState }) {
+  if (state === 'saved') {
+    return (
+      <span className="flex items-center gap-1 text-[11px] font-medium" style={{ color: 'var(--state-success-text)' }}>
+        <Check size={12} />
+        Guardado
+      </span>
+    )
+  }
+
+  if (state === 'error') {
+    return (
+      <span className="flex items-center gap-1 text-[11px] font-medium" style={{ color: 'var(--state-cancel-text)' }}>
+        <AlertCircle size={12} />
+        No se pudo guardar
+      </span>
+    )
+  }
+
+  return null
+}
+
+function FieldActions({
+  state,
+  onSave,
+  className = '',
+}: {
+  state: SaveState
+  onSave: () => void
+  className?: string
+}) {
   return (
-    <div className="flex items-center justify-end pt-0.5">
-      {state === 'saved' && (
-        <span className="flex items-center gap-1.5 text-[12px] font-medium" style={{ color: 'var(--state-success-text)' }}>
-          <Check size={13} />
-          Guardado
-        </span>
-      )}
-      {state === 'error' && (
-        <span className="flex items-center gap-1.5 text-[12px] font-medium" style={{ color: 'var(--state-cancel-text)' }}>
-          <AlertCircle size={13} />
-          No se pudo guardar
-        </span>
-      )}
-      {(state === 'idle' || state === 'saving') && (
+    <div className={`flex items-center justify-end ${className}`.trim()}>
+      {(state === 'idle' || state === 'saving' || state === 'error') && (
         <Button
           variant="action"
           onClick={onSave}
           disabled={state === 'saving'}
-          className="px-5 py-2.5 text-xs tracking-[0.06em] uppercase"
+          className="px-4 py-2 text-[11px] tracking-[0.06em] uppercase"
         >
           {state === 'saving' ? 'Guardando…' : 'Guardar'}
         </Button>
