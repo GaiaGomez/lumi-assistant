@@ -42,6 +42,12 @@ export interface DoctoraliaSyncResult {
   syncedAt: string
 }
 
+// Convierte un teléfono normalizado (ej: "+573183895244") al formato de whatsapp en Lumi
+// (solo dígitos, sin +, sin espacios: "573183895244")
+function toWhatsAppFormat(phone: string): string {
+  return phone.replace(/\D/g, '')
+}
+
 function normalizePersonName(value: string): string {
   return value
     .normalize('NFD')
@@ -279,7 +285,7 @@ export async function syncDoctoraliaAppointmentsForUser(
           nombre: patient.nombre,
           apellido: patient.apellido,
           telefono: phoneByNormalizedName.get(key) ?? null,
-          whatsapp: null,
+          whatsapp: phoneByNormalizedName.has(key) ? toWhatsAppFormat(phoneByNormalizedName.get(key)!) : null,
           email: null,
           fecha_inicio: patient.fecha_inicio,
           notas_generales: null,
@@ -306,13 +312,13 @@ export async function syncDoctoraliaAppointmentsForUser(
       const key = normalizePersonName(`${p.nombre} ${p.apellido}`)
       const phone = phoneByNormalizedName.get(key)
       if (!phone) return []
-      return [{ id: p.id, telefono: phone }]
+      return [{ id: p.id, telefono: phone, whatsapp: toWhatsAppFormat(phone) }]
     })
 
   if (phoneUpdates.length > 0) {
     await Promise.all(
-      phoneUpdates.map(({ id, telefono }) =>
-        supabase.from('patients').update({ telefono }).eq('id', id)
+      phoneUpdates.map(({ id, telefono, whatsapp }) =>
+        supabase.from('patients').update({ telefono, whatsapp }).eq('id', id)
       )
     )
   }
