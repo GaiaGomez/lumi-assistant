@@ -45,9 +45,20 @@ export interface NormalizedDoctoraliaAppointment extends DoctoraliaAppointment {
   end_iso_if_utc: string
 }
 
-// Extrae el primer teléfono disponible del objeto patient de Doctoralia
-// Prueba los nombres de campo más comunes en la API de Docplanner
-export function extractDoctoraliaPhone(
+// Respuesta del endpoint POST /api/phoneNumber de Doctoralia
+export interface DoctoraliaPhoneValidation {
+  countryCode: number
+  extension: string
+  hasExtension: boolean
+  isValid: boolean
+  hasCountryCode: boolean
+  format: string        // número en formato internacional, ej: "+573183895244"
+  exampleNumber: string
+}
+
+// Extrae el primer teléfono crudo disponible del objeto patient de Doctoralia.
+// Se usa como entrada para la normalización — se mantiene con formato original.
+export function extractRawDoctoraliaPhone(
   patient: DoctoraliaAppointment['patient']
 ): string | null {
   const candidates = [
@@ -59,11 +70,41 @@ export function extractDoctoraliaPhone(
 
   for (const raw of candidates) {
     if (!raw) continue
-    const cleaned = raw.replace(/\D/g, '')
-    if (cleaned.length >= 7) return cleaned
+    if (raw.replace(/\D/g, '').length >= 7) return raw
   }
 
   return null
+}
+
+// Llama al endpoint de validación/normalización de Doctoralia.
+// Devuelve el número en formato internacional (+57...) si es válido, o null si falla.
+export async function fetchDoctoraliaPhoneValidation(
+  rawPhone: string,
+  token: string
+): Promise<string | null> {
+  try {
+    const response = await fetch('https://docplanner.doctoralia.co/api/phoneNumber', {
+      method: 'POST',
+      headers: {
+        'Authorization': `bearer ${token}`,
+        'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json',
+        'x-country-id': 'CO',
+        'x-user-type': 'doctor',
+      },
+      body: JSON.stringify({ phoneNumber: rawPhone }),
+      cache: 'no-store',
+    })
+
+    if (!response.ok) return null
+
+    const data: DoctoraliaPhoneValidation = await response.json()
+
+    if (data.isValid && data.format) return data.format
+    return null
+  } catch {
+    return null
+  }
 }
 
 // Mapeamos el campo `attendance` de Doctoralia a nuestro enum de estado_sesion

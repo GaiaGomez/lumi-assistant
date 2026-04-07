@@ -4,7 +4,8 @@ import { getBogotaDateParts, isSameInstant } from '@/lib/datetime'
 import {
   fetchDoctoraliaRange,
   mapAttendanceToEstado,
-  extractDoctoraliaPhone,
+  extractRawDoctoraliaPhone,
+  fetchDoctoraliaPhoneValidation,
 } from '@/lib/doctoralia-api'
 
 interface PatientMatchRow {
@@ -183,9 +184,9 @@ export async function syncDoctoraliaAppointmentsForUser(
     const normalizedName = fullName ? normalizePersonName(fullName) : ''
     if (!normalizedName) continue
 
-    // Guardamos el teléfono si viene en el payload (no sobreescribimos si ya lo tenemos)
+    // Guardamos el teléfono crudo si viene en el payload (se normaliza después)
     if (!phoneByNormalizedName.has(normalizedName)) {
-      const phone = extractDoctoraliaPhone(rawAppointment.patient)
+      const phone = extractRawDoctoraliaPhone(rawAppointment.patient)
       if (phone) phoneByNormalizedName.set(normalizedName, phone)
     }
 
@@ -213,6 +214,28 @@ export async function syncDoctoraliaAppointmentsForUser(
       ...splitName,
       fecha_inicio: buildAppointmentStartDate(appointment.fecha_inicio),
     })
+  }
+
+  // Normalizar teléfonos únicos vía POST /api/phoneNumber antes de guardar.
+  // Solo llamamos una vez por número crudo único — si falla, queda el crudo como fallback.
+  const uniqueRawPhones = Array.from(new Set(phoneByNormalizedName.values()))
+  if (uniqueRawPhones.length > 0) {
+    const normalizedResults = await Promise.allSettled(
+      uniqueRawPhones.map((raw) => fetchDoctoraliaPhoneValidation(raw, token))
+    )
+    // Construimos un mapa rawPhone → formatoNormalizado
+    const normalizedByRaw = new Map<string, string>()
+    for (let i = 0; i < uniqueRawPhones.length; i++) {
+      const result = normalizedResults[i]
+      if (result.status === 'fulfilled' && result.value) {
+        normalizedByRaw.set(uniqueRawPhones[i], result.value)
+      }
+    }
+    // Reemplazamos los crudos por normalizados donde el API confirmó que son válidos
+    for (const [name, raw] of phoneByNormalizedName) {
+      const normalized = normalizedByRaw.get(raw)
+      if (normalized) phoneByNormalizedName.set(name, normalized)
+    }
   }
 
   if (patientsToCreate.size > 0) {
