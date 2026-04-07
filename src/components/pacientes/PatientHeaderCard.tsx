@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { ArrowLeft, Phone, Plus } from 'lucide-react'
 import { Patient } from '@/types'
 import PatientInactivityStatus from '@/components/pacientes/PatientInactivityStatus'
 import Avatar from '@/components/ui/Avatar'
@@ -63,10 +63,19 @@ export default function PatientHeaderCard({
               >
                 {patient.nombre} {patient.apellido}
               </h1>
-              <div className="mt-1.5" style={{ color: 'var(--ink-cool-strong)' }}>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
                 <PatientInactivityStatus
                   lastAppointmentDate={lastAppointmentDate}
                 />
+                {patient.telefono && (
+                  <span
+                    className="flex items-center gap-1 text-[12px]"
+                    style={{ color: 'var(--ink-cool-soft)' }}
+                  >
+                    <Phone size={11} />
+                    {patient.telefono}
+                  </span>
+                )}
               </div>
             </div>
           </div>

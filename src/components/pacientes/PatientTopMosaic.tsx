@@ -97,16 +97,26 @@ export default function PatientTopMosaic({
   pendingPaymentsCount,
   settings,
 }: PatientTopMosaicProps) {
-  const hasWhatsApp = !!patient.whatsapp
-  const whatsappHref = hasWhatsApp ? `https://wa.me/${patient.whatsapp?.replace(/[^0-9]/g, '')}` : undefined
+  // Derivamos el número de WhatsApp: campo whatsapp tiene prioridad,
+  // pero si está vacío usamos telefono (solo dígitos) como fallback.
+  const effectiveWhatsapp =
+    patient.whatsapp ??
+    (patient.telefono ? patient.telefono.replace(/[^0-9]/g, '') : null)
+
+  const effectivePatient = effectiveWhatsapp !== patient.whatsapp
+    ? { ...patient, whatsapp: effectiveWhatsapp }
+    : patient
+
+  const hasWhatsApp = !!effectiveWhatsapp
+  const whatsappHref = hasWhatsApp ? `https://wa.me/${effectiveWhatsapp}` : undefined
 
   const nextAppointmentText = nextAppointment ? formatAppointmentDate(nextAppointment.fecha_inicio) : null
   const lastPastAppointmentText = lastPastAppointment ? formatAppointmentDate(lastPastAppointment.fecha_inicio) : null
-  const quickActions = buildPatientWhatsAppQuickActions(patient, appointments, settings)
+  const quickActions = buildPatientWhatsAppQuickActions(effectivePatient, appointments, settings)
 
   const actionCards = [
     ...quickActions,
-    whatsappHref ? {
+    hasWhatsApp ? {
       key: 'whatsapp',
       label: 'WhatsApp',
       hint: 'Abrir chat',

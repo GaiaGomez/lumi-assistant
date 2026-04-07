@@ -13,6 +13,7 @@ interface PatientMatchRow {
   nombre: string
   apellido: string
   telefono: string | null
+  whatsapp: string | null
 }
 
 interface ExistingDoctoraliaRow {
@@ -119,7 +120,7 @@ export async function syncDoctoraliaAppointmentsForUser(
     fetchDoctoraliaRange(token, daysAhead, daysBehind),
     supabase
       .from('patients')
-      .select('id, nombre, apellido, telefono')
+      .select('id, nombre, apellido, telefono, whatsapp')
       .eq('user_id', userId),
     supabase
       .from('appointments')
@@ -304,21 +305,31 @@ export async function syncDoctoraliaAppointmentsForUser(
     }
   }
 
-  // Actualizar teléfono de pacientes existentes que no lo tienen aún (nunca sobreescribimos)
+  // Actualizar teléfono/whatsapp de pacientes existentes — nunca sobreescribimos valores ya cargados
   const existingPatientsToUpdatePhone = (patientsResult.data ?? []) as PatientMatchRow[]
-  const phoneUpdates = existingPatientsToUpdatePhone
-    .filter((p) => !p.telefono)
-    .flatMap((p) => {
+  const phoneUpdates: Array<{ id: string; telefono?: string; whatsapp: string }> = []
+
+  for (const p of existingPatientsToUpdatePhone) {
+    // Caso 1: tiene telefono pero no whatsapp → derivamos whatsapp directo, sin llamar a Doctoralia
+    if (p.telefono && !p.whatsapp) {
+      phoneUpdates.push({ id: p.id, whatsapp: toWhatsAppFormat(p.telefono) })
+      continue
+    }
+    // Caso 2: no tiene telefono → usamos lo que buscamos en Doctoralia en esta sync
+    if (!p.telefono) {
       const key = normalizePersonName(`${p.nombre} ${p.apellido}`)
       const phone = phoneByNormalizedName.get(key)
-      if (!phone) return []
-      return [{ id: p.id, telefono: phone, whatsapp: toWhatsAppFormat(phone) }]
-    })
+      if (!phone) continue
+      phoneUpdates.push({ id: p.id, telefono: phone, whatsapp: toWhatsAppFormat(phone) })
+    }
+  }
 
   if (phoneUpdates.length > 0) {
     await Promise.all(
       phoneUpdates.map(({ id, telefono, whatsapp }) =>
-        supabase.from('patients').update({ telefono, whatsapp }).eq('id', id)
+        supabase.from('patients').update(
+          telefono !== undefined ? { telefono, whatsapp } : { whatsapp }
+        ).eq('id', id)
       )
     )
   }
