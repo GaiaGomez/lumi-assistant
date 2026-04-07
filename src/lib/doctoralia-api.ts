@@ -76,6 +76,44 @@ export function extractRawDoctoraliaPhone(
   return null
 }
 
+// Respuesta mínima del endpoint GET /api/appointments/{id}/for-edition
+// Solo mapeamos los campos que necesitamos — la respuesta completa tiene mucho más.
+export interface DoctoraliaAppointmentForEdition {
+  patient: {
+    id: number
+    firstName: string
+    lastName: string
+    phone: string | null    // teléfono crudo tal como está en Doctoralia, ej: "+57 318 4042549"
+    email: string | null
+  }
+}
+
+// Obtiene el detalle completo de una cita, incluyendo el teléfono del paciente.
+// Doctoralia solo devuelve el teléfono en este endpoint, no en el listado de agenda.
+export async function fetchDoctoraliaAppointmentDetail(
+  appointmentId: string,
+  token: string
+): Promise<DoctoraliaAppointmentForEdition | null> {
+  try {
+    const response = await fetch(
+      `https://docplanner.doctoralia.co/api/appointments/${appointmentId}/for-edition`,
+      {
+        headers: {
+          'Authorization': `bearer ${token}`,
+          'Accept': 'application/json, text/plain, */*',
+          'x-country-id': 'CO',
+          'x-user-type': 'doctor',
+        },
+        cache: 'no-store',
+      }
+    )
+    if (!response.ok) return null
+    return await response.json()
+  } catch {
+    return null
+  }
+}
+
 // Llama al endpoint de validación/normalización de Doctoralia.
 // Devuelve el número en formato internacional (+57...) si es válido, o null si falla.
 export async function fetchDoctoraliaPhoneValidation(

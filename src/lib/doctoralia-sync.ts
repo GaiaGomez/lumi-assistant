@@ -4,7 +4,7 @@ import { getBogotaDateParts, isSameInstant } from '@/lib/datetime'
 import {
   fetchDoctoraliaRange,
   mapAttendanceToEstado,
-  extractRawDoctoraliaPhone,
+  fetchDoctoraliaAppointmentDetail,
   fetchDoctoraliaPhoneValidation,
 } from '@/lib/doctoralia-api'
 
@@ -165,8 +165,10 @@ export async function syncDoctoraliaAppointmentsForUser(
   const appointmentLinkUpdates: Array<Pick<Appointment, 'id' | 'patient_id'>> = []
   const inserts: Array<Partial<Appointment>> = []
   const pendingNewImports = new Map<string, string | null>()
-  // Teléfono por nombre normalizado — se rellena desde el payload de Doctoralia
+  // Teléfono normalizado por nombre de paciente — se rellena después de /for-edition
   const phoneByNormalizedName = new Map<string, string>()
+  // Primera cita conocida por paciente — usada para pedir el detalle con el teléfono
+  const firstAppointmentIdByName = new Map<string, string>()
   const patientsToCreate = new Map<string, {
     nombre: string
     apellido: string
@@ -184,10 +186,9 @@ export async function syncDoctoraliaAppointmentsForUser(
     const normalizedName = fullName ? normalizePersonName(fullName) : ''
     if (!normalizedName) continue
 
-    // Guardamos el teléfono crudo si viene en el payload (se normaliza después)
-    if (!phoneByNormalizedName.has(normalizedName)) {
-      const phone = extractRawDoctoraliaPhone(rawAppointment.patient)
-      if (phone) phoneByNormalizedName.set(normalizedName, phone)
+    // Guardamos la primera cita de cada paciente para pedir el detalle con teléfono después
+    if (!firstAppointmentIdByName.has(normalizedName)) {
+      firstAppointmentIdByName.set(normalizedName, String(rawAppointment.id))
     }
 
     if (patientLookup.has(normalizedName)) continue
@@ -216,25 +217,56 @@ export async function syncDoctoraliaAppointmentsForUser(
     })
   }
 
-  // Normalizar teléfonos únicos vía POST /api/phoneNumber antes de guardar.
-  // Solo llamamos una vez por número crudo único — si falla, queda el crudo como fallback.
-  const uniqueRawPhones = Array.from(new Set(phoneByNormalizedName.values()))
-  if (uniqueRawPhones.length > 0) {
-    const normalizedResults = await Promise.allSettled(
-      uniqueRawPhones.map((raw) => fetchDoctoraliaPhoneValidation(raw, token))
+  // Resolver teléfonos para pacientes que los necesitan:
+  // nuevos (patientsToCreate) + existentes sin teléfono en Lumi.
+  // El teléfono solo existe en /api/appointments/{id}/for-edition, no en el listado de agenda.
+  const existingWithoutPhone = (patientsResult.data ?? []) as PatientMatchRow[]
+  const namesNeedingPhone = new Set<string>([
+    ...patientsToCreate.keys(),
+    ...existingWithoutPhone
+      .filter((p) => !p.telefono)
+      .map((p) => normalizePersonName(`${p.nombre} ${p.apellido}`)),
+  ])
+
+  const appointmentsToFetch = Array.from(namesNeedingPhone).flatMap((name) => {
+    const id = firstAppointmentIdByName.get(name)
+    return id ? [{ name, id }] : []
+  })
+
+  if (appointmentsToFetch.length > 0) {
+    const detailResults = await Promise.allSettled(
+      appointmentsToFetch.map(({ id }) => fetchDoctoraliaAppointmentDetail(id, token))
     )
-    // Construimos un mapa rawPhone → formatoNormalizado
-    const normalizedByRaw = new Map<string, string>()
-    for (let i = 0; i < uniqueRawPhones.length; i++) {
-      const result = normalizedResults[i]
-      if (result.status === 'fulfilled' && result.value) {
-        normalizedByRaw.set(uniqueRawPhones[i], result.value)
+
+    // Recogemos los teléfonos crudos por nombre de paciente
+    const rawPhoneByName = new Map<string, string>()
+    for (let i = 0; i < appointmentsToFetch.length; i++) {
+      const result = detailResults[i]
+      if (result.status !== 'fulfilled' || !result.value) continue
+      const phone = result.value.patient.phone
+      if (phone && phone.replace(/\D/g, '').length >= 7) {
+        rawPhoneByName.set(appointmentsToFetch[i].name, phone)
       }
     }
-    // Reemplazamos los crudos por normalizados donde el API confirmó que son válidos
-    for (const [name, raw] of phoneByNormalizedName) {
-      const normalized = normalizedByRaw.get(raw)
-      if (normalized) phoneByNormalizedName.set(name, normalized)
+
+    // Normalizamos los teléfonos únicos vía POST /api/phoneNumber (una llamada por número único)
+    const uniqueRawPhones = Array.from(new Set(rawPhoneByName.values()))
+    const normalizedByRaw = new Map<string, string>()
+    if (uniqueRawPhones.length > 0) {
+      const normalizedResults = await Promise.allSettled(
+        uniqueRawPhones.map((raw) => fetchDoctoraliaPhoneValidation(raw, token))
+      )
+      for (let i = 0; i < uniqueRawPhones.length; i++) {
+        const result = normalizedResults[i]
+        if (result.status === 'fulfilled' && result.value) {
+          normalizedByRaw.set(uniqueRawPhones[i], result.value)
+        }
+      }
+    }
+
+    // Guardamos: preferimos formato normalizado (+57...), fallback al crudo
+    for (const [name, raw] of rawPhoneByName) {
+      phoneByNormalizedName.set(name, normalizedByRaw.get(raw) ?? raw)
     }
   }
 
