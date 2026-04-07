@@ -12,9 +12,14 @@ import {
   getTomorrowPendingAppointments,
 } from '@/lib/appointments'
 import { interpolate, type SettingsMap } from '@/lib/settings'
-import { generarLinkWhatsApp, linkRecordatorioCita, mensajeRecordatorioCita } from '@/lib/whatsapp'
+import { generarLinkWhatsApp, mensajeRecordatorioCita } from '@/lib/whatsapp'
 
 type AppointmentWithPatient = Appointment & { patient?: Patient | null }
+
+// whatsapp tiene prioridad; si está vacío, deriva el número de telefono
+function resolveWhatsApp(patient: Patient): string | null {
+  return patient.whatsapp ?? (patient.telefono ? patient.telefono.replace(/[^0-9]/g, '') : null)
+}
 
 export type PendingActionType =
   | 'confirmar_cita_hoy'
@@ -88,7 +93,8 @@ export function buildPatientWhatsAppQuickActions(
   settings: SettingsMap,
   now = new Date()
 ): PatientWhatsAppQuickAction[] {
-  if (!patient.whatsapp) return []
+  const whatsapp = resolveWhatsApp(patient)
+  if (!whatsapp) return []
 
   const nextAppointment = getNextAppointment(appointments, now)
   const lastPastAppointment = getLastPastAppointment(appointments, now)
@@ -103,7 +109,7 @@ export function buildPatientWhatsAppQuickActions(
       session_date: formatDateTimeFull(oldestPendingPayment.fecha_inicio),
     })
 
-    const href = generarLinkWhatsApp(patient.whatsapp, message)
+    const href = generarLinkWhatsApp(whatsapp, message)
     if (href !== '#') {
       actions.push({
         key: 'payment',
@@ -121,7 +127,7 @@ export function buildPatientWhatsAppQuickActions(
       booking_url: settings['doctoralia_url'],
     })
 
-    const href = generarLinkWhatsApp(patient.whatsapp, message)
+    const href = generarLinkWhatsApp(whatsapp, message)
     if (href !== '#') {
       actions.push({
         key: 'no-next',
@@ -139,7 +145,7 @@ export function buildPatientWhatsAppQuickActions(
       days_inactive: String(daysInactive),
     })
 
-    const href = generarLinkWhatsApp(patient.whatsapp, message)
+    const href = generarLinkWhatsApp(whatsapp, message)
     if (href !== '#') {
       actions.push({
         key: 'resume',
@@ -184,7 +190,7 @@ export function buildPendingActions(
         internalActions: ['open_patient', 'update_session', 'update_payment'],
         externalAction: buildWhatsAppAction(
           'Abrir WhatsApp',
-          linkRecordatorioCita(patient, appointment)
+          generarLinkWhatsApp(resolveWhatsApp(patient), mensajeRecordatorioCita(patient, appointment))
         ),
       })
     })
@@ -209,7 +215,7 @@ export function buildPendingActions(
         internalActions: ['open_patient', 'update_session', 'update_payment'],
         externalAction: buildWhatsAppAction(
           'Abrir WhatsApp',
-          linkRecordatorioCita(patient, appointment)
+          generarLinkWhatsApp(resolveWhatsApp(patient), mensajeRecordatorioCita(patient, appointment))
         ),
       })
     })
@@ -238,7 +244,7 @@ export function buildPendingActions(
       internalActions: ['open_patient', 'update_session', 'update_payment'],
       externalAction: buildWhatsAppAction(
         'Abrir WhatsApp',
-        generarLinkWhatsApp(patient.whatsapp, message)
+        generarLinkWhatsApp(resolveWhatsApp(patient), message)
       ),
     })
   })
@@ -273,7 +279,7 @@ export function buildPendingActions(
         internalActions: ['open_patient'],
         externalAction: buildWhatsAppAction(
           'Abrir WhatsApp',
-          generarLinkWhatsApp(patient.whatsapp, message)
+          generarLinkWhatsApp(resolveWhatsApp(patient), message)
         ),
       })
       return
@@ -299,7 +305,7 @@ export function buildPendingActions(
       internalActions: ['open_patient'],
       externalAction: buildWhatsAppAction(
         'Abrir WhatsApp',
-        generarLinkWhatsApp(patient.whatsapp, message)
+        generarLinkWhatsApp(resolveWhatsApp(patient), message)
       ),
     })
   })
