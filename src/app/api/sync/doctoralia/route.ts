@@ -41,6 +41,7 @@ export async function POST() {
         patients_created: result.patientsCreated,
         linked: result.linked,
         unmatched: result.unmatched,
+        phones_skipped: result.phonesSkipped,
       })),
       upsertSettingValue(supabase, user.id, 'doctoralia_sync_error', ''),
     ])
@@ -54,6 +55,7 @@ export async function POST() {
       patients_created: result.patientsCreated,
       linked: result.linked,
       unmatched: result.unmatched,
+      phones_skipped: result.phonesSkipped,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error desconocido'

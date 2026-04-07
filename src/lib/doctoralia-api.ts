@@ -56,26 +56,6 @@ export interface DoctoraliaPhoneValidation {
   exampleNumber: string
 }
 
-// Extrae el primer teléfono crudo disponible del objeto patient de Doctoralia.
-// Se usa como entrada para la normalización — se mantiene con formato original.
-export function extractRawDoctoraliaPhone(
-  patient: DoctoraliaAppointment['patient']
-): string | null {
-  const candidates = [
-    patient.phone,
-    patient.phoneNumber,
-    patient.mobile,
-    patient.cellPhone,
-  ]
-
-  for (const raw of candidates) {
-    if (!raw) continue
-    if (raw.replace(/\D/g, '').length >= 7) return raw
-  }
-
-  return null
-}
-
 // Respuesta mínima del endpoint GET /api/appointments/{id}/for-edition
 // Solo mapeamos los campos que necesitamos — la respuesta completa tiene mucho más.
 export interface DoctoraliaAppointmentForEdition {

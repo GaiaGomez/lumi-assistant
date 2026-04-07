@@ -113,7 +113,7 @@ export default function DoctoraliaSync({ settings, userId }: Props) {
           Sincronización con Doctoralia
         </h2>
         <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink-cool-soft)' }}>
-          Lumi usa Doctoralia para importar citas nuevas a `appointments`.
+          Lumi usa Doctoralia para importar citas nuevas.
           Si una cita ya existe, el import conserva los cambios locales y solo refresca metadatos de seguimiento.
         </p>
       </div>

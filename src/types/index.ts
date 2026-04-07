@@ -76,7 +76,7 @@ export interface Appointment {
   color: string | null
   recurrence_group_id: string | null
   recurrence_rule: AppointmentRecurrenceRule | null
-  doctoralia_uid: string | null  // UID del evento iCal de Doctoralia, evita duplicados
+  doctoralia_uid: string | null  // ID único del evento en la API REST de Doctoralia, evita duplicados
   doctoralia_estado_sesion: 'pendiente' | 'confirmada' | 'realizada' | 'cancelo' | null
   estado_sesion_override: 'pendiente' | 'confirmada' | 'realizada' | 'cancelo' | null
   doctoralia_paciente_nombre: string | null
@@ -125,11 +125,3 @@ export interface CalendarEvent {
   resource: Appointment  // el objeto completo de la cita vive acá
 }
 
-// Estado de las alertas de WhatsApp
-export interface WhatsAppAlert {
-  patient: Patient
-  tipo: 'recordatorio_cita' | 'pago_pendiente' | 'paciente_inactivo'
-  appointment?: Appointment
-  diasSinCita?: number
-  mensaje: string  // mensaje pre-escrito listo para enviar
-}

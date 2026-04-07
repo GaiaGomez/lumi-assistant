@@ -14,6 +14,7 @@ import {
   getPendingPayments,
 } from '@/lib/appointments'
 import {
+  APPOINTMENT_SELECT,
   mapAppointmentRows,
   mapClinicalNoteRows,
   mapPatientRow,
@@ -42,7 +43,7 @@ export default async function PatientProfilePage({ params }: Props) {
     supabase.from('patients').select('*').eq('id', id).single(),
     supabase
       .from('appointments')
-      .select('id, patient_id, user_id, source_system, doctoralia_uid, doctoralia_estado_sesion, estado_sesion_override, doctoralia_paciente_nombre, doctoralia_last_synced_at, doctoralia_last_seen_at, doctoralia_removed_at, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at')
+      .select(APPOINTMENT_SELECT)
       .eq('patient_id', id)
       .order('fecha_inicio', { ascending: false }),
     supabase

@@ -12,14 +12,9 @@ import {
   getTomorrowPendingAppointments,
 } from '@/lib/appointments'
 import { interpolate, type SettingsMap } from '@/lib/settings'
-import { generarLinkWhatsApp, mensajeRecordatorioCita } from '@/lib/whatsapp'
+import { generarLinkWhatsApp, mensajeRecordatorioCita, resolveWhatsApp } from '@/lib/whatsapp'
 
 type AppointmentWithPatient = Appointment & { patient?: Patient | null }
-
-// whatsapp tiene prioridad; si está vacío, deriva el número de telefono
-function resolveWhatsApp(patient: Patient): string | null {
-  return patient.whatsapp ?? (patient.telefono ? patient.telefono.replace(/[^0-9]/g, '') : null)
-}
 
 export type PendingActionType =
   | 'confirmar_cita_hoy'

@@ -7,7 +7,6 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 export const SETTINGS_KEYS = [
   'doctoralia_url',
-  'doctoralia_ical_url',    // legacy — reemplazado por doctoralia_token
   'doctoralia_token',       // Bearer token de la API interna de Doctoralia
   'doctoralia_last_sync',
   'doctoralia_sync_error',  // último error de sync, para mostrarlo en UI
@@ -22,7 +21,6 @@ export type SettingsMap = Record<SettingsKey, string>
 // Valores por defecto si el usuario aún no ha personalizado
 export const DEFAULT_SETTINGS: SettingsMap = {
   doctoralia_url: process.env.NEXT_PUBLIC_DOCTORALIA_URL ?? '',
-  doctoralia_ical_url: '',
   doctoralia_token: '',
   doctoralia_last_sync: '',
   doctoralia_sync_error: '',

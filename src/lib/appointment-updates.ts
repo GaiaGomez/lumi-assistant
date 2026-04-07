@@ -32,21 +32,17 @@ export interface CreateAppointmentInput {
   doctoralia_uid?: Appointment['doctoralia_uid']
 }
 
-function normalizeAppointmentNotes(value: Appointment['notas'] | undefined) {
-  return value?.trim() ? value.trim() : null
-}
-
-function normalizeAppointmentText(value: string | null | undefined) {
+function normalizeText(value: string | null | undefined) {
   return value?.trim() ? value.trim() : null
 }
 
 function sanitizeAppointmentUpdateInput(updates: AppointmentUpdateInput): AppointmentUpdateInput {
   return {
     ...updates,
-    notas: updates.notas === undefined ? undefined : normalizeAppointmentNotes(updates.notas),
-    title: updates.title === undefined ? undefined : normalizeAppointmentText(updates.title),
-    category: updates.category === undefined ? undefined : normalizeAppointmentText(updates.category),
-    color: updates.color === undefined ? undefined : normalizeAppointmentText(updates.color),
+    notas: updates.notas === undefined ? undefined : normalizeText(updates.notas),
+    title: updates.title === undefined ? undefined : normalizeText(updates.title),
+    category: updates.category === undefined ? undefined : normalizeText(updates.category),
+    color: updates.color === undefined ? undefined : normalizeText(updates.color),
   }
 }
 
@@ -61,17 +57,14 @@ export async function updateAppointmentById(
     .eq('id', appointmentId)
 }
 
-export async function createAppointment(
-  supabase: SupabaseClient,
-  input: CreateAppointmentInput
-) {
-  const payload = {
+function buildAppointmentPayload(input: CreateAppointmentInput) {
+  return {
     patient_id: input.patient_id,
     user_id: input.user_id,
     event_type: input.event_type,
-    title: normalizeAppointmentText(input.title),
-    category: normalizeAppointmentText(input.category),
-    color: normalizeAppointmentText(input.color),
+    title: normalizeText(input.title),
+    category: normalizeText(input.category),
+    color: normalizeText(input.color),
     recurrence_group_id: input.recurrence_group_id ?? null,
     recurrence_rule: serializeAppointmentRecurrenceRule(input.recurrence_rule),
     source_system: 'manual' as const,
@@ -80,13 +73,18 @@ export async function createAppointment(
     modalidad: input.modalidad,
     estado_sesion: input.event_type === 'general' ? 'confirmada' : 'pendiente',
     estado_pago: input.event_type === 'general' ? 'pagado' : 'pendiente',
-    notas: normalizeAppointmentNotes(input.notas),
+    notas: normalizeText(input.notas),
     doctoralia_uid: input.doctoralia_uid ?? null,
   }
+}
 
+export async function createAppointment(
+  supabase: SupabaseClient,
+  input: CreateAppointmentInput
+) {
   return supabase
     .from('appointments')
-    .insert(payload)
+    .insert(buildAppointmentPayload(input))
 }
 
 export async function createAppointments(
@@ -95,24 +93,7 @@ export async function createAppointments(
 ) {
   return supabase
     .from('appointments')
-    .insert(inputs.map((input) => ({
-      patient_id: input.patient_id,
-      user_id: input.user_id,
-      event_type: input.event_type,
-      title: normalizeAppointmentText(input.title),
-      category: normalizeAppointmentText(input.category),
-      color: normalizeAppointmentText(input.color),
-      recurrence_group_id: input.recurrence_group_id ?? null,
-      recurrence_rule: serializeAppointmentRecurrenceRule(input.recurrence_rule),
-      source_system: 'manual' as const,
-      fecha_inicio: input.fecha_inicio,
-      fecha_fin: input.fecha_fin,
-      modalidad: input.modalidad,
-      estado_sesion: input.event_type === 'general' ? 'confirmada' : 'pendiente',
-      estado_pago: input.event_type === 'general' ? 'pagado' : 'pendiente',
-      notas: normalizeAppointmentNotes(input.notas),
-      doctoralia_uid: input.doctoralia_uid ?? null,
-    })))
+    .insert(inputs.map(buildAppointmentPayload))
 }
 
 export async function deleteAppointmentById(

@@ -2,6 +2,7 @@ import { MessageCircle } from 'lucide-react'
 import { Appointment, ClinicalNote, Patient } from '@/types'
 import { type SettingsMap } from '@/lib/settings'
 import { buildPatientWhatsAppQuickActions } from '@/lib/pending-actions'
+import { resolveWhatsApp } from '@/lib/whatsapp'
 import StatCard from '@/components/ui/StatCard'
 
 interface PatientTopMosaicProps {
@@ -97,12 +98,7 @@ export default function PatientTopMosaic({
   pendingPaymentsCount,
   settings,
 }: PatientTopMosaicProps) {
-  // Derivamos el número de WhatsApp: campo whatsapp tiene prioridad,
-  // pero si está vacío usamos telefono (solo dígitos) como fallback.
-  const effectiveWhatsapp =
-    patient.whatsapp ??
-    (patient.telefono ? patient.telefono.replace(/[^0-9]/g, '') : null)
-
+  const effectiveWhatsapp = resolveWhatsApp(patient)
   const effectivePatient = effectiveWhatsapp !== patient.whatsapp
     ? { ...patient, whatsapp: effectiveWhatsapp }
     : patient

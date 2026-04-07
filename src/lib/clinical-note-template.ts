@@ -17,7 +17,7 @@ export const CLINICAL_NOTE_RISK_META: Record<ClinicalNoteRiskLevel, { label: str
     tone: 'warning',
   },
   'atencion-prioritaria': {
-    label: 'Atencion prioritaria',
+    label: 'Atención prioritaria',
     tone: 'danger',
   },
 }
@@ -129,7 +129,7 @@ export function getClinicalNoteHeadline(note: Pick<ClinicalNote, 'template_data'
   const textLine = note.texto?.trim().split('\n').find(Boolean)
   if (textLine) return textLine
 
-  return note.canvas_url ? 'Nota manuscrita' : 'Nota de sesion'
+  return note.canvas_url ? 'Nota manuscrita' : 'Nota de sesión'
 }
 
 export function getClinicalNoteSummary(note: Pick<ClinicalNote, 'template_data' | 'texto' | 'canvas_url'>): string {

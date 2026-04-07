@@ -11,6 +11,12 @@
 import { Patient, Appointment } from '@/types'
 import { formatInBogota } from '@/lib/datetime'
 
+// whatsapp tiene prioridad; si está vacío, deriva el número de telefono.
+// Punto único de verdad para toda la app — úsalo antes de generarLinkWhatsApp.
+export function resolveWhatsApp(patient: Patient): string | null {
+  return patient.whatsapp ?? (patient.telefono ? patient.telefono.replace(/[^0-9]/g, '') : null)
+}
+
 // Recordatorio de cita (no personalizable — se usa desde el modal de cita)
 export function mensajeRecordatorioCita(patient: Patient, appointment: Appointment): string {
   const horaFormateada = formatInBogota(appointment.fecha_inicio, {
@@ -21,7 +27,7 @@ export function mensajeRecordatorioCita(patient: Patient, appointment: Appointme
 }
 
 export function linkRecordatorioCita(patient: Patient, appointment: Appointment): string {
-  return generarLinkWhatsApp(patient.whatsapp, mensajeRecordatorioCita(patient, appointment))
+  return generarLinkWhatsApp(resolveWhatsApp(patient), mensajeRecordatorioCita(patient, appointment))
 }
 
 /**

@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import AgendaClient from '@/components/agenda/AgendaClient'
-import { mapAppointmentRows } from '@/lib/supabase/mappers'
+import { APPOINTMENT_SELECT, mapAppointmentRows } from '@/lib/supabase/mappers'
 
 export default async function AgendaPage() {
   const supabase = await createClient()
@@ -12,7 +12,7 @@ export default async function AgendaPage() {
 
   const { data: appointments, error } = await supabase
     .from('appointments')
-    .select('*, patient:patients(*)')
+    .select(APPOINTMENT_SELECT)
     .eq('user_id', user.id)
     .order('fecha_inicio', { ascending: true })
 

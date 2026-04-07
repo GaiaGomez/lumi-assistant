@@ -40,6 +40,7 @@ export interface DoctoraliaSyncResult {
   patientsCreated: number
   linked: number
   unmatched: number
+  phonesSkipped: number
   syncedAt: string
 }
 
@@ -235,9 +236,11 @@ export async function syncDoctoraliaAppointmentsForUser(
       .map((p) => normalizePersonName(`${p.nombre} ${p.apellido}`)),
   ])
 
+  let phonesSkipped = 0
   const appointmentsToFetch = Array.from(namesNeedingPhone).flatMap((name) => {
     const id = firstAppointmentIdByName.get(name)
-    return id ? [{ name, id }] : []
+    if (!id) { phonesSkipped++; return [] }
+    return [{ name, id }]
   })
 
   if (appointmentsToFetch.length > 0) {
@@ -532,6 +535,7 @@ export async function syncDoctoraliaAppointmentsForUser(
     patientsCreated,
     linked,
     unmatched,
+    phonesSkipped,
     syncedAt,
   }
 }

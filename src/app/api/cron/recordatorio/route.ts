@@ -1,7 +1,7 @@
 // ============================================================
 // CRON: RECORDATORIO DE CITAS — se ejecuta diariamente a las 9am
-// Busca todas las citas del día siguiente y las lista para debug
-// (Los mensajes los envía Lu desde el panel de WhatsApp con un tap)
+// Cuenta las citas del día siguiente con estado pendiente.
+// Los resultados quedan en los logs de Vercel para monitoreo.
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -42,6 +42,6 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     success: true,
     citasManana: citas?.length ?? 0,
-    mensaje: 'Revisa el panel de WhatsApp para enviar los recordatorios'
+    mensaje: `${citas?.length ?? 0} cita(s) pendiente(s) mañana`
   })
 }

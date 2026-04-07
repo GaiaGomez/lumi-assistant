@@ -31,7 +31,7 @@ import {
 } from '@/lib/appointments'
 import { deleteAppointmentById, updateAppointmentById } from '@/lib/appointment-updates'
 import { createClient } from '@/lib/supabase/client'
-import { linkRecordatorioCita } from '@/lib/whatsapp'
+import { linkRecordatorioCita, resolveWhatsApp } from '@/lib/whatsapp'
 import Button from '@/components/ui/Button'
 import SectionHeader from '@/components/ui/SectionHeader'
 import ModalShell from '@/components/ui/ModalShell'
@@ -578,7 +578,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
               </Button>
             )}
 
-            {appointment.patient?.whatsapp && appointment.event_type === 'patient' && (
+            {appointment.patient && resolveWhatsApp(appointment.patient) && appointment.event_type === 'patient' && (
               <a
                 href={linkRecordatorioCita(appointment.patient, appointment)}
                 target="_blank"

@@ -22,24 +22,6 @@ export function isDoctoraliaAppointment(
   return appointment.source_system === 'doctoralia' || !!appointment.doctoralia_uid
 }
 
-export function getAppointmentSourceSessionState(
-  appointment: Pick<Appointment, 'source_system' | 'doctoralia_uid' | 'doctoralia_estado_sesion' | 'estado_sesion'>
-): Appointment['estado_sesion'] {
-  return appointment.estado_sesion
-}
-
-export function buildAppointmentSessionUpdate(
-  appointment: Pick<
-    Appointment,
-    'source_system' | 'doctoralia_uid' | 'doctoralia_estado_sesion' | 'estado_sesion'
-  >,
-  nextState: Appointment['estado_sesion']
-): Pick<Appointment, 'estado_sesion' | 'estado_sesion_override'> {
-  return {
-    estado_sesion: nextState,
-    estado_sesion_override: null,
-  }
-}
 
 export function isCancelledAppointment(
   appointment: Pick<Appointment, 'estado_sesion'>
@@ -83,7 +65,6 @@ export function appointmentNeedsChargeCollection(
   return isCompletedAppointment(appointment) && appointmentHasPendingPayment(appointment)
 }
 
-export const appointmentHasCollectablePendingPayment = appointmentNeedsChargeCollection
 
 export function appointmentNeedsAttention(
   appointment: Pick<Appointment, 'estado_sesion' | 'estado_pago'>

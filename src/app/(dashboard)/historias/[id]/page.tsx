@@ -79,7 +79,7 @@ export default async function HistoriaPage({ params }: Props) {
 
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
-            Nota clinica
+            Nota clínica
           </p>
           <h1 className="page-title text-[1.75rem]" style={{ color: 'var(--ink-cool-strong)' }}>
             {clinicalNote.patient.nombre} {clinicalNote.patient.apellido}
@@ -201,7 +201,7 @@ export default async function HistoriaPage({ params }: Props) {
 
         <div className="space-y-4">
           {canvasSignedUrl && (
-            <SectionCard kicker="Canvas manuscrito" title="Registro visual de sesion">
+            <SectionCard kicker="Canvas manuscrito" title="Registro visual de sesión">
               <div
                 className="overflow-hidden rounded-[24px]"
                 style={{ border: '1px solid rgba(255,255,255,0.42)', boxShadow: '0 18px 42px rgba(120,110,130,0.10)' }}

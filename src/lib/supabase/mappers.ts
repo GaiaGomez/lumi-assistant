@@ -5,6 +5,8 @@ import {
 } from '@/lib/clinical-note-template'
 import { normalizeAppointmentRecurrenceRule } from '@/lib/appointment-recurrence'
 
+export const APPOINTMENT_SELECT = 'id, patient_id, user_id, source_system, event_type, title, category, color, recurrence_group_id, recurrence_rule, doctoralia_uid, doctoralia_estado_sesion, estado_sesion_override, doctoralia_paciente_nombre, doctoralia_last_synced_at, doctoralia_last_seen_at, doctoralia_removed_at, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at, patient:patients(*)'
+
 type SupabaseRow = Record<string, unknown>
 
 function expectRecord(value: unknown, label: string): SupabaseRow {
@@ -70,7 +72,7 @@ export function mapAppointmentRow(row: unknown): Appointment {
   const estadoSesionOverride = (
     optionalString(record.estado_sesion_override) as Appointment['estado_sesion'] | null
   ) ?? null
-  const legacyEstadoSesion = record.estado_sesion as Appointment['estado_sesion']
+  const estadoSesion = record.estado_sesion as Appointment['estado_sesion']
 
   return {
     id: expectString(record.id, 'appointment.id'),
@@ -92,7 +94,7 @@ export function mapAppointmentRow(row: unknown): Appointment {
     doctoralia_removed_at: optionalString(record.doctoralia_removed_at),
     fecha_inicio: expectString(record.fecha_inicio, 'appointment.fecha_inicio'),
     fecha_fin: optionalString(record.fecha_fin),
-    estado_sesion: legacyEstadoSesion,
+    estado_sesion: estadoSesion,
     estado_pago: record.estado_pago as Appointment['estado_pago'],
     notas: optionalString(record.notas),
     modalidad: (record.modalidad as Appointment['modalidad']) ?? null,

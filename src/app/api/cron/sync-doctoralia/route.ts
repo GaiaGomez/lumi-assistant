@@ -59,12 +59,13 @@ export async function GET(request: NextRequest) {
           patients_created: result.patientsCreated,
           linked: result.linked,
           unmatched: result.unmatched,
+          phones_skipped: result.phonesSkipped,
         })),
         upsertSettingValue(supabase as never, user_id, 'doctoralia_sync_error', ''),
       ])
 
       console.log(
-        `[Cron sync-doctoralia] user=${user_id} → total=${result.total} linked=${result.linked} unmatched=${result.unmatched}`
+        `[Cron sync-doctoralia] user=${user_id} → total=${result.total} linked=${result.linked} unmatched=${result.unmatched} phones_skipped=${result.phonesSkipped}`
       )
 
     } catch (err) {
