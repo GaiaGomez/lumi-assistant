@@ -1,16 +1,15 @@
 // ============================================================
-// SYNC DOCTORALIA — importa citas desde el feed iCal de Doctoralia
-// POST /api/sync/doctoralia
-// Solo inserta citas nuevas (ignoreDuplicates: true) para no pisar
-// los estados que Lu haya actualizado manualmente.
+// SYNC DOCTORALIA — importa citas desde la API interna de Doctoralia
+// POST /api/sync/doctoralia  (lo llama el botón en Configuración)
+// Usa el Bearer token descubierto en DevTools → Network → Request Headers
 // ============================================================
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { fetchDoctoraliaCitas } from '@/lib/ical'
+import { syncDoctoraliaAppointmentsForUser } from '@/lib/doctoralia-sync'
 import { fetchSettings, upsertSettingValue } from '@/lib/settings'
 
-export async function POST(_req: NextRequest) {
+export async function POST() {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -19,54 +18,53 @@ export async function POST(_req: NextRequest) {
   }
 
   const settings = await fetchSettings(supabase, user.id)
-  const icalUrl = settings['doctoralia_ical_url']
+  const token = settings['doctoralia_token']
 
-  if (!icalUrl) {
+  if (!token) {
     return NextResponse.json(
-      { error: 'No hay URL del calendario de Doctoralia configurada' },
+      { error: 'No hay token de Doctoralia configurado. Agrégalo en Configuración.' },
       { status: 400 }
     )
   }
 
-  // Parsear el feed iCal
-  let citas
   try {
-    citas = await fetchDoctoraliaCitas(icalUrl, user.id)
+    const result = await syncDoctoraliaAppointmentsForUser(supabase, user.id, token, 60, 1)
+
+    await Promise.all([
+      upsertSettingValue(supabase, user.id, 'doctoralia_last_sync', JSON.stringify({
+        synced_at: result.syncedAt,
+        total: result.total,
+        imported: result.imported,
+        created: result.created,
+        updated: result.updated,
+        repaired: result.repaired,
+        patients_created: result.patientsCreated,
+        linked: result.linked,
+        unmatched: result.unmatched,
+      })),
+      upsertSettingValue(supabase, user.id, 'doctoralia_sync_error', ''),
+    ])
+
+    return NextResponse.json({
+      total: result.total,
+      imported: result.imported,
+      created: result.created,
+      updated: result.updated,
+      repaired: result.repaired,
+      patients_created: result.patientsCreated,
+      linked: result.linked,
+      unmatched: result.unmatched,
+    })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Error al leer el calendario'
+    const message = err instanceof Error ? err.message : 'Error desconocido'
+    await upsertSettingValue(supabase, user.id, 'doctoralia_sync_error', message)
+
+    if (message === 'TOKEN_EXPIRADO') {
+      return NextResponse.json(
+        { error: 'El token de Doctoralia expiró. Copia uno nuevo desde DevTools y pégalo en Configuración.' },
+        { status: 401 }
+      )
+    }
     return NextResponse.json({ error: message }, { status: 502 })
   }
-
-  if (!citas.length) {
-    await upsertSettingValue(supabase, user.id, 'doctoralia_last_sync', JSON.stringify({
-      synced_at: new Date().toISOString(),
-      total: 0,
-      imported: 0,
-    }))
-    return NextResponse.json({ total: 0, imported: 0 })
-  }
-
-  // Insertar solo las citas nuevas — ignoreDuplicates evita pisar datos editados manualmente
-  const { error: insertError, count } = await supabase
-    .from('appointments')
-    .upsert(citas, {
-      onConflict: 'user_id,doctoralia_uid',
-      ignoreDuplicates: true,
-      count: 'exact',
-    })
-
-  if (insertError) {
-    return NextResponse.json({ error: insertError.message }, { status: 500 })
-  }
-
-  const imported = count ?? 0
-
-  // Guardar el resultado del último sync en settings
-  await upsertSettingValue(supabase, user.id, 'doctoralia_last_sync', JSON.stringify({
-    synced_at: new Date().toISOString(),
-    total: citas.length,
-    imported,
-  }))
-
-  return NextResponse.json({ total: citas.length, imported })
 }

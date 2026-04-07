@@ -143,9 +143,11 @@ export default function AppointmentQuickStateEditor({
       setPaymentState(value as Appointment['estado_pago'])
     }
 
-    const { error: updateError } = await updateAppointmentById(supabase, appointmentId, {
-      [field]: value,
-    })
+    const payload = field === 'estado_sesion'
+      ? { estado_sesion: value as Appointment['estado_sesion'], estado_sesion_override: null }
+      : { estado_pago: value as Appointment['estado_pago'] }
+
+    const { error: updateError } = await updateAppointmentById(supabase, appointmentId, payload)
 
     if (updateError) {
       setSessionState(previousSession)
@@ -162,7 +164,6 @@ export default function AppointmentQuickStateEditor({
   }
 
   const disabled = !!savingField || isRefreshing
-
   if (compact) {
     return (
       <div className="space-y-1">

@@ -19,6 +19,8 @@ create table if not exists appointments (
   id               uuid default gen_random_uuid() primary key,
   patient_id       uuid references patients(id) on delete cascade,
   user_id          uuid references auth.users(id) on delete cascade not null,
+  source_system    text default 'manual'
+                   check (source_system in ('manual', 'doctoralia')),
   event_type       text default 'patient'
                    check (event_type in ('patient', 'general')),
   title            text,
@@ -27,6 +29,14 @@ create table if not exists appointments (
   recurrence_group_id uuid,
   recurrence_rule  jsonb,
   doctoralia_uid   text,  -- UID del evento iCal, se deduplica por usuario
+  doctoralia_estado_sesion text
+                   check (doctoralia_estado_sesion in ('pendiente', 'confirmada', 'realizada', 'cancelo')),
+  estado_sesion_override text
+                   check (estado_sesion_override in ('pendiente', 'confirmada', 'realizada', 'cancelo')),
+  doctoralia_paciente_nombre text,
+  doctoralia_last_synced_at timestamptz,
+  doctoralia_last_seen_at timestamptz,
+  doctoralia_removed_at timestamptz,
   fecha_inicio     timestamptz not null,
   fecha_fin        timestamptz,
   estado_sesion    text default 'pendiente'
@@ -42,6 +52,23 @@ create table if not exists appointments (
 create unique index if not exists appointments_user_doctoralia_uid_key
   on appointments(user_id, doctoralia_uid)
   where doctoralia_uid is not null;
+
+-- TABLA: doctoralia_imports
+-- Guarda el rastro de imports para evitar duplicados y respetar
+-- citas borradas localmente aunque sigan existiendo en Doctoralia.
+create table if not exists doctoralia_imports (
+  id                  uuid default gen_random_uuid() primary key,
+  user_id             uuid references auth.users(id) on delete cascade not null,
+  doctoralia_uid      text not null,
+  appointment_id      uuid references appointments(id) on delete set null,
+  external_patient_name text,
+  first_imported_at   timestamptz default now() not null,
+  last_seen_at        timestamptz,
+  deleted_in_lumi_at  timestamptz,
+  created_at          timestamptz default now(),
+  updated_at          timestamptz default now(),
+  unique (user_id, doctoralia_uid)
+);
 
 -- TABLA: settings
 -- Configuración key-value del consultorio por usuario.
@@ -89,6 +116,10 @@ create trigger update_appointments_updated_at
   before update on appointments
   for each row execute function update_updated_at_column();
 
+create trigger update_doctoralia_imports_updated_at
+  before update on doctoralia_imports
+  for each row execute function update_updated_at_column();
+
 create trigger update_settings_updated_at
   before update on settings
   for each row execute function update_updated_at_column();
@@ -101,6 +132,7 @@ create trigger update_settings_updated_at
 
 alter table patients        enable row level security;
 alter table appointments    enable row level security;
+alter table doctoralia_imports enable row level security;
 alter table clinical_notes  enable row level security;
 alter table settings        enable row level security;
 
@@ -115,6 +147,12 @@ create policy "appointments: solo el dueño puede ver"   on appointments for sel
 create policy "appointments: solo el dueño puede crear" on appointments for insert with check (auth.uid() = user_id);
 create policy "appointments: solo el dueño puede editar" on appointments for update using (auth.uid() = user_id);
 create policy "appointments: solo el dueño puede borrar" on appointments for delete using (auth.uid() = user_id);
+
+-- Políticas para doctoralia_imports
+create policy "doctoralia_imports: solo el dueño puede ver" on doctoralia_imports for select using (auth.uid() = user_id);
+create policy "doctoralia_imports: solo el dueño puede crear" on doctoralia_imports for insert with check (auth.uid() = user_id);
+create policy "doctoralia_imports: solo el dueño puede editar" on doctoralia_imports for update using (auth.uid() = user_id);
+create policy "doctoralia_imports: solo el dueño puede borrar" on doctoralia_imports for delete using (auth.uid() = user_id);
 
 -- Políticas para clinical_notes
 create policy "notes: solo el dueño puede ver"   on clinical_notes for select using (auth.uid() = user_id);

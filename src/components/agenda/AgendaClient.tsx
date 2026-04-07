@@ -6,7 +6,7 @@
 
 import { useState, useCallback, useMemo } from 'react'
 import { Calendar, momentLocalizer, View, SlotInfo } from 'react-big-calendar'
-import moment from 'moment'
+import moment from 'moment-timezone'
 import 'moment/locale/es'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { Appointment, CalendarEvent } from '@/types'
@@ -23,6 +23,7 @@ import {
 } from '@/lib/appointment-ui'
 
 moment.locale('es')
+moment.tz.setDefault('America/Bogota')
 const localizer = momentLocalizer(moment)
 
 // ─────────────────────────────────────────────────────────────

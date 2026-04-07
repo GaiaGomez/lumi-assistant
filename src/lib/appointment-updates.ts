@@ -4,7 +4,16 @@ import { serializeAppointmentRecurrenceRule } from '@/lib/appointment-recurrence
 
 export type AppointmentUpdateInput = Partial<Pick<
   Appointment,
-  'estado_sesion' | 'estado_pago' | 'modalidad' | 'fecha_inicio' | 'fecha_fin' | 'notas' | 'title' | 'category' | 'color'
+  | 'estado_sesion'
+  | 'estado_sesion_override'
+  | 'estado_pago'
+  | 'modalidad'
+  | 'fecha_inicio'
+  | 'fecha_fin'
+  | 'notas'
+  | 'title'
+  | 'category'
+  | 'color'
 >>
 
 export interface CreateAppointmentInput {
@@ -65,6 +74,7 @@ export async function createAppointment(
     color: normalizeAppointmentText(input.color),
     recurrence_group_id: input.recurrence_group_id ?? null,
     recurrence_rule: serializeAppointmentRecurrenceRule(input.recurrence_rule),
+    source_system: 'manual' as const,
     fecha_inicio: input.fecha_inicio,
     fecha_fin: input.fecha_fin,
     modalidad: input.modalidad,
@@ -94,6 +104,7 @@ export async function createAppointments(
       color: normalizeAppointmentText(input.color),
       recurrence_group_id: input.recurrence_group_id ?? null,
       recurrence_rule: serializeAppointmentRecurrenceRule(input.recurrence_rule),
+      source_system: 'manual' as const,
       fecha_inicio: input.fecha_inicio,
       fecha_fin: input.fecha_fin,
       modalidad: input.modalidad,

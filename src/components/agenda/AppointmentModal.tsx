@@ -12,6 +12,11 @@ import {
   APPOINTMENT_SESSION_LABEL,
   APPOINTMENT_SESSION_STATES,
 } from '@/lib/appointment-status'
+import {
+  formatInBogota,
+  toBogotaDateInputValue,
+  toBogotaTimeInputValue,
+} from '@/lib/datetime'
 import { APPOINTMENT_MODALIDAD_CONFIG, GENERAL_EVENT_COLOR_PRESETS } from '@/lib/appointment-ui'
 import {
   buildAppointmentDisplayTitle,
@@ -22,6 +27,7 @@ import {
   getAppointmentEnd,
   getAppointmentEndFromDuration,
   getAppointmentScheduleError,
+  isDoctoraliaAppointment,
 } from '@/lib/appointments'
 import { deleteAppointmentById, updateAppointmentById } from '@/lib/appointment-updates'
 import { createClient } from '@/lib/supabase/client'
@@ -55,19 +61,15 @@ const inactiveToggle = {
 }
 
 function toDateInputValue(isoString: string): string {
-  const d = new Date(isoString)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  return toBogotaDateInputValue(isoString)
 }
 
 function toTimeInputValue(isoString: string): string {
-  const d = new Date(isoString)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+  return toBogotaTimeInputValue(isoString)
 }
 
 function formatSchedule(date: Date): string {
-  return date.toLocaleDateString('es-CO', {
+  return formatInBogota(date, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -77,13 +79,13 @@ function formatSchedule(date: Date): string {
 }
 
 function formatTimeRange(start: Date, end: Date): string {
-  return `${start.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })} – ${end.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`
+  return `${formatInBogota(start, { hour: '2-digit', minute: '2-digit' })} – ${formatInBogota(end, { hour: '2-digit', minute: '2-digit' })}`
 }
 
 function formatConflictDateTime(appointment: Appointment): string {
   const start = new Date(appointment.fecha_inicio)
   const end = getAppointmentEnd(appointment)
-  return `${start.toLocaleDateString('es-CO', {
+  return `${formatInBogota(start, {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
@@ -113,6 +115,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
   const [deudaCount, setDeudaCount] = useState<number | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const isDoctoraliaSource = isDoctoraliaAppointment(appointment)
 
   // Deuda del paciente — sesiones realizadas sin pagar (excluye la cita actual)
   useEffect(() => {
@@ -173,6 +176,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
     try {
       const { error } = await updateAppointmentById(supabase, appointment.id, {
         estado_sesion: estadoSesion,
+        estado_sesion_override: null,
         estado_pago:   estadoPago,
         modalidad:     modalidadEdit,
         title:         title.trim() || null,
@@ -196,6 +200,24 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
   async function eliminarCita() {
     setDeleting(true)
     try {
+      if (appointment.doctoralia_uid) {
+        const { error: importError } = await supabase
+          .from('doctoralia_imports')
+          .upsert({
+            user_id: appointment.user_id,
+            doctoralia_uid: appointment.doctoralia_uid,
+            appointment_id: null,
+            external_patient_name: appointment.doctoralia_paciente_nombre,
+            last_seen_at: appointment.doctoralia_last_seen_at,
+            deleted_in_lumi_at: new Date().toISOString(),
+          }, {
+            onConflict: 'user_id,doctoralia_uid',
+            ignoreDuplicates: false,
+          })
+
+        if (importError) throw importError
+      }
+
       const { error } = await deleteAppointmentById(supabase, appointment.id)
       if (error) throw error
       router.refresh()
@@ -254,6 +276,19 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
         </div>
 
         <div className="px-5 pb-5 space-y-4">
+          {isDoctoraliaSource && (
+            <div
+              className="rounded-[14px] px-3.5 py-3 text-[12px] leading-relaxed"
+              style={{
+                background: 'rgba(255,255,255,0.42)',
+                border: '1px solid var(--border-glass-white)',
+                color: 'var(--ink-cool-soft)',
+              }}
+            >
+              Esta cita entró desde Doctoralia, pero desde aquí Lumi lleva el control.
+              Puedes editar horario, estado, pago, notas y vínculo operativo sin que el próximo import los revierta.
+            </div>
+          )}
 
           {/* ── Reagendar ── */}
           <div>

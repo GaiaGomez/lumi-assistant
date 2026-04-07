@@ -5,6 +5,7 @@
 // ============================================================
 
 import type { Appointment } from '@/types'
+import { buildBogotaDateTime } from '@/lib/datetime'
 export {
   buildAppointmentDisplayTitle,
   buildRecurringAppointmentWindows,
@@ -14,6 +15,31 @@ export const DEFAULT_APPOINTMENT_DURATION_MINUTES = 60
 export const REACTIVATION_INACTIVITY_DAYS = 30
 
 const BASE_APPOINTMENT_DURATION_OPTIONS = [30, 45, 60, 90, 120, 150, 180]
+
+export function isDoctoraliaAppointment(
+  appointment: Pick<Appointment, 'source_system' | 'doctoralia_uid'>
+): boolean {
+  return appointment.source_system === 'doctoralia' || !!appointment.doctoralia_uid
+}
+
+export function getAppointmentSourceSessionState(
+  appointment: Pick<Appointment, 'source_system' | 'doctoralia_uid' | 'doctoralia_estado_sesion' | 'estado_sesion'>
+): Appointment['estado_sesion'] {
+  return appointment.estado_sesion
+}
+
+export function buildAppointmentSessionUpdate(
+  appointment: Pick<
+    Appointment,
+    'source_system' | 'doctoralia_uid' | 'doctoralia_estado_sesion' | 'estado_sesion'
+  >,
+  nextState: Appointment['estado_sesion']
+): Pick<Appointment, 'estado_sesion' | 'estado_sesion_override'> {
+  return {
+    estado_sesion: nextState,
+    estado_sesion_override: null,
+  }
+}
 
 export function isCancelledAppointment(
   appointment: Pick<Appointment, 'estado_sesion'>
@@ -69,9 +95,7 @@ export function buildLocalAppointmentStart(
   dateValue: string,
   timeValue: string
 ): Date | null {
-  if (!dateValue || !timeValue) return null
-  const parsed = new Date(`${dateValue}T${timeValue}`)
-  return Number.isNaN(parsed.getTime()) ? null : parsed
+  return buildBogotaDateTime(dateValue, timeValue)
 }
 
 export function getAppointmentEnd(

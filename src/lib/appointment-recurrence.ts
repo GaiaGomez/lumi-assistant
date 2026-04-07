@@ -103,10 +103,16 @@ function weeksBetween(start: Date, current: Date): number {
 }
 
 export function buildAppointmentDisplayTitle(
-  appointment: Pick<Appointment, 'event_type' | 'title' | 'patient' | 'notas'>
+  appointment: Pick<
+    Appointment,
+    'event_type' | 'title' | 'patient' | 'notas' | 'doctoralia_paciente_nombre'
+  >
 ): string {
   if (appointment.title?.trim()) return appointment.title.trim()
   if (appointment.patient) return `${appointment.patient.nombre} ${appointment.patient.apellido}`
+  if (appointment.doctoralia_paciente_nombre?.trim()) {
+    return appointment.doctoralia_paciente_nombre.trim()
+  }
   return appointment.notas?.trim() || 'Evento'
 }
 

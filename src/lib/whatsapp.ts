@@ -9,11 +9,11 @@
 // ============================================================
 
 import { Patient, Appointment } from '@/types'
+import { formatInBogota } from '@/lib/datetime'
 
 // Recordatorio de cita (no personalizable — se usa desde el modal de cita)
 export function mensajeRecordatorioCita(patient: Patient, appointment: Appointment): string {
-  const fecha = new Date(appointment.fecha_inicio)
-  const horaFormateada = fecha.toLocaleTimeString('es-CO', {
+  const horaFormateada = formatInBogota(appointment.fecha_inicio, {
     hour: 'numeric',
     minute: '2-digit',
   })

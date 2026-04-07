@@ -58,20 +58,41 @@ export function mapPatientRows(rows: unknown): Patient[] {
 
 export function mapAppointmentRow(row: unknown): Appointment {
   const record = expectRecord(row, 'appointment')
+  const doctoraliaUid = optionalString(record.doctoralia_uid)
+  const sourceSystem = record.source_system === 'doctoralia'
+    ? 'doctoralia'
+    : doctoraliaUid
+      ? 'doctoralia'
+      : 'manual'
+  const doctoraliaEstadoSesion = (
+    optionalString(record.doctoralia_estado_sesion) as Appointment['estado_sesion'] | null
+  ) ?? null
+  const estadoSesionOverride = (
+    optionalString(record.estado_sesion_override) as Appointment['estado_sesion'] | null
+  ) ?? null
+  const legacyEstadoSesion = record.estado_sesion as Appointment['estado_sesion']
+
   return {
     id: expectString(record.id, 'appointment.id'),
     patient_id: optionalString(record.patient_id),
     user_id: expectString(record.user_id, 'appointment.user_id'),
+    source_system: sourceSystem,
     event_type: record.event_type === 'general' ? 'general' : 'patient',
     title: optionalString(record.title),
     category: optionalString(record.category),
     color: optionalString(record.color),
     recurrence_group_id: optionalString(record.recurrence_group_id),
     recurrence_rule: normalizeAppointmentRecurrenceRule(record.recurrence_rule),
-    doctoralia_uid: optionalString(record.doctoralia_uid),
+    doctoralia_uid: doctoraliaUid,
+    doctoralia_estado_sesion: doctoraliaEstadoSesion,
+    estado_sesion_override: estadoSesionOverride,
+    doctoralia_paciente_nombre: optionalString(record.doctoralia_paciente_nombre),
+    doctoralia_last_synced_at: optionalString(record.doctoralia_last_synced_at),
+    doctoralia_last_seen_at: optionalString(record.doctoralia_last_seen_at),
+    doctoralia_removed_at: optionalString(record.doctoralia_removed_at),
     fecha_inicio: expectString(record.fecha_inicio, 'appointment.fecha_inicio'),
     fecha_fin: optionalString(record.fecha_fin),
-    estado_sesion: record.estado_sesion as Appointment['estado_sesion'],
+    estado_sesion: legacyEstadoSesion,
     estado_pago: record.estado_pago as Appointment['estado_pago'],
     notas: optionalString(record.notas),
     modalidad: (record.modalidad as Appointment['modalidad']) ?? null,

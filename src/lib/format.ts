@@ -3,19 +3,21 @@
 // Centraliza los formatos que estaban repetidos en múltiples páginas
 // ============================================================
 
+import { formatInBogota, getBogotaDateParts } from '@/lib/datetime'
+
 /**
  * Formato completo: día de semana + fecha corta + hora.
  * Ejemplo: "Lunes 24/03/26 · 10:00 a. m."
  * Usado en: historial de citas, sección de pendientes de WhatsApp.
  */
 export function formatDateTimeFull(date: string): string {
-  const parsed = new Date(date)
-  const weekdayRaw = parsed.toLocaleDateString('es-CO', { weekday: 'long' })
+  const weekdayRaw = formatInBogota(date, { weekday: 'long' })
   const weekday = weekdayRaw.charAt(0).toUpperCase() + weekdayRaw.slice(1)
-  const day = String(parsed.getDate()).padStart(2, '0')
-  const month = String(parsed.getMonth() + 1).padStart(2, '0')
-  const year = String(parsed.getFullYear()).slice(-2)
-  const time = parsed.toLocaleTimeString('es-CO', {
+  const parts = getBogotaDateParts(date)
+  const day = String(parts.day).padStart(2, '0')
+  const month = String(parts.month).padStart(2, '0')
+  const year = String(parts.year).slice(-2)
+  const time = formatInBogota(date, {
     hour: 'numeric',
     minute: '2-digit',
   })
@@ -28,11 +30,11 @@ export function formatDateTimeFull(date: string): string {
  * Usado en: notas clínicas (fecha de creación).
  */
 export function formatDateOnly(date: string): string {
-  const parsed = new Date(date)
-  const weekdayRaw = parsed.toLocaleDateString('es-CO', { weekday: 'long' })
+  const weekdayRaw = formatInBogota(date, { weekday: 'long' })
   const weekday = weekdayRaw.charAt(0).toUpperCase() + weekdayRaw.slice(1)
-  const day = String(parsed.getDate()).padStart(2, '0')
-  const month = String(parsed.getMonth() + 1).padStart(2, '0')
-  const year = String(parsed.getFullYear()).slice(-2)
+  const parts = getBogotaDateParts(date)
+  const day = String(parts.day).padStart(2, '0')
+  const month = String(parts.month).padStart(2, '0')
+  const year = String(parts.year).slice(-2)
   return `${weekday} ${day}/${month}/${year}`
 }

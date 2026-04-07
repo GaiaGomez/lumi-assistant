@@ -1,17 +1,27 @@
-// ============================================================
-// MIDDLEWARE — se ejecuta en CADA request antes de que llegue a la página
-// Su trabajo: verificar si el usuario está autenticado
-// Si no está logueada → redirige a /login
-// Si está logueada y va a /login → redirige al home
-// ============================================================
-
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Next.js 16: el archivo se llama proxy.ts y la función se llama proxy
+const PUBLIC_ROUTES = ['/login']
+const INTERNAL_PREFIXES = ['/_next', '/favicon', '/api']
+const PUBLIC_FILE_PATHS = ['/manifest.json', '/robots.txt', '/sitemap.xml', '/sw.js']
+
+function matchesRoute(pathname: string, route: string) {
+  return pathname === route || pathname.startsWith(`${route}/`)
+}
+
 export async function proxy(request: NextRequest) {
-  // Creamos una respuesta mutable para poder modificar las cookies
-  let supabaseResponse = NextResponse.next({ request })
+  const { pathname } = request.nextUrl
+
+  if (
+    INTERNAL_PREFIXES.some((p) => pathname.startsWith(p)) ||
+    PUBLIC_FILE_PATHS.includes(pathname)
+  ) {
+    return NextResponse.next()
+  }
+
+  let response = NextResponse.next({
+    request: { headers: request.headers },
+  })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,36 +33,40 @@ export async function proxy(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
+          response = NextResponse.next({
+            request: { headers: request.headers },
+          })
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options)
+          })
         },
       },
     }
   )
 
-  // Verificamos si hay una sesión activa
-  // IMPORTANTE: no usar getSession() en middleware — getUser() hace la verificación real con el servidor
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  const { pathname } = request.nextUrl
+  const isPublicRoute = PUBLIC_ROUTES.some((route) => matchesRoute(pathname, route))
 
-  // Si no está logueada y no está en /login → redirigir a login
-  if (!user && pathname !== '/login') {
-    return NextResponse.redirect(new URL('/login', request.url))
+  if (!user && !isPublicRoute) {
+    const loginUrl = request.nextUrl.clone()
+    loginUrl.pathname = '/login'
+    return NextResponse.redirect(loginUrl)
   }
 
-  // Si está logueada y va a /login → redirigir a la agenda
-  if (user && pathname === '/login') {
-    return NextResponse.redirect(new URL('/agenda', request.url))
+  if (user && matchesRoute(pathname, '/login')) {
+    const agendaUrl = request.nextUrl.clone()
+    agendaUrl.pathname = '/agenda'
+    return NextResponse.redirect(agendaUrl)
   }
 
-  return supabaseResponse
+  return response
 }
 
-// Le decimos a Next.js en qué rutas ejecutar el middleware
-// Excluimos archivos estáticos, imágenes y APIs para no bloquear Route Handlers
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|icons|manifest.json|sw.js).*)'],
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }

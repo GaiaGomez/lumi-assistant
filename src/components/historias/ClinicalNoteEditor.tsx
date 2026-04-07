@@ -167,7 +167,7 @@ export default function ClinicalNoteEditor({
 
           const { data: appointmentsRow } = await supabase
             .from('appointments')
-            .select('id, patient_id, user_id, doctoralia_uid, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at')
+            .select('id, patient_id, user_id, source_system, doctoralia_uid, doctoralia_estado_sesion, estado_sesion_override, doctoralia_paciente_nombre, doctoralia_last_synced_at, doctoralia_last_seen_at, doctoralia_removed_at, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at')
             .eq('patient_id', mappedNote.patient_id)
             .order('fecha_inicio', { ascending: false })
 
@@ -200,7 +200,7 @@ export default function ClinicalNoteEditor({
             supabase.from('patients').select('*').eq('id', patientId).single(),
             supabase
               .from('appointments')
-              .select('id, patient_id, user_id, doctoralia_uid, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at')
+              .select('id, patient_id, user_id, source_system, doctoralia_uid, doctoralia_estado_sesion, estado_sesion_override, doctoralia_paciente_nombre, doctoralia_last_synced_at, doctoralia_last_seen_at, doctoralia_removed_at, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at')
               .eq('patient_id', patientId)
               .order('fecha_inicio', { ascending: false }),
           ])
