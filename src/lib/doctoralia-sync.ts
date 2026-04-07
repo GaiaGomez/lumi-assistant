@@ -4,12 +4,14 @@ import { getBogotaDateParts, isSameInstant } from '@/lib/datetime'
 import {
   fetchDoctoraliaRange,
   mapAttendanceToEstado,
+  extractDoctoraliaPhone,
 } from '@/lib/doctoralia-api'
 
 interface PatientMatchRow {
   id: string
   nombre: string
   apellido: string
+  telefono: string | null
 }
 
 interface ExistingDoctoraliaRow {
@@ -110,7 +112,7 @@ export async function syncDoctoraliaAppointmentsForUser(
     fetchDoctoraliaRange(token, daysAhead, daysBehind),
     supabase
       .from('patients')
-      .select('id, nombre, apellido')
+      .select('id, nombre, apellido, telefono')
       .eq('user_id', userId),
     supabase
       .from('appointments')
@@ -162,6 +164,8 @@ export async function syncDoctoraliaAppointmentsForUser(
   const appointmentLinkUpdates: Array<Pick<Appointment, 'id' | 'patient_id'>> = []
   const inserts: Array<Partial<Appointment>> = []
   const pendingNewImports = new Map<string, string | null>()
+  // Teléfono por nombre normalizado — se rellena desde el payload de Doctoralia
+  const phoneByNormalizedName = new Map<string, string>()
   const patientsToCreate = new Map<string, {
     nombre: string
     apellido: string
@@ -178,6 +182,13 @@ export async function syncDoctoraliaAppointmentsForUser(
     const fullName = `${rawAppointment.patient.firstName} ${rawAppointment.patient.lastName}`.trim()
     const normalizedName = fullName ? normalizePersonName(fullName) : ''
     if (!normalizedName) continue
+
+    // Guardamos el teléfono si viene en el payload (no sobreescribimos si ya lo tenemos)
+    if (!phoneByNormalizedName.has(normalizedName)) {
+      const phone = extractDoctoraliaPhone(rawAppointment.patient)
+      if (phone) phoneByNormalizedName.set(normalizedName, phone)
+    }
+
     if (patientLookup.has(normalizedName)) continue
     if (patientsToCreate.has(normalizedName)) continue
 
@@ -208,11 +219,11 @@ export async function syncDoctoraliaAppointmentsForUser(
     const { data: createdPatients, error: createdPatientsError } = await supabase
       .from('patients')
       .insert(
-        Array.from(patientsToCreate.values()).map((patient) => ({
+        Array.from(patientsToCreate.entries()).map(([key, patient]) => ({
           user_id: userId,
           nombre: patient.nombre,
           apellido: patient.apellido,
-          telefono: null,
+          telefono: phoneByNormalizedName.get(key) ?? null,
           whatsapp: null,
           email: null,
           fecha_inicio: patient.fecha_inicio,
@@ -230,6 +241,25 @@ export async function syncDoctoraliaAppointmentsForUser(
       patientIdByKey.set(key, patient.id)
       patientsCreated += 1
     }
+  }
+
+  // Actualizar teléfono de pacientes existentes que no lo tienen aún (nunca sobreescribimos)
+  const existingPatientsToUpdatePhone = (patientsResult.data ?? []) as PatientMatchRow[]
+  const phoneUpdates = existingPatientsToUpdatePhone
+    .filter((p) => !p.telefono)
+    .flatMap((p) => {
+      const key = normalizePersonName(`${p.nombre} ${p.apellido}`)
+      const phone = phoneByNormalizedName.get(key)
+      if (!phone) return []
+      return [{ id: p.id, telefono: phone }]
+    })
+
+  if (phoneUpdates.length > 0) {
+    await Promise.all(
+      phoneUpdates.map(({ id, telefono }) =>
+        supabase.from('patients').update({ telefono }).eq('id', id)
+      )
+    )
   }
 
   for (const rawAppointment of rawAppointments) {

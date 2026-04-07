@@ -23,6 +23,12 @@ export interface DoctoraliaAppointment {
   patient: {
     firstName: string
     lastName: string
+    // Campos de contacto — presentes o no según el endpoint; se capturam si la API los devuelve
+    phone?: string | null
+    phoneNumber?: string | null
+    mobile?: string | null
+    cellPhone?: string | null
+    phonePrefix?: string | null
   }
 }
 
@@ -37,6 +43,27 @@ export interface NormalizedDoctoraliaAppointment extends DoctoraliaAppointment {
   end_iso: string
   start_iso_if_utc: string
   end_iso_if_utc: string
+}
+
+// Extrae el primer teléfono disponible del objeto patient de Doctoralia
+// Prueba los nombres de campo más comunes en la API de Docplanner
+export function extractDoctoraliaPhone(
+  patient: DoctoraliaAppointment['patient']
+): string | null {
+  const candidates = [
+    patient.phone,
+    patient.phoneNumber,
+    patient.mobile,
+    patient.cellPhone,
+  ]
+
+  for (const raw of candidates) {
+    if (!raw) continue
+    const cleaned = raw.replace(/\D/g, '')
+    if (cleaned.length >= 7) return cleaned
+  }
+
+  return null
 }
 
 // Mapeamos el campo `attendance` de Doctoralia a nuestro enum de estado_sesion
