@@ -50,7 +50,7 @@ export default function BottomNav() {
                   style={{ background: 'var(--ink-cool-faint)' }} />
               )}
               <Icon size={21} strokeWidth={isActive ? 2.2 : 1.5} />
-              <span className="text-xs font-medium tracking-wide">{label}</span>
+              <span className="text-[11px] font-medium tracking-wide">{label}</span>
             </Link>
           )
         })}
@@ -74,8 +74,8 @@ export default function BottomNav() {
               <span className="text-white text-base font-light">L</span>
             </div>
             <div>
-              <p className="font-medium text-sm" style={{ color: 'var(--ink-cool-strong)' }}>Lu Assistant</p>
-              <p className="text-xs tracking-wide" style={{ color: 'var(--ink-cool-muted)' }}>Consultorio privado</p>
+              <p className="font-medium text-[14px]" style={{ color: 'var(--ink-cool-strong)' }}>Lu Assistant</p>
+              <p className="text-[11px] tracking-wide" style={{ color: 'var(--ink-cool-muted)' }}>Consultorio privado</p>
             </div>
           </div>
         </div>
@@ -97,7 +97,7 @@ export default function BottomNav() {
                 }}
               >
                 <Icon size={17} strokeWidth={isActive ? 2.2 : 1.5} />
-                <span className="text-sm font-medium">{label}</span>
+                <span className="text-[14px] font-medium">{label}</span>
               </Link>
             )
           })}
@@ -105,7 +105,7 @@ export default function BottomNav() {
 
         {/* Footer del sidebar */}
         <div className="p-5">
-          <p className="text-xs text-center tracking-widest" style={{ color: 'var(--ink-cool-muted)' }}>
+          <p className="text-[11px] text-center tracking-widest" style={{ color: 'var(--ink-cool-muted)' }}>
             Lumi Assistant
           </p>
         </div>

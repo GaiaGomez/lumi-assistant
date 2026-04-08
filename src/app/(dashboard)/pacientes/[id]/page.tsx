@@ -69,7 +69,7 @@ export default async function PatientProfilePage({ params }: Props) {
   const pendingPaymentsCount = pendingPayments.length
 
   return (
-    <div className="relative mx-auto max-w-[1180px] px-4 pb-1 font-sans sm:px-5">
+    <div className="relative pb-1">
       <PageBlobs />
 
       <PatientHeaderCard

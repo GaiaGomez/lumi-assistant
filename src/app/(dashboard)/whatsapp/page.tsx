@@ -199,10 +199,10 @@ export default async function PendingPage() {
   const summary = countSummary(pendingActions)
 
   return (
-    <div className="relative mx-auto max-w-[1180px] px-4 pb-1 font-sans sm:px-5">
+    <div className="relative pb-1">
       <PageBlobs />
 
-      <div className="mb-3 flex items-end justify-between gap-3">
+      <div className="mb-4 flex items-end justify-between gap-3">
         <div>
           <h1 className="page-title text-[1.6rem] leading-none">Pendientes</h1>
           <p className="page-subtitle mt-1">Acciones operativas listas para resolver</p>

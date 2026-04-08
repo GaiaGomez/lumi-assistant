@@ -24,7 +24,7 @@ export default async function PacientesPage() {
   return (
     <div>
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="page-title text-[1.6rem] leading-none">
             Pacientes

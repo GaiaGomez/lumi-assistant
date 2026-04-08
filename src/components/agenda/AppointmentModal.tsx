@@ -234,7 +234,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
 
   return (
     <ModalShell onClose={onClose}>
-      <div className="overflow-y-auto max-h-[88vh]">
+      <div>
 
         {/* ── Header ── */}
         <div className="flex items-start justify-between p-4">

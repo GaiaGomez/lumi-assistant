@@ -339,7 +339,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
   return (
     <ModalShell onClose={onClose}>
       <div>
-        <div className="flex items-start justify-between p-5 pb-4">
+        <div className="flex items-start justify-between p-4">
           <div>
             <SectionHeader label="Nuevo evento" className="mb-2" />
             <h2 className="editorial-panel-title text-[1.05rem]">
@@ -351,7 +351,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
           </Button>
         </div>
 
-        <div className="px-5 pb-5 space-y-4">
+        <div className="px-4 pb-4 space-y-4">
           <div>
             <SectionHeader label="Paciente (opcional)" className="mb-2" />
             {selectedPatient ? (
