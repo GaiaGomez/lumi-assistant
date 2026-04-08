@@ -1,17 +1,15 @@
 'use client'
 // ============================================================
-// CONFIGURACIÓN CLIENT — página de ajustes con 6 secciones
+// CONFIGURACIÓN CLIENT — página de ajustes
 //
 // Persistencia: Supabase settings (key-value), reutiliza upsertSettingValue
-// Secciones funcionales: Agenda · Recordatorios · Consultorios · Pacientes · Seguridad
-// Secciones visuales preparadas: Historial
+// Secciones vigentes: Agenda · WhatsApp · Consultorios
 // ============================================================
 
 import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import {
-  Building2, Calendar, MessageCircle, MapPin, Plus, Trash2, Users, FileText, Shield,
-  Check, AlertCircle, Download, ChevronDown, Eye, EyeOff, Loader2,
+  Building2, Calendar, MessageCircle, MapPin, Plus, Trash2,
+  Check, AlertCircle, ChevronDown, Loader2,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -41,9 +39,6 @@ const TABS = [
   { id: 'agenda',        label: 'Agenda',        icon: Calendar },
   { id: 'recordatorios', label: 'WhatsApp',      icon: MessageCircle },
   { id: 'consultorios',  label: 'Consultorios',  icon: MapPin },
-  { id: 'pacientes',     label: 'Pacientes',     icon: Users },
-  { id: 'historial',     label: 'Historial',     icon: FileText },
-  { id: 'seguridad',     label: 'Seguridad',     icon: Shield },
 ] as const
 
 type TabId = (typeof TABS)[number]['id']
@@ -379,40 +374,8 @@ function AgendaSection({ settings, userId }: Pick<Props, 'settings' | 'userId'>)
 // ── RECORDATORIOS ──────────────────────────────────────────────────────────
 
 function RecordatoriosSection({ settings, userId }: Pick<Props, 'settings' | 'userId'>) {
-  const { state, save } = useSave(userId)
-
-  const [firma, setFirma] = useState(settings['recordatorio_firma'] ?? '')
-
-  function handleSave() {
-    save([['recordatorio_firma', firma]])
-  }
-
   return (
     <div className="space-y-3">
-      <SettingsCard>
-        <p className="section-kicker mb-0.5">WhatsApp manual</p>
-        <p className="text-[13px] mb-3" style={{ color: 'var(--ink-cool-faint)' }}>
-          Ajusta la firma que se añade a los mensajes manuales de WhatsApp.
-        </p>
-
-        <div className="pt-3.5">
-          <p className="section-kicker mb-1.5">Firma automática</p>
-          <p className="text-[13px] mb-2" style={{ color: 'var(--ink-cool-faint)' }}>
-            Se añade al final de los mensajes manuales que Lumi abre con WhatsApp.
-            Deja vacío para no usar firma.
-          </p>
-          <textarea
-            value={firma}
-            onChange={e => setFirma(e.target.value)}
-            rows={2}
-            placeholder="Ej: Un saludo, Lu"
-            className="w-full rounded-[14px] px-3.5 py-2.5 text-[14px] leading-relaxed resize-none focus:outline-none"
-          />
-        </div>
-
-        <SaveButton state={state} onClick={handleSave} />
-      </SettingsCard>
-
       <SettingsCard>
         <p className="section-kicker mb-0.5">Plantillas de mensajes</p>
         <p className="text-[13px] mb-3" style={{ color: 'var(--ink-cool-faint)' }}>
@@ -490,7 +453,6 @@ function ConsultorioCard({
   onDeleted: (consultorioId: string) => void
   onSaved: (consultorio: Consultorio) => void
 }) {
-  const router = useRouter()
   const supabase = createClient()
   const [state, setState] = useState<SaveState>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -549,7 +511,6 @@ function ConsultorioCard({
 
       onSaved(mapConsultorioRow(response.data))
       setState('saved')
-      router.refresh()
       setTimeout(() => setState('idle'), 2500)
     } catch {
       setState('error')
@@ -596,7 +557,6 @@ function ConsultorioCard({
     }
 
     onDeleted(consultorio.id)
-    router.refresh()
   }
 
   return (
@@ -868,472 +828,6 @@ function ConsultoriosSection({ consultorios, userId }: Pick<Props, 'consultorios
   )
 }
 
-// ── PACIENTES ──────────────────────────────────────────────────────────────
-
-function PacientesSection({ settings, userId }: Pick<Props, 'settings' | 'userId'>) {
-  const { state, save } = useSave(userId)
-
-  const [diasInactivo,      setDiasInactivo]      = useState(settings['pacientes_dias_inactivo']  ?? '90')
-  const [diasReactivar,     setDiasReactivar]     = useState(settings['pacientes_dias_reactivar'] ?? '60')
-
-  function handleSave() {
-    save([
-      ['pacientes_dias_inactivo',      diasInactivo],
-      ['pacientes_dias_reactivar',     diasReactivar],
-    ])
-  }
-
-  return (
-    <div className="space-y-3">
-      <SettingsCard>
-        <p className="section-kicker mb-0.5">Actividad y seguimiento</p>
-        <p className="text-[13px] mb-3" style={{ color: 'var(--ink-cool-faint)' }}>
-          Reglas para detectar pacientes inactivos y activar sugerencias de reactivación.
-          Estos umbrales afectan la sección {`"Pendientes"`} directamente.
-        </p>
-
-        <SettingRow
-          label="Días para marcar como inactivo"
-          description="Días sin citas para considerar a un paciente inactivo"
-        >
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              value={diasInactivo}
-              onChange={e => setDiasInactivo(e.target.value)}
-              min="1"
-              max="365"
-              className="w-16 rounded-[12px] px-2 py-2 text-[13px] text-center focus:outline-none"
-              style={{
-                background: 'rgba(255,255,255,0.72)',
-                border: '1px solid var(--border-glass-white)',
-                color: 'var(--ink-cool-strong)',
-              }}
-            />
-            <span className="text-[13px]" style={{ color: 'var(--ink-cool-faint)' }}>días</span>
-          </div>
-        </SettingRow>
-
-        <SettingRow
-          label="Días para sugerir reactivación"
-          description="A partir de este período sin cita aparece el aviso 'Reactivar' en Pendientes"
-        >
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              value={diasReactivar}
-              onChange={e => setDiasReactivar(e.target.value)}
-              min="1"
-              max="365"
-              className="w-16 rounded-[12px] px-2 py-2 text-[13px] text-center focus:outline-none"
-              style={{
-                background: 'rgba(255,255,255,0.72)',
-                border: '1px solid var(--border-glass-white)',
-                color: 'var(--ink-cool-strong)',
-              }}
-            />
-            <span className="text-[13px]" style={{ color: 'var(--ink-cool-faint)' }}>días</span>
-          </div>
-        </SettingRow>
-
-        <SaveButton state={state} onClick={handleSave} />
-      </SettingsCard>
-    </div>
-  )
-}
-
-// ── HISTORIAL ──────────────────────────────────────────────────────────────
-
-const TEMPLATE_DEFAULT = `## Motivo de consulta\n\n## Contenido de la sesión\n\n## Intervenciones aplicadas\n\n## Plan y próximos pasos`
-
-function HistorialSection({ settings, userId }: Pick<Props, 'settings' | 'userId'>) {
-  const { state, save } = useSave(userId)
-
-  const [vista,    setVista]    = useState<'compacta' | 'expandida'>(
-    (settings['historial_vista'] as 'compacta' | 'expandida') ?? 'expandida'
-  )
-  const [template, setTemplate] = useState(settings['historial_plantilla_base'] ?? '')
-
-  function handleSave() {
-    save([
-      ['historial_vista',          vista],
-      ['historial_plantilla_base', template],
-    ])
-  }
-
-  return (
-    <div className="space-y-3">
-      <SettingsCard>
-        <p className="section-kicker mb-0.5">Visualización</p>
-        <p className="text-[13px] mb-3" style={{ color: 'var(--ink-cool-faint)' }}>
-          Cómo se presentan las notas clínicas en el historial del paciente.
-        </p>
-
-        <SettingRow label="Vista por defecto" description="Modo en que aparecen las notas al abrir un perfil">
-          <div className="flex gap-1.5">
-            {(['compacta', 'expandida'] as const).map(v => (
-              <button
-                key={v}
-                onClick={() => setVista(v)}
-                className="px-3 py-1.5 rounded-full text-[12px] font-medium capitalize transition-all"
-                style={{
-                  background: vista === v
-                    ? 'linear-gradient(145deg, var(--accent-lilac) 0%, var(--accent-mauve) 100%)'
-                    : 'rgba(185,174,189,0.16)',
-                  color: vista === v ? 'var(--ink-cool-strong)' : 'var(--ink-cool-faint)',
-                  border: '1px solid var(--border-glass-muted)',
-                }}
-              >
-                {v}
-              </button>
-            ))}
-          </div>
-        </SettingRow>
-      </SettingsCard>
-
-      <SettingsCard>
-        <p className="section-kicker mb-0.5">Plantilla base de sesión</p>
-        <p className="text-[13px] mb-3" style={{ color: 'var(--ink-cool-faint)' }}>
-          Texto que se pre-carga en el campo de notas al crear una historia clínica nueva.
-          Deja vacío para comenzar con la hoja en blanco.
-        </p>
-
-        <textarea
-          value={template}
-          onChange={e => setTemplate(e.target.value)}
-          placeholder={TEMPLATE_DEFAULT}
-          rows={9}
-          className="w-full rounded-[14px] px-4 py-3 leading-relaxed resize-none focus:outline-none"
-          style={{
-            background: 'rgba(255,255,255,0.72)',
-            border: '1px solid var(--border-glass-white)',
-            color: 'var(--ink-cool-strong)',
-            fontFamily: 'ui-monospace, "SF Mono", monospace',
-            fontSize: '13px',
-            lineHeight: '1.6',
-          }}
-        />
-
-        <SaveButton state={state} onClick={handleSave} />
-      </SettingsCard>
-    </div>
-  )
-}
-
-// ── SEGURIDAD ──────────────────────────────────────────────────────────────
-
-function CambiarPasswordModal({ onClose }: { onClose: () => void }) {
-  const [newPassword,     setNewPassword]     = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [showNew,         setShowNew]         = useState(false)
-  const [showConfirm,     setShowConfirm]     = useState(false)
-  const [state,           setState]           = useState<SaveState>('idle')
-  const [errorMsg,        setErrorMsg]        = useState('')
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (newPassword !== confirmPassword) {
-      setErrorMsg('Las contraseñas no coinciden.')
-      return
-    }
-    if (newPassword.length < 6) {
-      setErrorMsg('La contraseña debe tener al menos 6 caracteres.')
-      return
-    }
-    setErrorMsg('')
-    setState('saving')
-    try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.updateUser({ password: newPassword })
-      if (error) throw error
-      setState('saved')
-      setTimeout(onClose, 1500)
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Error al cambiar la contraseña.')
-      setState('error')
-    }
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-[70] flex items-center justify-center p-4"
-      style={{ background: 'var(--overlay-modal)', backdropFilter: 'blur(8px)' }}
-      onClick={onClose}
-    >
-      <div
-        className="glass-cool rounded-[22px] p-6 w-full max-w-sm"
-        onClick={e => e.stopPropagation()}
-      >
-        <h2 className="editorial-panel-title text-[1.05rem] mb-4">Cambiar contraseña</h2>
-
-        {state === 'saved' ? (
-          <div className="flex flex-col items-center gap-3 py-4">
-            <Check size={32} style={{ color: 'var(--state-success-text)' }} />
-            <p className="text-[14px]" style={{ color: 'var(--state-success-text)' }}>
-              Contraseña actualizada correctamente.
-            </p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <p className="section-kicker mb-1.5">Nueva contraseña</p>
-              <div className="relative">
-                <input
-                  type={showNew ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={e => {
-                    setNewPassword(e.target.value)
-                    if (errorMsg) setErrorMsg('')
-                  }}
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                  className="w-full rounded-[14px] px-3.5 py-3 text-[14px] pr-10 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNew(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
-                  style={{ color: 'var(--ink-cool-faint)' }}
-                >
-                  {showNew ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <p className="section-kicker mb-1.5">Confirmar contraseña</p>
-              <div className="relative">
-                <input
-                  type={showConfirm ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={e => {
-                    setConfirmPassword(e.target.value)
-                    if (errorMsg) setErrorMsg('')
-                  }}
-                  required
-                  autoComplete="new-password"
-                  className="w-full rounded-[14px] px-3.5 py-3 text-[14px] pr-10 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
-                  style={{ color: 'var(--ink-cool-faint)' }}
-                >
-                  {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-              </div>
-            </div>
-
-            {errorMsg && (
-              <p className="text-[13px] flex items-center gap-1.5" style={{ color: 'var(--state-cancel-text)' }}>
-                <AlertCircle size={13} />
-                {errorMsg}
-              </p>
-            )}
-
-            <div className="flex gap-2 pt-1">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn-subtle flex-1 py-2.5 text-[13px]"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={state === 'saving'}
-                className="btn-action flex-1 py-2.5 text-[13px] flex items-center justify-center gap-2"
-              >
-                {state === 'saving' && <Loader2 size={13} className="animate-spin" />}
-                {state === 'saving' ? 'Guardando…' : 'Cambiar'}
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function SeguridadSection() {
-  const router = useRouter()
-  const [showPasswordModal, setShowPasswordModal] = useState(false)
-  const [exportState, setExportState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
-  const [exportMessage, setExportMessage] = useState('')
-  const [signOutState, setSignOutState] = useState<'idle' | 'loading' | 'error'>('idle')
-  const [signOutError, setSignOutError] = useState('')
-
-  function getDownloadFileName(contentDisposition: string | null): string {
-    const match = contentDisposition?.match(/filename="?([^"]+)"?/)
-    return match?.[1] ?? `lumi-datos-${new Date().toISOString().slice(0, 10)}.json`
-  }
-
-  async function handleSignOut() {
-    setSignOutState('loading')
-    setSignOutError('')
-
-    try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-      router.replace('/login')
-      router.refresh()
-    } catch (err) {
-      setSignOutError(err instanceof Error ? err.message : 'No se pudo cerrar la sesión.')
-      setSignOutState('error')
-    }
-  }
-
-  async function handleExport() {
-    setExportMessage('')
-    setExportState('loading')
-
-    try {
-      const response = await fetch('/api/export/datos', { method: 'GET' })
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null)
-        throw new Error(payload?.error ?? 'No se pudo preparar la exportación.')
-      }
-
-      const blob = await response.blob()
-      const downloadUrl = window.URL.createObjectURL(blob)
-      const anchor = document.createElement('a')
-      anchor.href = downloadUrl
-      anchor.download = getDownloadFileName(response.headers.get('content-disposition'))
-      document.body.appendChild(anchor)
-      anchor.click()
-      anchor.remove()
-      window.URL.revokeObjectURL(downloadUrl)
-
-      setExportState('success')
-      setExportMessage('Se descargó un JSON con settings, consultorios, pacientes, citas y notas clínicas.')
-      window.setTimeout(() => {
-        setExportState('idle')
-        setExportMessage('')
-      }, 3200)
-    } catch (err) {
-      setExportState('error')
-      setExportMessage(err instanceof Error ? err.message : 'No se pudo exportar la información.')
-    }
-  }
-
-  return (
-    <>
-      {showPasswordModal && (
-        <CambiarPasswordModal onClose={() => setShowPasswordModal(false)} />
-      )}
-
-      <div className="space-y-3">
-        <SettingsCard>
-          <p className="section-kicker mb-0.5">Acceso</p>
-          <p className="text-[13px] mb-3" style={{ color: 'var(--ink-cool-faint)' }}>
-            Gestiona las credenciales de acceso a tu cuenta de Lumi.
-          </p>
-
-          <SettingRow label="Contraseña" description="Actualiza la contraseña que usas para entrar a Lumi">
-            <button
-              onClick={() => setShowPasswordModal(true)}
-              className="btn-subtle px-4 py-2 text-[13px]"
-            >
-              Cambiar
-            </button>
-          </SettingRow>
-        </SettingsCard>
-
-        <SettingsCard>
-          <p className="section-kicker mb-0.5">Datos</p>
-          <p className="text-[13px] mb-3" style={{ color: 'var(--ink-cool-faint)' }}>
-            Descarga tus datos y consulta el estado real del respaldo de la plataforma.
-          </p>
-
-          <SettingRow
-            label="Exportar datos"
-            description="Descarga un archivo JSON con la configuración y los datos actuales de tu cuenta"
-          >
-            <div className="flex flex-col items-end gap-1.5">
-              <button
-                onClick={handleExport}
-                disabled={exportState === 'loading'}
-                className="btn-subtle px-4 py-2 text-[13px] flex items-center gap-2"
-              >
-                {exportState === 'loading'
-                  ? <Loader2 size={13} className="animate-spin" />
-                  : <Download size={13} strokeWidth={1.8} />
-                }
-                {exportState === 'loading' ? 'Preparando…' : 'Exportar'}
-              </button>
-              {exportMessage && (
-                <span
-                  className="text-[12px] text-right leading-snug max-w-[260px]"
-                  style={{
-                    color: exportState === 'error'
-                      ? 'var(--state-cancel-text)'
-                      : exportState === 'success'
-                        ? 'var(--state-success-text)'
-                        : 'var(--ink-cool-muted)',
-                  }}
-                >
-                  {exportMessage}
-                </span>
-              )}
-            </div>
-          </SettingRow>
-
-          <SettingRow
-            label="Respaldo automático"
-            description="Los datos que guardas se persisten en Supabase. Este estado lo gestiona la plataforma, no requiere configuración adicional aquí."
-          >
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{ background: 'var(--state-success-text)' }} />
-              <span className="text-[13px]" style={{ color: 'var(--state-success-text)' }}>
-                Gestionado por la plataforma
-              </span>
-            </div>
-          </SettingRow>
-        </SettingsCard>
-
-        <SettingsCard>
-          <p className="section-kicker mb-0.5">Equipo</p>
-          <SettingRow
-            label="Usuarios y roles"
-            description="Hoy Lumi funciona con una sola cuenta por consultorio. La gestión de múltiples usuarios todavía no está habilitada."
-          >
-            <span className="text-[13px]" style={{ color: 'var(--ink-cool-muted)' }}>
-              No disponible en esta versión
-            </span>
-          </SettingRow>
-        </SettingsCard>
-
-        <SettingsCard>
-          <SettingRow label="Cerrar sesión" description="Salir de tu cuenta en este dispositivo">
-            <div className="flex flex-col items-end gap-1.5">
-              <button
-                onClick={handleSignOut}
-                disabled={signOutState === 'loading'}
-                className="rounded-full px-4 py-2 text-[13px] font-medium transition-colors hover:opacity-80 disabled:opacity-60"
-                style={{
-                  background: 'rgba(176,124,132,0.12)',
-                  color:      'var(--state-cancel-text)',
-                  border:     '1px solid rgba(176,124,132,0.18)',
-                }}
-              >
-                {signOutState === 'loading' ? 'Cerrando…' : 'Cerrar sesión'}
-              </button>
-              {signOutError && (
-                <span className="text-[12px]" style={{ color: 'var(--state-cancel-text)' }}>
-                  {signOutError}
-                </span>
-              )}
-            </div>
-          </SettingRow>
-        </SettingsCard>
-      </div>
-    </>
-  )
-}
-
 // ── MAIN ───────────────────────────────────────────────────────────────────
 
 export default function ConfiguracionClient({ settings, consultorios, userId }: Props) {
@@ -1344,9 +838,6 @@ export default function ConfiguracionClient({ settings, consultorios, userId }: 
       case 'agenda':        return <AgendaSection        settings={settings} userId={userId} />
       case 'recordatorios': return <RecordatoriosSection settings={settings} userId={userId} />
       case 'consultorios':  return <ConsultoriosSection consultorios={consultorios} userId={userId} />
-      case 'pacientes':     return <PacientesSection     settings={settings} userId={userId} />
-      case 'historial':     return <HistorialSection     settings={settings} userId={userId} />
-      case 'seguridad':     return <SeguridadSection />
     }
   })()
 
