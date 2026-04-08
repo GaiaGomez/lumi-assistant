@@ -873,13 +873,11 @@ function ConsultoriosSection({ consultorios, userId }: Pick<Props, 'consultorios
 function PacientesSection({ settings, userId }: Pick<Props, 'settings' | 'userId'>) {
   const { state, save } = useSave(userId)
 
-  const [whatsappPrincipal, setWhatsappPrincipal] = useState(settings['pacientes_whatsapp_principal'] !== 'false')
   const [diasInactivo,      setDiasInactivo]      = useState(settings['pacientes_dias_inactivo']  ?? '90')
   const [diasReactivar,     setDiasReactivar]     = useState(settings['pacientes_dias_reactivar'] ?? '60')
 
   function handleSave() {
     save([
-      ['pacientes_whatsapp_principal', whatsappPrincipal ? 'true' : 'false'],
       ['pacientes_dias_inactivo',      diasInactivo],
       ['pacientes_dias_reactivar',     diasReactivar],
     ])
@@ -887,20 +885,6 @@ function PacientesSection({ settings, userId }: Pick<Props, 'settings' | 'userId
 
   return (
     <div className="space-y-3">
-      <SettingsCard>
-        <p className="section-kicker mb-0.5">Interfaz de paciente</p>
-        <p className="text-[13px] mb-3" style={{ color: 'var(--ink-cool-faint)' }}>
-          Cómo se presenta la información en el perfil de cada paciente.
-        </p>
-
-        <SettingRow
-          label="WhatsApp como campo principal"
-          description="Muestra el WhatsApp destacado como forma de contacto principal en el perfil"
-        >
-          <Toggle checked={whatsappPrincipal} onChange={setWhatsappPrincipal} />
-        </SettingRow>
-      </SettingsCard>
-
       <SettingsCard>
         <p className="section-kicker mb-0.5">Actividad y seguimiento</p>
         <p className="text-[13px] mb-3" style={{ color: 'var(--ink-cool-faint)' }}>
@@ -1097,9 +1081,13 @@ function CambiarPasswordModal({ onClose }: { onClose: () => void }) {
                 <input
                   type={showNew ? 'text' : 'password'}
                   value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
+                  onChange={e => {
+                    setNewPassword(e.target.value)
+                    if (errorMsg) setErrorMsg('')
+                  }}
                   required
                   minLength={6}
+                  autoComplete="new-password"
                   className="w-full rounded-[14px] px-3.5 py-3 text-[14px] pr-10 focus:outline-none"
                 />
                 <button
@@ -1119,8 +1107,12 @@ function CambiarPasswordModal({ onClose }: { onClose: () => void }) {
                 <input
                   type={showConfirm ? 'text' : 'password'}
                   value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
+                  onChange={e => {
+                    setConfirmPassword(e.target.value)
+                    if (errorMsg) setErrorMsg('')
+                  }}
                   required
+                  autoComplete="new-password"
                   className="w-full rounded-[14px] px-3.5 py-3 text-[14px] pr-10 focus:outline-none"
                 />
                 <button
@@ -1168,21 +1160,63 @@ function CambiarPasswordModal({ onClose }: { onClose: () => void }) {
 function SeguridadSection() {
   const router = useRouter()
   const [showPasswordModal, setShowPasswordModal] = useState(false)
-  const [exportState, setExportState] = useState<'idle' | 'loading'>('idle')
+  const [exportState, setExportState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [exportMessage, setExportMessage] = useState('')
+  const [signOutState, setSignOutState] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [signOutError, setSignOutError] = useState('')
+
+  function getDownloadFileName(contentDisposition: string | null): string {
+    const match = contentDisposition?.match(/filename="?([^"]+)"?/)
+    return match?.[1] ?? `lumi-datos-${new Date().toISOString().slice(0, 10)}.json`
+  }
 
   async function handleSignOut() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/login')
+    setSignOutState('loading')
+    setSignOutError('')
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      router.replace('/login')
+      router.refresh()
+    } catch (err) {
+      setSignOutError(err instanceof Error ? err.message : 'No se pudo cerrar la sesión.')
+      setSignOutState('error')
+    }
   }
 
   async function handleExport() {
-    // Estructura preparada para exportación futura
-    // TODO: implementar descarga de CSV/JSON cuando se defina el formato
+    setExportMessage('')
     setExportState('loading')
-    await new Promise(r => setTimeout(r, 800))
-    setExportState('idle')
-    alert('La exportación de datos estará disponible en una próxima versión.')
+
+    try {
+      const response = await fetch('/api/export/datos', { method: 'GET' })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error ?? 'No se pudo preparar la exportación.')
+      }
+
+      const blob = await response.blob()
+      const downloadUrl = window.URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = downloadUrl
+      anchor.download = getDownloadFileName(response.headers.get('content-disposition'))
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      window.URL.revokeObjectURL(downloadUrl)
+
+      setExportState('success')
+      setExportMessage('Se descargó un JSON con settings, consultorios, pacientes, citas y notas clínicas.')
+      window.setTimeout(() => {
+        setExportState('idle')
+        setExportMessage('')
+      }, 3200)
+    } catch (err) {
+      setExportState('error')
+      setExportMessage(err instanceof Error ? err.message : 'No se pudo exportar la información.')
+    }
   }
 
   return (
@@ -1211,33 +1245,51 @@ function SeguridadSection() {
         <SettingsCard>
           <p className="section-kicker mb-0.5">Datos</p>
           <p className="text-[13px] mb-3" style={{ color: 'var(--ink-cool-faint)' }}>
-            Respaldo y exportación de tu información clínica.
+            Descarga tus datos y consulta el estado real del respaldo de la plataforma.
           </p>
 
           <SettingRow
             label="Exportar datos"
-            description="Descarga toda tu información en formato seguro"
+            description="Descarga un archivo JSON con la configuración y los datos actuales de tu cuenta"
           >
-            <button
-              onClick={handleExport}
-              disabled={exportState === 'loading'}
-              className="btn-subtle px-4 py-2 text-[13px] flex items-center gap-2"
-            >
-              {exportState === 'loading'
-                ? <Loader2 size={13} className="animate-spin" />
-                : <Download size={13} strokeWidth={1.8} />
-              }
-              Exportar
-            </button>
+            <div className="flex flex-col items-end gap-1.5">
+              <button
+                onClick={handleExport}
+                disabled={exportState === 'loading'}
+                className="btn-subtle px-4 py-2 text-[13px] flex items-center gap-2"
+              >
+                {exportState === 'loading'
+                  ? <Loader2 size={13} className="animate-spin" />
+                  : <Download size={13} strokeWidth={1.8} />
+                }
+                {exportState === 'loading' ? 'Preparando…' : 'Exportar'}
+              </button>
+              {exportMessage && (
+                <span
+                  className="text-[12px] text-right leading-snug max-w-[260px]"
+                  style={{
+                    color: exportState === 'error'
+                      ? 'var(--state-cancel-text)'
+                      : exportState === 'success'
+                        ? 'var(--state-success-text)'
+                        : 'var(--ink-cool-muted)',
+                  }}
+                >
+                  {exportMessage}
+                </span>
+              )}
+            </div>
           </SettingRow>
 
           <SettingRow
             label="Respaldo automático"
-            description="Tus datos están respaldados en Supabase con seguridad enterprise"
+            description="Los datos que guardas se persisten en Supabase. Este estado lo gestiona la plataforma, no requiere configuración adicional aquí."
           >
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full" style={{ background: 'var(--state-success-text)' }} />
-              <span className="text-[13px]" style={{ color: 'var(--state-success-text)' }}>Activo</span>
+              <span className="text-[13px]" style={{ color: 'var(--state-success-text)' }}>
+                Gestionado por la plataforma
+              </span>
             </div>
           </SettingRow>
         </SettingsCard>
@@ -1246,25 +1298,35 @@ function SeguridadSection() {
           <p className="section-kicker mb-0.5">Equipo</p>
           <SettingRow
             label="Usuarios y roles"
-            description="Invita y gestiona quién puede acceder a Lumi en tu consultorio"
+            description="Hoy Lumi funciona con una sola cuenta por consultorio. La gestión de múltiples usuarios todavía no está habilitada."
           >
-            <span className="text-[13px]" style={{ color: 'var(--ink-cool-muted)' }}>Próximamente</span>
+            <span className="text-[13px]" style={{ color: 'var(--ink-cool-muted)' }}>
+              No disponible en esta versión
+            </span>
           </SettingRow>
         </SettingsCard>
 
         <SettingsCard>
           <SettingRow label="Cerrar sesión" description="Salir de tu cuenta en este dispositivo">
-            <button
-              onClick={handleSignOut}
-              className="rounded-full px-4 py-2 text-[13px] font-medium transition-colors hover:opacity-80"
-              style={{
-                background: 'rgba(176,124,132,0.12)',
-                color:      'var(--state-cancel-text)',
-                border:     '1px solid rgba(176,124,132,0.18)',
-              }}
-            >
-              Cerrar sesión
-            </button>
+            <div className="flex flex-col items-end gap-1.5">
+              <button
+                onClick={handleSignOut}
+                disabled={signOutState === 'loading'}
+                className="rounded-full px-4 py-2 text-[13px] font-medium transition-colors hover:opacity-80 disabled:opacity-60"
+                style={{
+                  background: 'rgba(176,124,132,0.12)',
+                  color:      'var(--state-cancel-text)',
+                  border:     '1px solid rgba(176,124,132,0.18)',
+                }}
+              >
+                {signOutState === 'loading' ? 'Cerrando…' : 'Cerrar sesión'}
+              </button>
+              {signOutError && (
+                <span className="text-[12px]" style={{ color: 'var(--state-cancel-text)' }}>
+                  {signOutError}
+                </span>
+              )}
+            </div>
           </SettingRow>
         </SettingsCard>
       </div>
