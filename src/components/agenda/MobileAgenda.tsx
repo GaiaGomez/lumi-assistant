@@ -56,6 +56,10 @@ interface MobileAgendaLayout {
   cardPaddingX: number
   cardPaddingY: number
   badgeSize: number
+  eventRadius: number
+  eventMinHeight: number
+  headerGap: number
+  outerGap: number
 }
 
 const START_HOUR = 8
@@ -63,11 +67,11 @@ const END_HOUR = 21
 const SLOT_MINUTES = 30
 const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60
 const SLOT_COUNT = TOTAL_MINUTES / SLOT_MINUTES
-const OVERLAP_GAP_PX = 4
+const OVERLAP_GAP_PX = 3
 const MIN_VISIBLE_DAYS = 3
 const MAX_VISIBLE_DAYS = 5
-const MIN_DAY_WIDTH = 104
-const MAX_DAY_WIDTH = 152
+const MIN_DAY_WIDTH = 96
+const MAX_DAY_WIDTH = 136
 
 function interpolate(min: number, max: number, ratio: number) {
   return min + (max - min) * ratio
@@ -173,7 +177,7 @@ function layoutDayAppointments(
       top: (entry.startMinutes / SLOT_MINUTES) * slotHeight + 2,
       height: Math.max(
         ((entry.endMinutes - entry.startMinutes) / SLOT_MINUTES) * slotHeight - 4,
-        slotHeight - 8
+        Math.max(slotHeight - 6, 18)
       ),
       lane,
       laneCount,
@@ -204,17 +208,22 @@ function EventCard({
   const start = new Date(apt.fecha_inicio)
   const end = getAppointmentEnd(apt)
   const bgColor = apt.event_type === 'general' && apt.color ? apt.color : bg
+  const isTiny = height <= layout.eventMinHeight + 2
+  const isCompact = height <= layout.slotHeight + 10
+  const titleClamp = isTiny ? 1 : isCompact ? 2 : 3
+  const topMetaVisible = !isTiny
+  const badgeRowMarginTop = isTiny ? 2 : 4
 
   const widthStyle =
     laneCount === 1
-      ? 'calc(100% - 8px)'
+      ? 'calc(100% - 4px)'
       : `calc(${100 / laneCount}% - ${
-          ((laneCount - 1) * OVERLAP_GAP_PX) / laneCount + 8
+          ((laneCount - 1) * OVERLAP_GAP_PX) / laneCount + 4
         }px)`
   const leftStyle =
     laneCount === 1
-      ? '4px'
-      : `calc(${(100 / laneCount) * lane}% + ${lane * OVERLAP_GAP_PX + 4}px)`
+      ? '2px'
+      : `calc(${(100 / laneCount) * lane}% + ${lane * OVERLAP_GAP_PX + 2}px)`
 
   return (
     <button
@@ -233,36 +242,39 @@ function EventCard({
       }}
     >
       <div
-        className="h-full rounded-[14px]"
+        className="h-full"
         style={{
           padding: `${layout.cardPaddingY}px ${layout.cardPaddingX}px`,
+          borderRadius: `${layout.eventRadius}px`,
           background: bgColor,
           opacity: isSoftPast ? 0.8 : 1,
           filter: isSoftPast ? 'saturate(80%)' : 'none',
-          boxShadow: '0 4px 12px rgba(60,50,70,0.14)',
+          boxShadow: '0 2px 8px rgba(60,50,70,0.12)',
           overflow: 'hidden',
         }}
       >
-        <p
-          style={{
-            fontSize: `${layout.metaSize}px`,
-            color: 'rgba(255,255,255,0.82)',
-            lineHeight: 1.2,
-            marginBottom: '4px',
-          }}
-        >
-          {formatTime(start)}
-          {apt.event_type !== 'general' ? ` - ${formatTime(end)}` : ''}
-        </p>
+        {topMetaVisible && (
+          <p
+            style={{
+              fontSize: `${layout.metaSize}px`,
+              color: 'rgba(255,255,255,0.82)',
+              lineHeight: 1.1,
+              marginBottom: '2px',
+            }}
+          >
+            {formatTime(start)}
+            {apt.event_type !== 'general' ? ` - ${formatTime(end)}` : ''}
+          </p>
+        )}
         <p
           className="font-semibold"
           style={{
             fontSize: `${layout.titleSize}px`,
             color: 'white',
-            lineHeight: 1.25,
+            lineHeight: 1.15,
             overflow: 'hidden',
             display: '-webkit-box',
-            WebkitLineClamp: 2,
+            WebkitLineClamp: titleClamp,
             WebkitBoxOrient: 'vertical',
           }}
         >
@@ -270,7 +282,11 @@ function EventCard({
         </p>
         <div
           className="flex items-center gap-1.5"
-          style={{ marginTop: '6px', minHeight: `${layout.badgeSize}px` }}
+          style={{
+            marginTop: `${badgeRowMarginTop}px`,
+            minHeight: `${layout.badgeSize}px`,
+            gap: `${isTiny ? 4 : 5}px`,
+          }}
         >
           {apt.event_type === 'general' ? (
             <Briefcase
@@ -354,7 +370,7 @@ function HourGutter({
           return (
             <div
               key={`hour-${hour}-${index}`}
-              className="flex items-start justify-end pr-2"
+              className="flex items-start justify-end pr-1.5"
               style={{
                 height: slotHeight,
                 color: isHourMark
@@ -409,8 +425,8 @@ export default function MobileAgenda({
   const layout = useMemo<MobileAgendaLayout>(() => {
     const width = Math.max(viewportWidth, 320)
     const ratio = Math.max(0, Math.min((width - 320) / 480, 1))
-    const dayGap = Math.round(interpolate(6, 10, ratio))
-    const preferredMinDayWidth = Math.round(interpolate(MIN_DAY_WIDTH, 126, ratio))
+    const dayGap = Math.round(interpolate(4, 7, ratio))
+    const preferredMinDayWidth = Math.round(interpolate(MIN_DAY_WIDTH, 112, ratio))
     const visibleDays = Math.max(
       MIN_VISIBLE_DAYS,
       Math.min(
@@ -423,15 +439,19 @@ export default function MobileAgenda({
       MIN_DAY_WIDTH,
       Math.min(MAX_DAY_WIDTH, rawDayWidth)
     )
-    const slotHeight = Math.round(interpolate(50, 62, ratio))
-    const headerHeight = Math.round(interpolate(58, 70, ratio))
-    const timeGutterWidth = Math.round(interpolate(40, 52, ratio))
-    const metaSize = Math.round(interpolate(10, 11, ratio))
-    const titleSize = Math.round(interpolate(12, 13, ratio))
-    const iconSize = Math.round(interpolate(10, 12, ratio))
-    const cardPaddingX = Math.round(interpolate(8, 11, ratio))
-    const cardPaddingY = Math.round(interpolate(7, 10, ratio))
-    const badgeSize = Math.round(interpolate(15, 17, ratio))
+    const slotHeight = Math.round(interpolate(28, 36, ratio))
+    const headerHeight = Math.round(interpolate(42, 52, ratio))
+    const timeGutterWidth = Math.round(interpolate(30, 38, ratio))
+    const metaSize = Math.round(interpolate(9, 10, ratio))
+    const titleSize = Math.round(interpolate(11, 12, ratio))
+    const iconSize = Math.round(interpolate(9, 10, ratio))
+    const cardPaddingX = Math.round(interpolate(5, 7, ratio))
+    const cardPaddingY = Math.round(interpolate(4, 6, ratio))
+    const badgeSize = Math.round(interpolate(12, 14, ratio))
+    const eventRadius = Math.round(interpolate(8, 10, ratio))
+    const eventMinHeight = Math.round(interpolate(20, 24, ratio))
+    const headerGap = Math.round(interpolate(4, 6, ratio))
+    const outerGap = Math.round(interpolate(4, 6, ratio))
 
     return {
       visibleDays,
@@ -447,6 +467,10 @@ export default function MobileAgenda({
       cardPaddingX,
       cardPaddingY,
       badgeSize,
+      eventRadius,
+      eventMinHeight,
+      headerGap,
+      outerGap,
     }
   }, [viewportWidth])
 
@@ -501,8 +525,11 @@ export default function MobileAgenda({
   }
 
   return (
-    <div className="glass-cool rounded-[18px] p-2.5">
-      <div className="flex items-start gap-2">
+    <div
+      className="glass-cool rounded-[18px]"
+      style={{ padding: `${Math.max(layout.outerGap, 4)}px ${Math.max(layout.outerGap, 4)}px ${Math.max(layout.outerGap + 1, 5)}px` }}
+    >
+      <div className="flex items-start" style={{ gap: `${layout.outerGap}px` }}>
         <HourGutter
           slotHeight={layout.slotHeight}
           headerHeight={layout.headerHeight}
@@ -514,7 +541,7 @@ export default function MobileAgenda({
         <div ref={viewportRef} className="min-w-0 flex-1 overflow-hidden">
           <div
             ref={scrollRef}
-            className="overflow-x-auto pb-1"
+            className="overflow-x-auto"
             style={{
               scrollSnapType: 'x proximity',
               scrollBehavior: 'smooth',
@@ -532,22 +559,22 @@ export default function MobileAgenda({
                   columnGap: `${layout.dayGap}px`,
                 }}
               >
-                {weekDays.map((day, dayIndex) => {
+                {weekDays.map((day) => {
                   const isToday = moment(day).isSame(moment(today), 'day')
                   const isFestivo = FESTIVOS_CO.has(toDateKey(day))
                   const isWeekend = day.getDay() === 0 || day.getDay() === 6
-                  const count = appointmentsByDay[dayIndex]?.length ?? 0
 
                   return (
                     <button
                       key={`header-${day.toISOString()}`}
                       type="button"
                       onClick={() => onNewSlot(buildSuggestedSlot(day, today))}
-                      className="rounded-[14px] text-center"
+                      className="text-center"
                       style={{
                         scrollSnapAlign: 'start',
                         height: layout.headerHeight,
-                        padding: `${Math.max(layout.cardPaddingY - 1, 6)}px ${Math.max(layout.cardPaddingX - 1, 7)}px`,
+                        borderRadius: `${Math.max(layout.eventRadius + 1, 9)}px`,
+                        padding: `${Math.max(layout.cardPaddingY - 1, 3)}px ${Math.max(layout.cardPaddingX, 5)}px`,
                         background: isToday
                           ? 'rgba(148,136,176,0.18)'
                           : isFestivo
@@ -564,7 +591,7 @@ export default function MobileAgenda({
                           fontSize: `${layout.metaSize}px`,
                           color: 'var(--ink-cool-faint)',
                           letterSpacing: '0.08em',
-                          marginBottom: '3px',
+                          marginBottom: '1px',
                         }}
                       >
                         {moment(day).format('ddd').replace('.', '')}
@@ -573,7 +600,7 @@ export default function MobileAgenda({
                         <p
                           className="font-semibold"
                           style={{
-                            fontSize: `${layout.titleSize + 5}px`,
+                            fontSize: `${layout.titleSize + 4}px`,
                             color: isToday
                               ? '#9488B0'
                               : isWeekend
@@ -596,25 +623,15 @@ export default function MobileAgenda({
                           </span>
                         )}
                       </div>
-                      {count > 0 && (
-                        <p
-                          style={{
-                            fontSize: `${layout.metaSize}px`,
-                            color: 'var(--ink-cool-soft)',
-                            marginTop: '3px',
-                          }}
-                        >
-                          {count} cita{count === 1 ? '' : 's'}
-                        </p>
-                      )}
                     </button>
                   )
                 })}
               </div>
 
               <div
-                className="mt-2 grid"
+                className="grid"
                 style={{
+                  marginTop: `${layout.headerGap}px`,
                   gridTemplateColumns: `repeat(7, ${layout.dayColumnWidth}px)`,
                   columnGap: `${layout.dayGap}px`,
                 }}
@@ -632,9 +649,10 @@ export default function MobileAgenda({
                   return (
                     <div
                       key={day.toISOString()}
-                      className="relative rounded-[14px] overflow-hidden"
+                      className="relative overflow-hidden"
                       style={{
                         scrollSnapAlign: 'start',
+                        borderRadius: `${Math.max(layout.eventRadius + 1, 9)}px`,
                         height: layout.gridHeight,
                         background: 'rgba(255,255,255,0.26)',
                         border: '1px solid rgba(255,255,255,0.34)',
@@ -649,11 +667,11 @@ export default function MobileAgenda({
                               height: layout.slotHeight,
                               borderTop:
                                 index % 2 === 0
-                                  ? '1px solid rgba(185,174,189,0.2)'
-                                  : '1px dashed rgba(185,174,189,0.12)',
+                                  ? '1px solid rgba(185,174,189,0.18)'
+                                  : '1px dashed rgba(185,174,189,0.1)',
                               background:
                                 index % 2 === 0
-                                  ? 'rgba(255,255,255,0.08)'
+                                  ? 'rgba(255,255,255,0.05)'
                                   : 'transparent',
                             }}
                           />

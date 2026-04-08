@@ -327,7 +327,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
   }
 
   return (
-    <div className="space-y-2 pb-6 lg:pb-0">
+    <div className="space-y-1.5 sm:space-y-2 pb-6 lg:pb-0">
 
       {/* ── Barra superior — desktop ── */}
       <div className="hidden lg:flex glass-cool rounded-[18px] px-4 py-2.5 items-center gap-3 flex-wrap">
@@ -378,7 +378,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
       </div>
 
       {/* ── Barra superior — mobile ── */}
-      <div className="flex lg:hidden glass-cool rounded-[18px] px-3 py-2.5 sm:px-3.5 sm:py-3 flex-col gap-2 sm:gap-2.5">
+      <div className="flex lg:hidden glass-cool rounded-[18px] px-3 py-2 sm:px-3.5 sm:py-2.5 flex-col gap-1.5 sm:gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <button onClick={() => navegarMobile('prev')} aria-label="Semana anterior" className="btn-subtle p-1.5 shrink-0">
             <ChevronLeft size={14} />
@@ -386,31 +386,31 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
           <button onClick={() => navegarMobile('next')} aria-label="Semana siguiente" className="btn-subtle p-1.5 shrink-0">
             <ChevronRight size={14} />
           </button>
-          <h2 className="editorial-panel-title flex-1 truncate capitalize text-[0.95rem] sm:text-[1rem]">
+          <h2 className="editorial-panel-title flex-1 truncate capitalize text-[0.9rem] sm:text-[0.98rem]">
             {periodoLabelMobile()}
           </h2>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
           {todayCount > 0 && (
-            <span className="text-[11px] sm:text-[12px] font-medium px-2 py-0.5 sm:px-2.5 rounded-full shrink-0" style={{ background: 'rgba(148,136,176,0.16)', color: 'var(--ink-cool-soft)' }}>
+            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0" style={{ background: 'rgba(148,136,176,0.16)', color: 'var(--ink-cool-soft)' }}>
               {todayCount} hoy
             </span>
           )}
           {pendingCount > 0 && (
-            <span className="text-[11px] sm:text-[12px] font-medium px-2 py-0.5 sm:px-2.5 rounded-full shrink-0" style={{ background: 'rgba(185,143,149,0.14)', color: 'var(--ink-cool-soft)' }}>
+            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0" style={{ background: 'rgba(185,143,149,0.14)', color: 'var(--ink-cool-soft)' }}>
               {pendingCount} por confirmar
             </span>
           )}
-          <button onClick={() => navegarMobile('today')} className="btn-subtle px-2.5 sm:px-3 py-1.5 text-[12px] sm:text-[13px] shrink-0">
+          <button onClick={() => navegarMobile('today')} className="btn-subtle px-2.5 py-1.5 text-[12px] shrink-0">
             Hoy
           </button>
           <button
             onClick={() => setNewSlotStart(new Date())}
             aria-label="Nueva cita"
-            className="btn-action p-1.5 sm:p-2 shrink-0"
+            className="btn-action p-1.5 shrink-0"
           >
-            <Plus size={15} />
+            <Plus size={14} />
           </button>
         </div>
       </div>
@@ -454,7 +454,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
       </div>
 
       {/* ── Filtros de modalidad — mobile (scroll horizontal) ── */}
-      <div className="flex lg:hidden items-center gap-2 sm:gap-2.5 px-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+      <div className="flex lg:hidden items-center gap-1.5 sm:gap-2 px-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         {((['online', 'medellin', 'retiro'] as const)).map((key) => {
           const cfg = APPOINTMENT_CATEGORY_CONFIG[key]
           const Icon = cfg.Icon
@@ -463,7 +463,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
             <button
               key={key}
               onClick={() => toggleFiltro(key)}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-[12px] font-medium transition-all shrink-0"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all shrink-0"
               style={activo ? {
                 background: cfg.bg,
                 color: 'white',
@@ -482,7 +482,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
         {filtrosActivos.size > 0 && (
           <button
             onClick={() => setFiltrosActivos(new Set())}
-            className="text-[11px] sm:text-[12px] px-2 sm:px-2.5 py-1 rounded-full shrink-0"
+            className="text-[11px] px-2 py-1 rounded-full shrink-0"
             style={{ color: 'var(--ink-cool-faint)', background: 'transparent' }}
           >
             Ver todas
