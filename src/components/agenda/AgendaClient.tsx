@@ -192,7 +192,7 @@ function Pill({ dot, text }: { dot: string; text: string }) {
       style={{ background: 'rgba(255,255,255,0.46)', border: '1px solid var(--border-glass-white)' }}
     >
       <span style={{ width: 5, height: 5, borderRadius: '50%', background: dot, display: 'inline-block', flexShrink: 0 }} />
-      <span className="text-[10px] font-medium whitespace-nowrap" style={{ color: 'var(--ink-cool-soft)' }}>
+      <span className="text-[12px] font-medium whitespace-nowrap" style={{ color: 'var(--ink-cool-soft)' }}>
         {text}
       </span>
     </div>
@@ -416,7 +416,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
         {filtrosActivos.size > 0 && (
           <button
             onClick={() => setFiltrosActivos(new Set())}
-            className="text-[10px] px-2 py-1 rounded-full transition-all"
+            className="text-[12px] px-2 py-1 rounded-full transition-all"
             style={{ color: 'var(--ink-cool-faint)', background: 'transparent' }}
           >
             Ver todas

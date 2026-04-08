@@ -83,8 +83,8 @@ function ChipButton({
       disabled={disabled}
       aria-pressed={active}
       className={compact
-        ? 'rounded-full px-2 py-[3px] text-[10px] font-medium transition-all'
-        : 'rounded-full px-2.5 py-1 text-[10px] font-medium transition-all'}
+        ? 'rounded-full px-2.5 py-1 text-[11px] font-medium transition-all'
+        : 'rounded-full px-3 py-1 text-[12px] font-medium transition-all'}
       style={active ? activeStyle : inactiveChipStyle}
     >
       {children}
@@ -170,7 +170,7 @@ export default function AppointmentQuickStateEditor({
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 md:flex-nowrap md:items-center">
           <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 md:flex-1 md:flex-nowrap">
             <p
-              className="text-[9px] uppercase tracking-[0.08em]"
+              className="text-[11px] uppercase tracking-[0.08em]"
               style={{ color: 'var(--ink-cool-faint)' }}
             >
               Sesión
@@ -193,7 +193,7 @@ export default function AppointmentQuickStateEditor({
 
           <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 md:flex-nowrap md:justify-end">
             <p
-              className="text-[9px] uppercase tracking-[0.08em]"
+              className="text-[11px] uppercase tracking-[0.08em]"
               style={{ color: 'var(--ink-cool-faint)' }}
             >
               Pago
@@ -216,7 +216,7 @@ export default function AppointmentQuickStateEditor({
         </div>
 
         {error && (
-          <p className="text-[10px]" style={{ color: 'var(--state-cancel-text)' }}>
+          <p className="text-[12px]" style={{ color: 'var(--state-cancel-text)' }}>
             {error}
           </p>
         )}
@@ -228,7 +228,7 @@ export default function AppointmentQuickStateEditor({
     <div className="space-y-2">
       <div className="space-y-1">
         <p
-          className="text-[10px] uppercase tracking-[0.08em]"
+          className="text-[11px] uppercase tracking-[0.08em]"
           style={{ color: 'var(--ink-cool-faint)' }}
         >
           Sesión
@@ -250,7 +250,7 @@ export default function AppointmentQuickStateEditor({
 
       <div className="space-y-1">
         <p
-          className="text-[10px] uppercase tracking-[0.08em]"
+          className="text-[11px] uppercase tracking-[0.08em]"
           style={{ color: 'var(--ink-cool-faint)' }}
         >
           Pago
@@ -271,7 +271,7 @@ export default function AppointmentQuickStateEditor({
       </div>
 
       {error && (
-        <p className="text-[10px]" style={{ color: 'var(--state-cancel-text)' }}>
+        <p className="text-[12px]" style={{ color: 'var(--state-cancel-text)' }}>
           {error}
         </p>
       )}

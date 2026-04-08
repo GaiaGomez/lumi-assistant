@@ -77,23 +77,23 @@ function PendingActionCard({ action }: { action: PendingAction }) {
             {action.patient.nombre} {action.patient.apellido}
           </p>
           <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1">
-            <p className="text-[11px] leading-none" style={{ color: 'var(--ink-cool-strong)' }}>
+            <p className="text-[13px] leading-none" style={{ color: 'var(--ink-cool-strong)' }}>
               {action.title}
             </p>
-            <span className="text-[10px] leading-none" style={{ color: 'var(--ink-cool-muted)' }}>
+            <span className="text-[12px] leading-none" style={{ color: 'var(--ink-cool-muted)' }}>
               •
             </span>
-            <p className="text-[10px] leading-none" style={{ color: 'var(--ink-cool-faint)' }}>
+            <p className="text-[12px] leading-none" style={{ color: 'var(--ink-cool-faint)' }}>
               {action.context}
             </p>
           </div>
           {shouldShowDescription && (
-            <p className="mt-1 text-[10px] leading-snug" style={{ color: 'var(--ink-cool-soft)' }}>
+            <p className="mt-1 text-[12px] leading-snug" style={{ color: 'var(--ink-cool-soft)' }}>
               {action.description}
             </p>
           )}
           {action.preview && (
-            <p className="mt-1 line-clamp-2 text-[10px] leading-snug" style={{ color: 'var(--ink-cool-soft)' }}>
+            <p className="mt-1 line-clamp-2 text-[12px] leading-snug" style={{ color: 'var(--ink-cool-soft)' }}>
               {action.preview}
             </p>
           )}
@@ -101,7 +101,7 @@ function PendingActionCard({ action }: { action: PendingAction }) {
 
         <Link
           href={`/pacientes/${action.patientId}`}
-          className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium"
+          className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-medium"
           style={{
             color: 'var(--ink-cool-strong)',
             background: 'rgba(255,255,255,0.58)',
