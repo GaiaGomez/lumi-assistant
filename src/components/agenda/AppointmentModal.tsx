@@ -520,7 +520,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
               onChange={(e) => setNotas(e.target.value)}
               placeholder="Observaciones, contexto…"
               rows={2}
-              className="w-full rounded-[12px] px-3 py-2.5 text-[14px] resize-none"
+              className="w-full rounded-[14px] px-3.5 py-3 text-[14px] resize-none"
               style={{
                 background: 'rgba(255,255,255,0.52)',
                 border: '1px solid var(--border-glass-white)',

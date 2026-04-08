@@ -53,7 +53,7 @@ function SelectField({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-[18px] px-4 py-3 text-[14px] focus:outline-none"
+        className="w-full rounded-[14px] px-3.5 py-3 text-[14px] focus:outline-none"
         style={{
           background: 'rgba(255,255,255,0.66)',
           border: '1px solid rgba(255,255,255,0.46)',
@@ -603,7 +603,7 @@ export default function ClinicalNoteEditor({
                 value={template.focus}
                 onChange={(event) => setTemplate((current) => ({ ...current, focus: event.target.value }))}
                 placeholder="Ej. regulacion emocional tras conflicto familiar"
-                className="w-full rounded-[18px] px-4 py-3 text-[14px] focus:outline-none"
+                className="w-full rounded-[14px] px-3.5 py-3 text-[14px] focus:outline-none"
                 style={{
                   background: 'rgba(255,255,255,0.66)',
                   border: '1px solid rgba(255,255,255,0.46)',

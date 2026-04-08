@@ -27,7 +27,7 @@ export default function ClinicalNoteSummaryCard({ note }: ClinicalNoteSummaryCar
 
   return (
     <div
-      className="rounded-[16px] px-3 py-2.5"
+      className="rounded-[14px] px-3 py-2.5"
       style={{
         background: 'linear-gradient(180deg, rgba(255,255,255,0.42) 0%, rgba(255,255,255,0.28) 100%)',
         border: '1px solid var(--border-glass-white)',
