@@ -6,10 +6,8 @@ export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { UserPlus, ChevronRight } from 'lucide-react'
-import { Patient } from '@/types'
-import Avatar from '@/components/ui/Avatar'
-import EmptyState from '@/components/ui/EmptyState'
+import { UserPlus } from 'lucide-react'
+import PatientsListClient from '@/components/pacientes/PatientsListClient'
 
 export default async function PacientesPage() {
   const supabase = await createClient()
@@ -19,6 +17,7 @@ export default async function PacientesPage() {
     .from('patients')
     .select('*')
     .eq('user_id', user!.id)
+    .order('nombre', { ascending: true })
     .order('apellido', { ascending: true })
 
   return (
@@ -42,39 +41,7 @@ export default async function PacientesPage() {
         </Link>
       </div>
 
-      {/* ── Lista ── */}
-      <div className="space-y-1.5">
-        {patients?.length === 0 && (
-          <EmptyState
-            message="Aún no hay pacientes"
-            hint="Toca «Nuevo» para agregar el primero"
-            size="md"
-          />
-        )}
-
-        {patients?.map((patient: Patient) => (
-          <Link
-            key={patient.id}
-            href={`/pacientes/${patient.id}`}
-            className="glass-cool rounded-[14px] flex items-center justify-between p-3 transition-all hover:translate-y-[-1px]"
-          >
-            <div className="flex items-center gap-3">
-              <Avatar nombre={patient.nombre} apellido={patient.apellido} size="lg" />
-              <div>
-                <p className="text-[14px] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
-                  {patient.nombre} {patient.apellido}
-                </p>
-                {patient.whatsapp && (
-                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-cool-soft)' }}>
-                    +{patient.whatsapp}
-                  </p>
-                )}
-              </div>
-            </div>
-            <ChevronRight size={15} style={{ color: 'var(--ink-cool-muted)' }} />
-          </Link>
-        ))}
-      </div>
+      <PatientsListClient patients={patients ?? []} />
     </div>
   )
 }
