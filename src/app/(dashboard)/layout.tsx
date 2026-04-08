@@ -58,7 +58,7 @@ export default async function DashboardLayout({
         className="dashboard-shell-main flex-1 lg:ml-64 min-h-screen"
         style={{ position: 'relative', zIndex: 10 }}
       >
-        <div className="max-w-5xl mx-auto px-4 py-4 lg:py-6">
+        <div className="max-w-5xl mx-auto px-4 pt-4 pb-28 lg:py-6">
           {children}
         </div>
       </main>

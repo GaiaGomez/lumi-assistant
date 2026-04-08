@@ -167,15 +167,15 @@ export default function AppointmentQuickStateEditor({
   if (compact) {
     return (
       <div className="space-y-1">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 md:flex-nowrap md:items-center">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 md:flex-1 md:flex-nowrap">
+        <div className="grid grid-cols-2 gap-x-2">
+          <div>
             <p
-              className="text-[11px] uppercase tracking-[0.08em]"
+              className="mb-1 text-[11px] uppercase tracking-[0.08em]"
               style={{ color: 'var(--ink-cool-faint)' }}
             >
               Sesión
             </p>
-            <div className="flex flex-wrap gap-1 md:flex-nowrap">
+            <div className="flex flex-wrap gap-1">
               {APPOINTMENT_SESSION_STATES.map((value) => (
                 <ChipButton
                   key={value}
@@ -191,14 +191,14 @@ export default function AppointmentQuickStateEditor({
             </div>
           </div>
 
-          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 md:flex-nowrap md:justify-end">
+          <div>
             <p
-              className="text-[11px] uppercase tracking-[0.08em]"
+              className="mb-1 text-[11px] uppercase tracking-[0.08em]"
               style={{ color: 'var(--ink-cool-faint)' }}
             >
               Pago
             </p>
-            <div className="flex flex-wrap gap-1 md:flex-nowrap">
+            <div className="flex flex-wrap gap-1">
               {APPOINTMENT_PAYMENT_STATES.map((value) => (
                 <ChipButton
                   key={value}

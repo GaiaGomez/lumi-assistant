@@ -244,7 +244,6 @@ body.canvas-editor-open .dashboard-shell-sidebar {
 }
 
 .dashboard-shell-main {
-  padding-bottom: var(--dashboard-nav-clearance);
   scroll-padding-bottom: var(--dashboard-action-clearance);
 }
 
@@ -268,7 +267,7 @@ body.canvas-editor-open .dashboard-shell-sidebar {
   }
 
   .dashboard-shell-main {
-    padding-bottom: 0;
+    /* no bottom padding needed on desktop — sidebar nav, not bottom bar */
   }
 
   .dashboard-safe-bottom {
