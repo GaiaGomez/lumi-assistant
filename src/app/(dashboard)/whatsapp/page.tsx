@@ -219,7 +219,7 @@ export default async function PendingPage() {
         </span>
       </div>
 
-      <div className="mb-2.5 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-2.5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         <SummaryMiniCard label="Confirmar hoy" value={summary.confirmarHoy} />
         <SummaryMiniCard label="Confirmar mañana" value={summary.confirmarManana} />
         <SummaryMiniCard label="Cobros" value={summary.cobros} />

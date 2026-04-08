@@ -129,7 +129,7 @@ export default function PatientTopMosaic({
 
   return (
     <div className="mb-2.5 space-y-2.5">
-      <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
         <StatCard
           label="Próxima cita"
           value={nextAppointmentText ? nextAppointmentText.primary : 'Sin cita'}
