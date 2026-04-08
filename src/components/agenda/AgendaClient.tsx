@@ -12,6 +12,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { Appointment, CalendarEvent } from '@/types'
 import AppointmentModal from './AppointmentModal'
 import NewAppointmentModal from './NewAppointmentModal'
+import MobileAgenda from './MobileAgenda'
 import { AlertTriangle, Briefcase, Check, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, HandCoins, Plus } from 'lucide-react'
 import { buildAppointmentDisplayTitle, getAppointmentEnd, getTodayAppointments } from '@/lib/appointments'
 import {
@@ -21,16 +22,11 @@ import {
   isAppointmentPaid,
   resolveAppointmentCategory,
 } from '@/lib/appointment-ui'
+import { FESTIVOS_CO } from './festivos'
 
 moment.locale('es')
 moment.tz.setDefault('America/Bogota')
 const localizer = momentLocalizer(moment)
-
-// ─────────────────────────────────────────────────────────────
-// FESTIVOS COLOMBIANOS 2026 — fuente explícita y verificada
-// Fechas oficiales según el calendario colombiano 2026.
-// Map: 'YYYY-MM-DD' → nombre del festivo
-// ─────────────────────────────────────────────────────────────
 
 function toDateKey(date: Date): string {
   return (
@@ -39,27 +35,6 @@ function toDateKey(date: Date): string {
     '-' + String(date.getDate()).padStart(2, '0')
   )
 }
-
-const FESTIVOS_CO: Map<string, string> = new Map([
-  ['2026-01-01', 'Año Nuevo'],
-  ['2026-01-12', 'Reyes Magos'],
-  ['2026-03-23', 'Día de San José'],
-  ['2026-04-02', 'Jueves Santo'],
-  ['2026-04-03', 'Viernes Santo'],
-  ['2026-05-01', 'Día del Trabajo'],
-  ['2026-05-18', 'Ascensión de Jesús'],
-  ['2026-06-08', 'Corpus Christi'],
-  ['2026-06-15', 'Sagrado Corazón'],
-  ['2026-06-29', 'San Pedro y San Pablo'],
-  ['2026-07-20', 'Día de la Independencia'],
-  ['2026-08-07', 'Batalla de Boyacá'],
-  ['2026-08-17', 'Asunción de la Virgen'],
-  ['2026-10-12', 'Día de la Raza'],
-  ['2026-11-02', 'Todos los Santos'],
-  ['2026-11-16', 'Independencia de Cartagena'],
-  ['2026-12-08', 'Inmaculada Concepción'],
-  ['2026-12-25', 'Navidad'],
-])
 
 // ─────────────────────────────────────────────────────────────
 // SUB-COMPONENTES DEL CALENDARIO
@@ -276,6 +251,10 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
       : events.filter((evt) => filtrosActivos.has(resolveAppointmentCategory(evt.resource) as ModalidadFiltro)),
     [events, filtrosActivos]
   )
+  const visibleAppointments = useMemo(
+    () => visibleEvents.map((event) => event.resource),
+    [visibleEvents]
+  )
 
   const handleSelectEvent = useCallback((event: CalendarEvent) => {
     setSelectedAppointment(event.resource)
@@ -328,6 +307,12 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
     return moment(currentDate).format('dddd D MMM YYYY')
   }
 
+  const periodoLabelMobile = () => {
+    const s = moment(currentDate).startOf('week')
+    const e = moment(currentDate).endOf('week')
+    return `${s.format('D')} – ${e.format('D MMM YYYY')}`
+  }
+
   function navegar(dir: 'prev' | 'next' | 'today') {
     const unit = currentView === 'month' ? 'month' : currentView === 'week' ? 'week' : 'day'
     if (dir === 'today')     setCurrentDate(new Date())
@@ -335,11 +320,17 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
     else                     setCurrentDate((d) => moment(d).add(1, unit).toDate())
   }
 
-  return (
-    <div className="space-y-2">
+  function navegarMobile(dir: 'prev' | 'next' | 'today') {
+    if (dir === 'today')     setCurrentDate(new Date())
+    else if (dir === 'prev') setCurrentDate((d) => moment(d).subtract(1, 'week').toDate())
+    else                     setCurrentDate((d) => moment(d).add(1, 'week').toDate())
+  }
 
-      {/* ── Barra superior compacta ── */}
-      <div className="glass-cool rounded-[18px] px-4 py-2.5 flex items-center gap-3 flex-wrap">
+  return (
+    <div className="space-y-2 pb-6 lg:pb-0">
+
+      {/* ── Barra superior — desktop ── */}
+      <div className="hidden lg:flex glass-cool rounded-[18px] px-4 py-2.5 items-center gap-3 flex-wrap">
 
         {/* Navegación + período + indicadores */}
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
@@ -386,8 +377,46 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
         </div>
       </div>
 
-      {/* ── Filtros de modalidad ── */}
-      <div className="flex items-center gap-2 px-1">
+      {/* ── Barra superior — mobile ── */}
+      <div className="flex lg:hidden glass-cool rounded-[18px] px-3 py-2.5 sm:px-3.5 sm:py-3 flex-col gap-2 sm:gap-2.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <button onClick={() => navegarMobile('prev')} aria-label="Semana anterior" className="btn-subtle p-1.5 shrink-0">
+            <ChevronLeft size={14} />
+          </button>
+          <button onClick={() => navegarMobile('next')} aria-label="Semana siguiente" className="btn-subtle p-1.5 shrink-0">
+            <ChevronRight size={14} />
+          </button>
+          <h2 className="editorial-panel-title flex-1 truncate capitalize text-[0.95rem] sm:text-[1rem]">
+            {periodoLabelMobile()}
+          </h2>
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
+          {todayCount > 0 && (
+            <span className="text-[11px] sm:text-[12px] font-medium px-2 py-0.5 sm:px-2.5 rounded-full shrink-0" style={{ background: 'rgba(148,136,176,0.16)', color: 'var(--ink-cool-soft)' }}>
+              {todayCount} hoy
+            </span>
+          )}
+          {pendingCount > 0 && (
+            <span className="text-[11px] sm:text-[12px] font-medium px-2 py-0.5 sm:px-2.5 rounded-full shrink-0" style={{ background: 'rgba(185,143,149,0.14)', color: 'var(--ink-cool-soft)' }}>
+              {pendingCount} por confirmar
+            </span>
+          )}
+          <button onClick={() => navegarMobile('today')} className="btn-subtle px-2.5 sm:px-3 py-1.5 text-[12px] sm:text-[13px] shrink-0">
+            Hoy
+          </button>
+          <button
+            onClick={() => setNewSlotStart(new Date())}
+            aria-label="Nueva cita"
+            className="btn-action p-1.5 sm:p-2 shrink-0"
+          >
+            <Plus size={15} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Filtros de modalidad — desktop ── */}
+      <div className="hidden lg:flex items-center gap-2 px-1">
         {((['online', 'medellin', 'retiro'] as const)).map((key) => {
           const cfg = APPOINTMENT_CATEGORY_CONFIG[key]
           const Icon = cfg.Icon
@@ -424,8 +453,45 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
         )}
       </div>
 
-      {/* ── Calendario ── */}
-      <div className="glass-cool rounded-[24px] overflow-hidden">
+      {/* ── Filtros de modalidad — mobile (scroll horizontal) ── */}
+      <div className="flex lg:hidden items-center gap-2 sm:gap-2.5 px-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+        {((['online', 'medellin', 'retiro'] as const)).map((key) => {
+          const cfg = APPOINTMENT_CATEGORY_CONFIG[key]
+          const Icon = cfg.Icon
+          const activo = filtrosActivos.has(key)
+          return (
+            <button
+              key={key}
+              onClick={() => toggleFiltro(key)}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-[12px] font-medium transition-all shrink-0"
+              style={activo ? {
+                background: cfg.bg,
+                color: 'white',
+                border: `1px solid ${cfg.bg}`,
+              } : {
+                background: 'rgba(255,255,255,0.38)',
+                color: 'var(--ink-cool-muted)',
+                border: '1px solid transparent',
+              }}
+            >
+              {Icon && <Icon size={10} style={{ color: activo ? 'white' : cfg.bg }} />}
+              {cfg.label}
+            </button>
+          )
+        })}
+        {filtrosActivos.size > 0 && (
+          <button
+            onClick={() => setFiltrosActivos(new Set())}
+            className="text-[11px] sm:text-[12px] px-2 sm:px-2.5 py-1 rounded-full shrink-0"
+            style={{ color: 'var(--ink-cool-faint)', background: 'transparent' }}
+          >
+            Ver todas
+          </button>
+        )}
+      </div>
+
+      {/* ── Calendario desktop ── */}
+      <div className="hidden lg:block glass-cool rounded-[24px] overflow-hidden">
         <div className="p-4" style={{ height: '720px' }}>
           <Calendar
             localizer={localizer}
@@ -458,6 +524,16 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
             toolbar={false}
           />
         </div>
+      </div>
+
+      {/* ── Agenda mobile ── */}
+      <div className="block lg:hidden">
+        <MobileAgenda
+          appointments={visibleAppointments}
+          currentDate={currentDate}
+          onSelectAppointment={setSelectedAppointment}
+          onNewSlot={setNewSlotStart}
+        />
       </div>
 
       {/* Modal al tocar una cita existente */}

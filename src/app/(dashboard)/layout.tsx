@@ -53,8 +53,11 @@ export default async function DashboardLayout({
 
       {/* Contenido principal — z-10 por encima de los blobs */}
       {/* lg:ml-64 — en pantallas grandes deja espacio para el sidebar */}
-      {/* pb-20 — en pantallas chicas deja espacio para la bottom nav */}
-      <main className="flex-1 lg:ml-64 pb-20 lg:pb-0 min-h-screen" style={{ position: 'relative', zIndex: 10 }}>
+      {/* En mobile dejamos espacio real para la bottom nav + safe area */}
+      <main
+        className="dashboard-shell-main flex-1 lg:ml-64 min-h-screen"
+        style={{ position: 'relative', zIndex: 10 }}
+      >
         <div className="max-w-5xl mx-auto px-4 py-6">
           {children}
         </div>

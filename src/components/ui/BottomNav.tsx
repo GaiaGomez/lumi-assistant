@@ -26,6 +26,9 @@ export default function BottomNav() {
       <nav
         className="dashboard-shell-nav fixed bottom-4 left-4 right-4 flex lg:hidden z-50 rounded-2xl overflow-hidden"
         style={{
+          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)',
+          left: 'calc(env(safe-area-inset-left, 0px) + 1rem)',
+          right: 'calc(env(safe-area-inset-right, 0px) + 1rem)',
           background: 'rgba(255,255,255,0.75)',
           backdropFilter: 'blur(24px) saturate(160%)',
           WebkitBackdropFilter: 'blur(24px) saturate(160%)',

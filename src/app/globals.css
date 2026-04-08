@@ -240,6 +240,16 @@ body.canvas-editor-open .dashboard-shell-sidebar {
   pointer-events: none;
 }
 
+.dashboard-shell-main {
+  padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 1024px) {
+  .dashboard-shell-main {
+    padding-bottom: 0;
+  }
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;
