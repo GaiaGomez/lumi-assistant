@@ -1,5 +1,17 @@
 import type React from 'react'
-import { Building2, House, Leaf, MapPin, Monitor } from 'lucide-react'
+import {
+  BriefcaseMedical,
+  Building2,
+  Globe,
+  Hospital,
+  House,
+  Landmark,
+  Leaf,
+  MapPin,
+  Monitor,
+  Stethoscope,
+  Trees,
+} from 'lucide-react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
   Appointment,
@@ -16,6 +28,12 @@ export type ConsultorioIconKey =
   | 'leaf'
   | 'building-2'
   | 'house'
+  | 'hospital'
+  | 'stethoscope'
+  | 'trees'
+  | 'globe'
+  | 'landmark'
+  | 'briefcase-medical'
 
 type IconComponent = React.ComponentType<{ size?: number; style?: React.CSSProperties }>
 
@@ -40,6 +58,12 @@ const CONSULTORIO_ICON_COMPONENTS: Record<ConsultorioIconKey, IconComponent> = {
   leaf: Leaf,
   'building-2': Building2,
   house: House,
+  hospital: Hospital,
+  stethoscope: Stethoscope,
+  trees: Trees,
+  globe: Globe,
+  landmark: Landmark,
+  'briefcase-medical': BriefcaseMedical,
 }
 
 export const CONSULTORIO_ICON_OPTIONS: Array<{
@@ -52,6 +76,12 @@ export const CONSULTORIO_ICON_OPTIONS: Array<{
   { value: 'leaf', label: 'Retiro', Icon: Leaf },
   { value: 'building-2', label: 'Consultorio', Icon: Building2 },
   { value: 'house', label: 'Casa', Icon: House },
+  { value: 'hospital', label: 'Clínica', Icon: Hospital },
+  { value: 'stethoscope', label: 'Terapia', Icon: Stethoscope },
+  { value: 'trees', label: 'Naturaleza', Icon: Trees },
+  { value: 'globe', label: 'Virtual', Icon: Globe },
+  { value: 'landmark', label: 'Sede', Icon: Landmark },
+  { value: 'briefcase-medical', label: 'Atención', Icon: BriefcaseMedical },
 ]
 
 const LEGACY_MODALIDAD_META: Record<AppointmentModalidad, {

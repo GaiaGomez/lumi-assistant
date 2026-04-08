@@ -652,15 +652,16 @@ function ConsultorioCard({
                   key={option.value}
                   type="button"
                   onClick={() => updateForm('icono', option.value)}
-                  className="py-2 px-3 rounded-[12px] text-[13px] font-medium transition-all flex items-center gap-1.5"
+                  aria-label={option.label}
+                  title={option.label}
+                  className="h-10 w-10 rounded-[12px] transition-all flex items-center justify-center"
                   style={isActive ? {
                     background: `${preview.color}22`,
                     color: preview.textColor,
                     border: `1px solid ${preview.color}44`,
                   } : inactiveToggle}
                 >
-                  <option.Icon size={13} style={{ color: isActive ? preview.color : undefined }} />
-                  {option.label}
+                  <option.Icon size={16} style={{ color: isActive ? preview.color : undefined }} />
                 </button>
               )
             })}
