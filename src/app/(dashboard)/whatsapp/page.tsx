@@ -114,36 +114,36 @@ function PendingActionCard({ action }: { action: PendingAction }) {
         </Link>
       </div>
 
-      <div className="mt-1.5 flex flex-wrap items-start gap-1.5">
-        {action.appointment && (
-          <div
-            className="min-w-0 flex-1 rounded-[12px] px-2 py-1.5"
-            style={{
-              background: 'rgba(255,255,255,0.38)',
-              border: '1px solid var(--border-glass-white)',
-            }}
-          >
-            <AppointmentQuickStateEditor
-              appointmentId={action.appointment.id}
-              initialSessionState={action.appointment.estado_sesion}
-              initialPaymentState={action.appointment.estado_pago}
-              compact
-            />
-          </div>
-        )}
+      {action.appointment && (
+        <div
+          className="mt-1.5 rounded-[12px] px-2 py-1.5"
+          style={{
+            background: 'rgba(255,255,255,0.38)',
+            border: '1px solid var(--border-glass-white)',
+          }}
+        >
+          <AppointmentQuickStateEditor
+            appointmentId={action.appointment.id}
+            initialSessionState={action.appointment.estado_sesion}
+            initialPaymentState={action.appointment.estado_pago}
+            compact
+          />
+        </div>
+      )}
 
-        {action.externalAction && (
+      {action.externalAction && (
+        <div className="mt-1.5 flex justify-end">
           <a
             href={action.externalAction.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-action shrink-0 gap-1 self-start px-2.5 py-1 text-[12px]"
+            className="btn-action gap-1 px-2.5 py-1 text-[12px]"
           >
             <MessageCircle size={11} />
             {action.externalAction.label}
           </a>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

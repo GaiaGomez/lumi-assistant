@@ -166,52 +166,52 @@ export default function AppointmentQuickStateEditor({
   const disabled = !!savingField || isRefreshing
   if (compact) {
     return (
-      <div className="space-y-1">
-        <div className="grid grid-cols-2 gap-x-2">
-          <div>
-            <p
-              className="mb-1 text-[11px] uppercase tracking-[0.08em]"
-              style={{ color: 'var(--ink-cool-faint)' }}
-            >
-              Sesión
-            </p>
-            <div className="flex flex-wrap gap-1">
-              {APPOINTMENT_SESSION_STATES.map((value) => (
-                <ChipButton
-                  key={value}
-                  active={sessionState === value}
-                  disabled={disabled}
-                  onClick={() => updateField('estado_sesion', value)}
-                  activeStyle={sessionActiveStyles[value]}
-                  compact
-                >
-                  {APPOINTMENT_SESSION_LABEL[value]}
-                </ChipButton>
-              ))}
-            </div>
+      <div className="space-y-1.5">
+        {/* SESIÓN — fila fija: Pendiente | Confirmada | Realizada | Canceló */}
+        <div>
+          <p
+            className="mb-1 text-[10px] uppercase tracking-[0.1em]"
+            style={{ color: 'var(--ink-cool-faint)' }}
+          >
+            Sesión
+          </p>
+          <div className="flex gap-1">
+            {APPOINTMENT_SESSION_STATES.map((value) => (
+              <ChipButton
+                key={value}
+                active={sessionState === value}
+                disabled={disabled}
+                onClick={() => updateField('estado_sesion', value)}
+                activeStyle={sessionActiveStyles[value]}
+                compact
+              >
+                {APPOINTMENT_SESSION_LABEL[value]}
+              </ChipButton>
+            ))}
           </div>
+        </div>
 
-          <div>
-            <p
-              className="mb-1 text-[11px] uppercase tracking-[0.08em]"
-              style={{ color: 'var(--ink-cool-faint)' }}
-            >
-              Pago
-            </p>
-            <div className="flex flex-wrap gap-1">
-              {APPOINTMENT_PAYMENT_STATES.map((value) => (
-                <ChipButton
-                  key={value}
-                  active={paymentState === value}
-                  disabled={disabled}
-                  onClick={() => updateField('estado_pago', value)}
-                  activeStyle={paymentActiveStyles[value]}
-                  compact
-                >
-                  {APPOINTMENT_PAYMENT_LABEL[value]}
-                </ChipButton>
-              ))}
-            </div>
+        {/* PAGO — fila fija: Pendiente | Pagado */}
+        <div>
+          <p
+            className="mb-1 text-[10px] uppercase tracking-[0.1em]"
+            style={{ color: 'var(--ink-cool-faint)' }}
+          >
+            Pago
+          </p>
+          <div className="flex gap-1">
+            {APPOINTMENT_PAYMENT_STATES.map((value) => (
+              <ChipButton
+                key={value}
+                active={paymentState === value}
+                disabled={disabled}
+                onClick={() => updateField('estado_pago', value)}
+                activeStyle={paymentActiveStyles[value]}
+                compact
+              >
+                {APPOINTMENT_PAYMENT_LABEL[value]}
+              </ChipButton>
+            ))}
           </div>
         </div>
 
