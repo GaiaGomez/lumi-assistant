@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2, Pencil, Save, Trash2, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Patient } from '@/types'
+import useBodyScrollLock from '@/components/ui/useBodyScrollLock'
 
 interface Props {
   patient: Patient
@@ -47,6 +48,8 @@ export default function PatientEditModal({ patient }: Props) {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useBodyScrollLock(open)
 
   function openModal() {
     setForm(toForm(patient))
@@ -120,7 +123,8 @@ export default function PatientEditModal({ patient }: Props) {
 
       {open && (
         <div
-          className="fixed inset-0 z-50 bg-[rgba(52,34,55,0.22)] backdrop-blur-[10px]"
+          className="dashboard-modal-shell fixed inset-0 z-50 bg-[rgba(52,34,55,0.22)] backdrop-blur-[10px]"
+          style={{ overscrollBehavior: 'contain' }}
           onClick={closeModal}
         >
           <div className="flex min-h-full items-start justify-center px-4 py-8 sm:items-center">
@@ -132,6 +136,10 @@ export default function PatientEditModal({ patient }: Props) {
                 boxShadow: '0 28px 80px rgba(70,46,43,0.16)',
                 backdropFilter: 'blur(26px) saturate(140%)',
                 WebkitBackdropFilter: 'blur(26px) saturate(140%)',
+                maxHeight: 'calc(100vh - var(--dashboard-action-clearance) - 2rem)',
+                overflowY: 'auto',
+                overscrollBehavior: 'contain',
+                WebkitOverflowScrolling: 'touch',
               }}
               onClick={e => e.stopPropagation()}
             >
@@ -153,7 +161,7 @@ export default function PatientEditModal({ patient }: Props) {
               </div>
 
               {/* Nombre / Apellido */}
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 <label className="block space-y-1.5">
                   <span className="section-kicker">Nombre *</span>
                   <input
@@ -175,7 +183,7 @@ export default function PatientEditModal({ patient }: Props) {
               </div>
 
               {/* Contacto */}
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 <label className="block space-y-1.5">
                   <span className="section-kicker">WhatsApp</span>
                   <input
@@ -198,7 +206,7 @@ export default function PatientEditModal({ patient }: Props) {
               </div>
 
               {/* Email / Fecha inicio */}
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 <label className="block space-y-1.5">
                   <span className="section-kicker">Email</span>
                   <input

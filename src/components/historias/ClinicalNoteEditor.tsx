@@ -21,6 +21,7 @@ import {
 import { formatDateTimeFull } from '@/lib/format'
 import { APPOINTMENT_SELECT, mapAppointmentRows, mapClinicalNoteRow, mapPatientRow } from '@/lib/supabase/mappers'
 import DrawingCanvas from '@/components/historias/DrawingCanvas'
+import useBodyScrollLock from '@/components/ui/useBodyScrollLock'
 
 type EditorMode = 'create' | 'edit'
 
@@ -241,16 +242,14 @@ export default function ClinicalNoteEditor({
 
   useEffect(() => {
     if (!isCanvasEditorOpen) return
-
-    const previousOverflow = document.body.style.overflow
     document.body.classList.add('canvas-editor-open')
-    document.body.style.overflow = 'hidden'
 
     return () => {
       document.body.classList.remove('canvas-editor-open')
-      document.body.style.overflow = previousOverflow
     }
   }, [isCanvasEditorOpen])
+
+  useBodyScrollLock(isCanvasEditorOpen)
 
   const canSave = useMemo(() => {
     const hasTemplate = !isClinicalNoteTemplateEmpty(template)
@@ -696,12 +695,14 @@ export default function ClinicalNoteEditor({
 
       {isCanvasEditorOpen && (
         <div
-          className="fixed inset-0 z-50 bg-[rgba(52,34,35,0.22)] backdrop-blur-[10px]"
+          className="dashboard-modal-shell fixed inset-0 z-50 bg-[rgba(52,34,35,0.22)] backdrop-blur-[10px]"
+          style={{ overscrollBehavior: 'contain' }}
           onClick={() => setIsCanvasEditorOpen(false)}
         >
           <div
             ref={canvasModalScrollRef}
             className="h-full overflow-y-auto px-4 py-6 sm:px-6"
+            style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
           >
             <div
               className="mx-auto max-w-[980px]"
