@@ -1,7 +1,7 @@
 'use client'
 // ============================================================
 // MOBILE AGENDA — vista semanal optimizada para mobile
-// Mantiene una grilla horaria real con 3 días visibles y
+// Mantiene una grilla horaria real con 3 a 5 días visibles y
 // scroll horizontal para recorrer la semana completa.
 // ============================================================
 
@@ -72,8 +72,8 @@ const SLOT_COUNT = TOTAL_MINUTES / SLOT_MINUTES
 const OVERLAP_GAP_PX = 3
 const MIN_VISIBLE_DAYS = 3
 const MAX_VISIBLE_DAYS = 5
-const MIN_DAY_WIDTH = 96
-const MAX_DAY_WIDTH = 136
+const MIN_DAY_WIDTH = 98
+const MAX_DAY_WIDTH = 148
 
 function interpolate(min: number, max: number, ratio: number) {
   return min + (max - min) * ratio
@@ -432,33 +432,38 @@ export default function MobileAgenda({
   const layout = useMemo<MobileAgendaLayout>(() => {
     const width = Math.max(viewportWidth, 320)
     const ratio = Math.max(0, Math.min((width - 320) / 480, 1))
-    const dayGap = Math.round(interpolate(4, 7, ratio))
-    const preferredMinDayWidth = Math.round(interpolate(MIN_DAY_WIDTH, 112, ratio))
-    const visibleDays = Math.max(
-      MIN_VISIBLE_DAYS,
-      Math.min(
-        MAX_VISIBLE_DAYS,
-        Math.floor((width + dayGap) / (preferredMinDayWidth + dayGap))
-      )
+    const isTablet = width >= 680
+    const dayGap = Math.round(interpolate(4, isTablet ? 9 : 7, ratio))
+    const preferredMinDayWidth = Math.round(
+      interpolate(MIN_DAY_WIDTH, isTablet ? 126 : 112, ratio)
     )
+    const visibleDays = isTablet
+      ? 5
+      : Math.max(
+          MIN_VISIBLE_DAYS,
+          Math.min(
+            MAX_VISIBLE_DAYS,
+            Math.floor((width + dayGap) / (preferredMinDayWidth + dayGap))
+          )
+        )
     const rawDayWidth = (width - dayGap * (visibleDays - 1)) / visibleDays
     const dayColumnWidth = Math.max(
       MIN_DAY_WIDTH,
       Math.min(MAX_DAY_WIDTH, rawDayWidth)
     )
-    const slotHeight = Math.round(interpolate(28, 36, ratio))
-    const headerHeight = Math.round(interpolate(42, 52, ratio))
-    const timeGutterWidth = Math.round(interpolate(30, 38, ratio))
-    const metaSize = Math.round(interpolate(9, 10, ratio))
-    const titleSize = Math.round(interpolate(11, 12, ratio))
-    const iconSize = Math.round(interpolate(9, 10, ratio))
-    const cardPaddingX = Math.round(interpolate(5, 7, ratio))
-    const cardPaddingY = Math.round(interpolate(4, 6, ratio))
-    const badgeSize = Math.round(interpolate(12, 14, ratio))
-    const eventRadius = Math.round(interpolate(8, 10, ratio))
-    const eventMinHeight = Math.round(interpolate(20, 24, ratio))
-    const headerGap = Math.round(interpolate(4, 6, ratio))
-    const outerGap = Math.round(interpolate(4, 6, ratio))
+    const slotHeight = Math.round(interpolate(28, isTablet ? 42 : 36, ratio))
+    const headerHeight = Math.round(interpolate(42, isTablet ? 60 : 52, ratio))
+    const timeGutterWidth = Math.round(interpolate(30, isTablet ? 42 : 38, ratio))
+    const metaSize = Math.round(interpolate(9, isTablet ? 11 : 10, ratio))
+    const titleSize = Math.round(interpolate(11, isTablet ? 13 : 12, ratio))
+    const iconSize = Math.round(interpolate(9, isTablet ? 11 : 10, ratio))
+    const cardPaddingX = Math.round(interpolate(5, isTablet ? 8 : 7, ratio))
+    const cardPaddingY = Math.round(interpolate(4, isTablet ? 7 : 6, ratio))
+    const badgeSize = Math.round(interpolate(12, isTablet ? 16 : 14, ratio))
+    const eventRadius = Math.round(interpolate(8, isTablet ? 11 : 10, ratio))
+    const eventMinHeight = Math.round(interpolate(20, isTablet ? 28 : 24, ratio))
+    const headerGap = Math.round(interpolate(4, isTablet ? 8 : 6, ratio))
+    const outerGap = Math.round(interpolate(4, isTablet ? 8 : 6, ratio))
 
     return {
       visibleDays,
@@ -533,8 +538,10 @@ export default function MobileAgenda({
 
   return (
     <div
-      className="glass-cool rounded-[18px]"
-      style={{ padding: `${Math.max(layout.outerGap, 4)}px ${Math.max(layout.outerGap, 4)}px ${Math.max(layout.outerGap + 1, 5)}px` }}
+      className="glass-cool rounded-[18px] md:rounded-[22px]"
+      style={{
+        padding: `${Math.max(layout.outerGap, 4)}px ${Math.max(layout.outerGap, 4)}px ${Math.max(layout.outerGap + 1, 5)}px`,
+      }}
     >
       <div className="flex items-start" style={{ gap: `${layout.outerGap}px` }}>
         <HourGutter
