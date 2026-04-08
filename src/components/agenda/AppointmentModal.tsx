@@ -276,20 +276,6 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
         </div>
 
         <div className="px-4 pb-4 space-y-3">
-          {isDoctoraliaSource && (
-            <div
-              className="rounded-[14px] px-3.5 py-3 text-[12px] leading-relaxed"
-              style={{
-                background: 'rgba(255,255,255,0.42)',
-                border: '1px solid var(--border-glass-white)',
-                color: 'var(--ink-cool-soft)',
-              }}
-            >
-              Esta cita entró desde Doctoralia, pero desde aquí Lumi lleva el control.
-              Puedes editar horario, estado, pago, notas y vínculo operativo sin que el próximo import los revierta.
-            </div>
-          )}
-
           {/* ── Reagendar ── */}
           <div>
             <SectionHeader label="Reagendar" className="mb-2.5" />
@@ -352,20 +338,6 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
               </label>
             </div>
 
-            {nuevaInicio && nuevaFin && !scheduleError && (
-              <div
-                className="mt-2 rounded-[10px] px-3 py-2"
-                style={{ background: 'rgba(143,165,189,0.10)', border: '1px solid rgba(143,165,189,0.16)' }}
-              >
-                <p className="section-kicker">
-                  Nuevo horario
-                </p>
-                <p className="text-[13px] font-medium capitalize mt-1" style={{ color: 'var(--ink-cool-strong)' }}>
-                  {formatSchedule(nuevaInicio)}
-                </p>
-              </div>
-            )}
-
             {scheduleError && (
               <div
                 className="mt-2 flex items-center gap-2 rounded-[10px] px-3 py-2 text-[12px]"
@@ -391,11 +363,6 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
               </div>
             )}
 
-            {!hasChanges && (
-              <p className="mt-2 text-[11px]" style={{ color: 'var(--ink-cool-faint)' }}>
-                No hay cambios pendientes en esta cita.
-              </p>
-            )}
           </div>
 
           {appointment.event_type === 'general' ? (

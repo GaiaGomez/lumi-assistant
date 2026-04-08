@@ -7,6 +7,7 @@ import {
   CalendarDays,
   ChevronDown,
   Clock3,
+  Loader2,
   Plus,
   Repeat2,
   Type,
@@ -133,6 +134,10 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
   const [customUnit, setCustomUnit] = useState<AppointmentRecurrenceUnit>('week')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [creatingPatient, setCreatingPatient] = useState(false)
+  const [newPatientNombre, setNewPatientNombre] = useState('')
+  const [newPatientApellido, setNewPatientApellido] = useState('')
+  const [savingNewPatient, setSavingNewPatient] = useState(false)
 
   useEffect(() => {
     supabase
@@ -156,6 +161,36 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
     setSelectedPatient(patient)
     setSearch('')
     setShowDropdown(false)
+    setCreatingPatient(false)
+    setNewPatientNombre('')
+    setNewPatientApellido('')
+  }
+
+  async function handleCreatePatient() {
+    if (!newPatientNombre.trim() || !newPatientApellido.trim()) return
+    setSavingNewPatient(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data, error } = await supabase
+        .from('patients')
+        .insert({
+          nombre: newPatientNombre.trim(),
+          apellido: newPatientApellido.trim(),
+          user_id: user.id,
+          fecha_inicio: new Date().toISOString().split('T')[0],
+        })
+        .select('*')
+        .single()
+      if (error || !data) throw error
+      const newP: Patient = data as Patient
+      setPatients(prev => [...prev, newP].sort((a, b) => a.nombre.localeCompare(b.nombre)))
+      selectPatient(newP)
+    } catch {
+      // silently fail — user can try again
+    } finally {
+      setSavingNewPatient(false)
+    }
   }
 
   function toggleWeekday(weekday: AppointmentWeekday) {
@@ -340,34 +375,99 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                     value={search}
                     onChange={(event) => { setSearch(event.target.value); setShowDropdown(true) }}
                     onFocus={() => setShowDropdown(true)}
+                    onBlur={() => setTimeout(() => { if (!creatingPatient) setShowDropdown(false) }, 150)}
                     className="lumi-control-field w-full"
                     disabled={loadingPatients}
                     autoComplete="off"
                   />
                 </span>
-                {showDropdown && search && (
+                {showDropdown && (
                   <div
                     className="absolute left-0 right-0 z-10 mt-1 rounded-[14px] overflow-hidden"
-                    style={{ background: 'rgba(255,250,247,0.98)', border: '1px solid var(--border-glass-white)', boxShadow: 'var(--shadow-float)', maxHeight: '180px', overflowY: 'auto' }}
+                    style={{ background: 'rgba(255,250,247,0.98)', border: '1px solid var(--border-glass-white)', boxShadow: 'var(--shadow-float)' }}
                   >
-                    {filteredPatients.length === 0 ? (
-                      <p className="px-3.5 py-3 text-[12px]" style={{ color: 'var(--ink-cool-muted)' }}>
-                        Sin resultados
-                      </p>
+                    {/* Lista de pacientes */}
+                    {!creatingPatient && (
+                      <div style={{ maxHeight: '160px', overflowY: 'auto' }}>
+                        {filteredPatients.slice(0, 8).map((patient) => (
+                          <button
+                            key={patient.id}
+                            type="button"
+                            onMouseDown={() => selectPatient(patient)}
+                            className="w-full text-left px-3.5 py-2.5 text-[13px] transition-colors"
+                            style={{ color: 'var(--ink-strong)' }}
+                            onMouseEnter={(event) => (event.currentTarget.style.background = 'rgba(148,136,176,0.10)')}
+                            onMouseLeave={(event) => (event.currentTarget.style.background = 'transparent')}
+                          >
+                            {patient.nombre} {patient.apellido}
+                          </button>
+                        ))}
+                        {filteredPatients.length === 0 && search && (
+                          <p className="px-3.5 py-2.5 text-[12px]" style={{ color: 'var(--ink-cool-muted)' }}>
+                            Sin resultados para "{search}"
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Formulario inline nuevo paciente */}
+                    {creatingPatient ? (
+                      <div className="p-3 space-y-2">
+                        <p className="section-kicker mb-1">Nuevo paciente</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            autoFocus
+                            value={newPatientNombre}
+                            onChange={e => setNewPatientNombre(e.target.value)}
+                            placeholder="Nombre"
+                            className="w-full rounded-[10px] px-3 py-2 text-[13px] focus:outline-none"
+                            style={{ background: 'rgba(255,255,255,0.82)', border: '1px solid rgba(200,196,210,0.5)', color: 'var(--ink-cool-strong)' }}
+                          />
+                          <input
+                            value={newPatientApellido}
+                            onChange={e => setNewPatientApellido(e.target.value)}
+                            placeholder="Apellido"
+                            onKeyDown={e => { if (e.key === 'Enter') handleCreatePatient() }}
+                            className="w-full rounded-[10px] px-3 py-2 text-[13px] focus:outline-none"
+                            style={{ background: 'rgba(255,255,255,0.82)', border: '1px solid rgba(200,196,210,0.5)', color: 'var(--ink-cool-strong)' }}
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onMouseDown={() => { setCreatingPatient(false); setNewPatientNombre(''); setNewPatientApellido('') }}
+                            className="flex-1 rounded-[10px] py-2 text-[12px]"
+                            style={{ background: 'rgba(200,196,210,0.28)', color: 'var(--ink-cool-soft)' }}
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            type="button"
+                            onMouseDown={handleCreatePatient}
+                            disabled={!newPatientNombre.trim() || !newPatientApellido.trim() || savingNewPatient}
+                            className="flex-1 rounded-[10px] py-2 text-[12px] font-medium flex items-center justify-center gap-1.5 disabled:opacity-45"
+                            style={{ background: 'rgba(148,136,176,0.22)', color: 'var(--ink-cool-strong)' }}
+                          >
+                            {savingNewPatient ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
+                            {savingNewPatient ? 'Creando...' : 'Crear'}
+                          </button>
+                        </div>
+                      </div>
                     ) : (
-                      filteredPatients.slice(0, 8).map((patient) => (
-                        <button
-                          key={patient.id}
-                          type="button"
-                          onMouseDown={() => selectPatient(patient)}
-                          className="w-full text-left px-3.5 py-2.5 text-[13px] transition-colors"
-                          style={{ color: 'var(--ink-strong)' }}
-                          onMouseEnter={(event) => (event.currentTarget.style.background = 'rgba(148,136,176,0.10)')}
-                          onMouseLeave={(event) => (event.currentTarget.style.background = 'transparent')}
-                        >
-                          {patient.nombre} {patient.apellido}
-                        </button>
-                      ))
+                      <button
+                        type="button"
+                        onMouseDown={() => setCreatingPatient(true)}
+                        className="w-full text-left px-3.5 py-2.5 text-[12px] flex items-center gap-1.5 transition-colors"
+                        style={{
+                          color: 'var(--ink-cool-soft)',
+                          borderTop: filteredPatients.length > 0 || search ? '1px solid rgba(200,196,210,0.3)' : 'none',
+                        }}
+                        onMouseEnter={(event) => (event.currentTarget.style.background = 'rgba(148,136,176,0.08)')}
+                        onMouseLeave={(event) => (event.currentTarget.style.background = 'transparent')}
+                      >
+                        <Plus size={13} />
+                        Nuevo paciente
+                      </button>
                     )}
                   </div>
                 )}
