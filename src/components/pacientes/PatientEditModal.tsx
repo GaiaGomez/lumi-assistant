@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Loader2, Pencil, Save, Trash2, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -120,7 +121,7 @@ export default function PatientEditModal({ patient }: Props) {
         <Pencil size={13} />
       </button>
 
-      {open && (
+      {open && typeof document !== 'undefined' && createPortal(
         <ModalShell onClose={closeModal} maxWidth="max-w-2xl">
           {/* Header */}
           <div className="flex items-start justify-between p-4">
@@ -252,7 +253,8 @@ export default function PatientEditModal({ patient }: Props) {
               </button>
             </div>
           </div>
-        </ModalShell>
+        </ModalShell>,
+        document.body
       )}
     </>
   )
