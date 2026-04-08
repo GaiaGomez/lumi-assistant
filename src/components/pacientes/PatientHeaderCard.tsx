@@ -39,7 +39,7 @@ export default function PatientHeaderCard({
           WebkitBackdropFilter: 'blur(24px) saturate(145%)',
         }}
       >
-        <div className="flex flex-wrap items-center gap-2.5 sm:flex-nowrap sm:justify-between">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-center gap-2.5">
             <Link
               href="/pacientes"
@@ -51,7 +51,7 @@ export default function PatientHeaderCard({
             <Avatar nombre={patient.nombre} apellido={patient.apellido} size="md" />
 
             <div className="min-w-0 pt-1">
-              <h1 className="page-title text-[1.6rem] truncate leading-none">
+              <h1 className="page-title text-[1.35rem] sm:text-[1.5rem] lg:text-[1.6rem] leading-none break-words">
                 {patient.nombre} {patient.apellido}
               </h1>
               <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
@@ -71,7 +71,7 @@ export default function PatientHeaderCard({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex w-full flex-wrap items-center justify-end gap-2 lg:w-auto lg:flex-nowrap lg:shrink-0">
             {editSlot}
             <Link
               href={newNoteHref}

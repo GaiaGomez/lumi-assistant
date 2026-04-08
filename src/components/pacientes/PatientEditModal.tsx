@@ -121,7 +121,7 @@ export default function PatientEditModal({ patient }: Props) {
       </button>
 
       {open && (
-        <ModalShell onClose={closeModal}>
+        <ModalShell onClose={closeModal} maxWidth="max-w-2xl">
           {/* Header */}
           <div className="flex items-start justify-between p-4">
             <div>
@@ -139,9 +139,9 @@ export default function PatientEditModal({ patient }: Props) {
             </button>
           </div>
 
-          <div className="px-4 pb-4 space-y-3">
+          <div className="px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] space-y-3">
             {/* Nombre / Apellido */}
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <label className="block space-y-1.5">
                 <span className="section-kicker">Nombre *</span>
                 <input
@@ -163,7 +163,7 @@ export default function PatientEditModal({ patient }: Props) {
             </div>
 
             {/* Contacto */}
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <label className="block space-y-1.5">
                 <span className="section-kicker">WhatsApp</span>
                 <input
@@ -186,7 +186,7 @@ export default function PatientEditModal({ patient }: Props) {
             </div>
 
             {/* Email / Fecha inicio */}
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <label className="block space-y-1.5">
                 <span className="section-kicker">Email</span>
                 <input
