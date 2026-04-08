@@ -137,6 +137,9 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
   const [creatingPatient, setCreatingPatient] = useState(false)
   const [newPatientNombre, setNewPatientNombre] = useState('')
   const [newPatientApellido, setNewPatientApellido] = useState('')
+  const [newPatientWhatsapp, setNewPatientWhatsapp] = useState('')
+  const [newPatientTelefono, setNewPatientTelefono] = useState('')
+  const [newPatientEmail, setNewPatientEmail] = useState('')
   const [savingNewPatient, setSavingNewPatient] = useState(false)
 
   useEffect(() => {
@@ -161,9 +164,16 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
     setSelectedPatient(patient)
     setSearch('')
     setShowDropdown(false)
+    resetNewPatientForm()
+  }
+
+  function resetNewPatientForm() {
     setCreatingPatient(false)
     setNewPatientNombre('')
     setNewPatientApellido('')
+    setNewPatientWhatsapp('')
+    setNewPatientTelefono('')
+    setNewPatientEmail('')
   }
 
   async function handleCreatePatient() {
@@ -177,6 +187,9 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
         .insert({
           nombre: newPatientNombre.trim(),
           apellido: newPatientApellido.trim(),
+          whatsapp: newPatientWhatsapp.trim() || null,
+          telefono: newPatientTelefono.trim() || null,
+          email: newPatientEmail.trim() || null,
           user_id: user.id,
           fecha_inicio: new Date().toISOString().split('T')[0],
         })
@@ -375,7 +388,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                     value={search}
                     onChange={(event) => { setSearch(event.target.value); setShowDropdown(true) }}
                     onFocus={() => setShowDropdown(true)}
-                    onBlur={() => setTimeout(() => { if (!creatingPatient) setShowDropdown(false) }, 150)}
+                    onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
                     className="lumi-control-field w-full"
                     disabled={loadingPatients}
                     autoComplete="off"
@@ -413,29 +426,53 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                     {/* Formulario inline nuevo paciente */}
                     {creatingPatient ? (
                       <div className="p-3 space-y-2">
-                        <p className="section-kicker mb-1">Nuevo paciente</p>
+                        <p className="section-kicker mb-0.5">Nuevo paciente</p>
                         <div className="grid grid-cols-2 gap-2">
                           <input
                             autoFocus
                             value={newPatientNombre}
                             onChange={e => setNewPatientNombre(e.target.value)}
-                            placeholder="Nombre"
+                            placeholder="Nombre *"
                             className="w-full rounded-[10px] px-3 py-2 text-[13px] focus:outline-none"
                             style={{ background: 'rgba(255,255,255,0.82)', border: '1px solid rgba(200,196,210,0.5)', color: 'var(--ink-cool-strong)' }}
                           />
                           <input
                             value={newPatientApellido}
                             onChange={e => setNewPatientApellido(e.target.value)}
-                            placeholder="Apellido"
-                            onKeyDown={e => { if (e.key === 'Enter') handleCreatePatient() }}
+                            placeholder="Apellido *"
                             className="w-full rounded-[10px] px-3 py-2 text-[13px] focus:outline-none"
                             style={{ background: 'rgba(255,255,255,0.82)', border: '1px solid rgba(200,196,210,0.5)', color: 'var(--ink-cool-strong)' }}
                           />
                         </div>
-                        <div className="flex gap-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            value={newPatientWhatsapp}
+                            onChange={e => setNewPatientWhatsapp(e.target.value)}
+                            placeholder="WhatsApp (573001234567)"
+                            className="w-full rounded-[10px] px-3 py-2 text-[13px] focus:outline-none"
+                            style={{ background: 'rgba(255,255,255,0.82)', border: '1px solid rgba(200,196,210,0.5)', color: 'var(--ink-cool-strong)' }}
+                          />
+                          <input
+                            value={newPatientTelefono}
+                            onChange={e => setNewPatientTelefono(e.target.value)}
+                            placeholder="Teléfono"
+                            className="w-full rounded-[10px] px-3 py-2 text-[13px] focus:outline-none"
+                            style={{ background: 'rgba(255,255,255,0.82)', border: '1px solid rgba(200,196,210,0.5)', color: 'var(--ink-cool-strong)' }}
+                          />
+                        </div>
+                        <input
+                          value={newPatientEmail}
+                          onChange={e => setNewPatientEmail(e.target.value)}
+                          placeholder="Email"
+                          type="email"
+                          onKeyDown={e => { if (e.key === 'Enter') handleCreatePatient() }}
+                          className="w-full rounded-[10px] px-3 py-2 text-[13px] focus:outline-none"
+                          style={{ background: 'rgba(255,255,255,0.82)', border: '1px solid rgba(200,196,210,0.5)', color: 'var(--ink-cool-strong)' }}
+                        />
+                        <div className="flex gap-2 pt-0.5">
                           <button
                             type="button"
-                            onMouseDown={() => { setCreatingPatient(false); setNewPatientNombre(''); setNewPatientApellido('') }}
+                            onMouseDown={resetNewPatientForm}
                             className="flex-1 rounded-[10px] py-2 text-[12px]"
                             style={{ background: 'rgba(200,196,210,0.28)', color: 'var(--ink-cool-soft)' }}
                           >
@@ -449,7 +486,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                             style={{ background: 'rgba(148,136,176,0.22)', color: 'var(--ink-cool-strong)' }}
                           >
                             {savingNewPatient ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
-                            {savingNewPatient ? 'Creando...' : 'Crear'}
+                            {savingNewPatient ? 'Creando...' : 'Crear paciente'}
                           </button>
                         </div>
                       </div>

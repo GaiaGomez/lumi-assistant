@@ -278,7 +278,6 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
         <div className="px-4 pb-4 space-y-3">
           {/* ── Reagendar ── */}
           <div>
-            <SectionHeader label="Reagendar" className="mb-2.5" />
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <label className="space-y-1">
                 <span className="section-kicker">
@@ -424,7 +423,6 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
           ) : (
             <>
               <div>
-                <SectionHeader label="Título (opcional)" className="mb-2.5" />
                 <span className="lumi-control-shell">
                   <span className="lumi-control-icon" aria-hidden="true">
                     <Type size={14} />
@@ -434,7 +432,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="lumi-control-field w-full"
-                    placeholder="Sobreescribir nombre visible"
+                    placeholder="Alias para esta cita (opcional)"
                   />
                 </span>
               </div>
