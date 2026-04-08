@@ -92,7 +92,7 @@ export default function TemplateEditor({ settings, userId }: Props) {
       <Card className="space-y-2.5 p-3">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
-            <h2 className="editorial-panel-title mb-0.5 text-[1rem]" style={{ color: 'var(--ink-cool-strong)' }}>
+            <h2 className="editorial-panel-title mb-0.5 text-[1.05rem]">
               Link de agenda
             </h2>
             <p className="text-[11px]" style={{ color: 'var(--ink-cool-soft)' }}>
@@ -133,7 +133,7 @@ export default function TemplateEditor({ settings, userId }: Props) {
           <Card key={tpl.key} className="space-y-2.5 p-3">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
-                <h2 className="editorial-panel-title mb-0.5 text-[1rem]" style={{ color: 'var(--ink-cool-strong)' }}>
+                <h2 className="editorial-panel-title mb-0.5 text-[1.05rem]">
                   {tpl.label}
                 </h2>
                 <p className="text-[11px]" style={{ color: 'var(--ink-cool-soft)' }}>

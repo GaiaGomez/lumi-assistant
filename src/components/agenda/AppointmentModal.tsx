@@ -237,23 +237,23 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
       <div className="overflow-y-auto max-h-[88vh]">
 
         {/* ── Header ── */}
-        <div className="flex items-start justify-between p-5">
+        <div className="flex items-start justify-between p-4">
           <div>
-            <SectionHeader label="Detalle de cita" className="mb-2" />
+            <SectionHeader label="Detalle de cita" className="mb-1" />
             <div className="flex items-center gap-2 flex-wrap">
               {appointment.patient_id ? (
                 <button
                   type="button"
                   onClick={() => router.push(`/pacientes/${appointment.patient_id}`)}
-                  className="editorial-title text-[1.4rem] transition-opacity"
-                  style={{ color: 'var(--ink-cool-strong)', cursor: 'pointer' }}
+                  className="editorial-panel-title text-[1.05rem] transition-opacity"
+                  style={{ cursor: 'pointer' }}
                   onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.78' }}
                   onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
                 >
                   {appointment.patient?.nombre} {appointment.patient?.apellido}
                 </button>
               ) : (
-                <h2 className="editorial-title text-[1.4rem]" style={{ color: 'var(--ink-cool-strong)' }}>
+                <h2 className="editorial-panel-title text-[1.05rem]">
                   {buildAppointmentDisplayTitle(appointment)}
                 </h2>
               )}
@@ -266,16 +266,16 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                 </span>
               )}
             </div>
-            <p className="text-sm mt-1 capitalize" style={{ color: 'var(--ink-cool-soft)' }}>
+            <p className="text-[12px] mt-0.5 capitalize" style={{ color: 'var(--ink-cool-soft)' }}>
               {fechaFormateada}
             </p>
           </div>
-          <Button variant="subtle" onClick={onClose} aria-label="Cerrar" className="p-2.5">
-            <X size={18} />
+          <Button variant="subtle" onClick={onClose} aria-label="Cerrar" className="p-2">
+            <X size={16} />
           </Button>
         </div>
 
-        <div className="px-5 pb-5 space-y-4">
+        <div className="px-4 pb-4 space-y-3">
           {isDoctoraliaSource && (
             <div
               className="rounded-[14px] px-3.5 py-3 text-[12px] leading-relaxed"
@@ -602,7 +602,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
             variant="action"
             onClick={guardarCambios}
             disabled={isSaveBlocked}
-            className="w-full py-3 text-xs tracking-[0.06em] uppercase"
+            className="w-full py-2.5 text-[13px]"
           >
             {saving ? 'Guardando…' : conflicto ? 'Corrige el conflicto para guardar' : 'Guardar cambios'}
           </Button>

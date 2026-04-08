@@ -296,7 +296,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
         <div className="flex items-start justify-between p-5 pb-4">
           <div>
             <SectionHeader label="Nuevo evento" className="mb-2" />
-            <h2 className="editorial-title text-[1.3rem]" style={{ color: 'var(--ink-cool-strong)' }}>
+            <h2 className="editorial-panel-title text-[1.05rem]">
               Crear en agenda
             </h2>
           </div>
@@ -582,7 +582,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
             variant="action"
             onClick={handleSave}
             disabled={isSaveBlocked}
-            className="w-full py-3 text-xs tracking-[0.06em] uppercase gap-2"
+            className="w-full py-2.5 text-[13px] tracking-[0.06em] uppercase gap-2"
           >
             <Plus size={14} />
             {saving ? 'Guardando…' : `Crear ${recurrenceRule ? 'serie' : 'evento'}`}

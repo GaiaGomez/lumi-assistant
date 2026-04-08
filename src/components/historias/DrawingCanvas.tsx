@@ -158,7 +158,7 @@ export default function DrawingCanvas({
                 key={item.id}
                 type="button"
                 onClick={() => handleToolChange(item.id as DrawingTool)}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm whitespace-nowrap shrink-0"
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] whitespace-nowrap shrink-0"
                 style={active ? {
                   background: 'rgba(255,255,255,0.88)',
                   color: 'var(--ink-cool-strong)',
@@ -292,10 +292,10 @@ export default function DrawingCanvas({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-        <p className="text-xs" style={{ color: 'var(--ink-cool-faint)' }}>
+        <p className="text-[11px]" style={{ color: 'var(--ink-cool-faint)' }}>
           {visibleStrokeCount === 0 ? 'Listo para escribir con Apple Pencil o mouse.' : `${visibleStrokeCount} trazos guardados en esta nota.`}
         </p>
-        <p className="text-xs" style={{ color: 'var(--ink-cool-muted)' }}>
+        <p className="text-[11px]" style={{ color: 'var(--ink-cool-muted)' }}>
           Amplia el lienzo cuando necesites mas espacio visual.
         </p>
       </div>

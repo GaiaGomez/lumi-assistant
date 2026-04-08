@@ -53,7 +53,7 @@ function SelectField({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-[18px] px-4 py-3 text-sm focus:outline-none"
+        className="w-full rounded-[18px] px-4 py-3 text-[13px] focus:outline-none"
         style={{
           background: 'rgba(255,255,255,0.66)',
           border: '1px solid rgba(255,255,255,0.46)',
@@ -99,7 +99,7 @@ function TextField({
         onChange={(event) => onChange(event.target.value)}
         rows={rows}
         placeholder={placeholder}
-        className="w-full resize-none rounded-[20px] px-4 py-3 text-sm leading-6 focus:outline-none"
+        className="w-full resize-none rounded-[14px] px-4 py-3 text-[13px] leading-6 focus:outline-none"
         style={{
           background: 'rgba(255,255,255,0.66)',
           border: '1px solid rgba(255,255,255,0.46)',
@@ -365,7 +365,7 @@ export default function ClinicalNoteEditor({
   if (loading) {
     return (
       <div className="flex min-h-[320px] items-center justify-center">
-        <div className="glass rounded-[24px] px-5 py-4 text-sm" style={{ color: 'var(--ink-cool-soft)' }}>
+        <div className="glass-cool rounded-[18px] px-5 py-4 text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>
           Cargando editor de nota...
         </div>
       </div>
@@ -374,17 +374,16 @@ export default function ClinicalNoteEditor({
 
   if (loadError || !patient) {
     return (
-      <div className="glass rounded-[24px] p-5">
-        <p style={{ color: 'var(--state-cancel-text)' }}>
+      <div className="glass-cool rounded-[18px] p-4">
+        <p className="text-[13px]" style={{ color: 'var(--state-cancel-text)' }}>
           {loadError ?? 'No pudimos cargar esta nota.'}
         </p>
         <button
           type="button"
           onClick={() => router.push('/pacientes')}
-          className="mt-4 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm"
-          style={{ background: 'rgba(255,255,255,0.7)', color: 'var(--ink-cool-strong)' }}
+          className="btn-subtle mt-4 inline-flex items-center gap-2"
         >
-          <ArrowLeft size={15} />
+          <ArrowLeft size={14} />
           Volver
         </button>
       </div>
@@ -419,29 +418,27 @@ export default function ClinicalNoteEditor({
 
       {saveError && (
         <div
-          className="rounded-[20px] px-4 py-3 text-sm"
+          className="rounded-[14px] px-4 py-3 text-[13px]"
           style={{ background: 'rgba(176,124,132,0.12)', color: 'var(--state-cancel-text)' }}
         >
           {saveError}
         </div>
       )}
 
-      <div className="space-y-5">
-        <section className="glass rounded-[30px] p-5 sm:p-6">
+      <div className="space-y-2.5">
+        <section className="glass-cool rounded-[18px] p-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="section-kicker">
                 Canvas manuscrito
               </p>
-              <h2 className="mt-1 text-[1.18rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
-                Lienzo flexible y editable
-              </h2>
+              <h2 className="editorial-panel-title mt-0.5 text-[1.05rem]">Lienzo flexible y editable</h2>
             </div>
             {(canvasPaths?.length || canvasBackgroundImage || note?.canvas_url) && (
               <button
                 type="button"
                 onClick={handleRemoveCanvas}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs"
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px]"
                 style={{ background: 'rgba(176,124,132,0.12)', color: 'var(--state-cancel-text)' }}
               >
                 <Trash2 size={13} />
@@ -453,10 +450,10 @@ export default function ClinicalNoteEditor({
           <button
             type="button"
             onClick={openCanvasEditor}
-            className="mt-5 block w-full text-left"
+            className="mt-3 block w-full text-left"
           >
             <div
-              className="overflow-hidden rounded-[24px]"
+              className="overflow-hidden rounded-[14px]"
               style={{
                 background: 'linear-gradient(180deg, rgba(255,255,255,0.56) 0%, rgba(255,255,255,0.34) 100%)',
                 border: '1px solid rgba(255,255,255,0.42)',
@@ -477,15 +474,15 @@ export default function ClinicalNoteEditor({
                   />
                   <div className="flex items-center justify-between gap-3 px-4 py-3">
                     <div>
-                      <p className="text-sm font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
+                      <p className="text-[13px] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
                         Vista previa del dibujo
                       </p>
-                      <p className="text-xs" style={{ color: 'var(--ink-cool-soft)' }}>
+                      <p className="text-[11px]" style={{ color: 'var(--ink-cool-soft)' }}>
                         {canvasPaths?.length ? `${canvasPaths.length} trazos listos para seguir editando.` : 'Abre el canvas para revisar o ajustar el dibujo.'}
                       </p>
                     </div>
                     <span
-                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs"
+                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px]"
                       style={{ background: 'rgba(255,255,255,0.72)', color: 'var(--ink-cool-strong)' }}
                     >
                       <Expand size={13} />
@@ -496,21 +493,21 @@ export default function ClinicalNoteEditor({
               ) : (
                 <div className="flex min-h-[180px] flex-col items-center justify-center gap-3 px-6 py-8 text-center">
                   <div
-                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs"
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px]"
                     style={{ background: 'rgba(255,255,255,0.62)', color: 'var(--ink-cool-soft)' }}
                   >
                     Canvas
                   </div>
                   <div>
-                    <p className="text-sm font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
+                    <p className="text-[13px] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
                       Sin dibujo aun
                     </p>
-                    <p className="mt-1 text-xs" style={{ color: 'var(--ink-cool-soft)' }}>
+                    <p className="mt-1 text-[11px]" style={{ color: 'var(--ink-cool-soft)' }}>
                       Abre el canvas para empezar a escribir o bosquejar.
                     </p>
                   </div>
                   <span
-                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs"
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px]"
                     style={{ background: 'rgba(255,255,255,0.72)', color: 'var(--ink-cool-strong)' }}
                   >
                     <Expand size={13} />
@@ -522,19 +519,17 @@ export default function ClinicalNoteEditor({
           </button>
         </section>
 
-        <section className="glass rounded-[30px] p-5 sm:p-6">
+        <section className="glass-cool rounded-[18px] p-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="section-kicker">
                 Notas libres
               </p>
-              <h2 className="mt-1 text-[1.08rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
-                Texto complementario
-              </h2>
+              <h2 className="editorial-panel-title mt-0.5 text-[1.05rem]">Texto complementario</h2>
             </div>
           </div>
 
-          <div className="mt-5 space-y-4">
+          <div className="mt-3 space-y-2.5">
             <TextField
               label="Observaciones extra"
               value={textoLibre}
@@ -543,10 +538,10 @@ export default function ClinicalNoteEditor({
               placeholder="Contexto que no quieras incluir en la estructura DAP, recordatorios clinicos o acuerdos operativos."
             />
 
-            <div className="grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
+            <div className="grid gap-2.5 md:grid-cols-[1.1fr_0.9fr]">
               <div
-                className="rounded-[20px] p-4"
-                style={{ background: 'rgba(255,255,255,0.48)', border: '1px solid rgba(255,255,255,0.42)' }}
+                className="rounded-[14px] p-3"
+                style={{ background: 'rgba(255,255,255,0.48)', border: '1px solid var(--border-glass-white)' }}
               >
                 <div className="flex items-center gap-2">
                   <CalendarDays size={16} style={{ color: 'var(--ink-cool-soft)' }} />
@@ -567,13 +562,13 @@ export default function ClinicalNoteEditor({
               </div>
 
               <div
-                className="rounded-[20px] p-4"
-                style={{ background: 'rgba(255,255,255,0.48)', border: '1px solid rgba(255,255,255,0.42)' }}
+                className="rounded-[14px] p-3"
+                style={{ background: 'rgba(255,255,255,0.48)', border: '1px solid var(--border-glass-white)' }}
               >
                 <p className="section-kicker">
                   Resumen de guardado
                 </p>
-                <div className="mt-3 space-y-2 text-sm" style={{ color: 'var(--ink-cool-soft)' }}>
+                <div className="mt-3 space-y-2 text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>
                   <p>{textoLibre.trim() ? 'Incluye texto libre complementario.' : 'Sin texto libre adicional.'}</p>
                   <p>
                     {canvasRemoved
@@ -589,19 +584,17 @@ export default function ClinicalNoteEditor({
           </div>
         </section>
 
-        <section className="glass rounded-[30px] p-5 sm:p-6">
+        <section className="glass-cool rounded-[18px] p-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="section-kicker">
                 Plantilla escrita
               </p>
-              <h2 className="mt-1 text-[1.12rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
-                DAP como apoyo estructurado
-              </h2>
+              <h2 className="editorial-panel-title mt-0.5 text-[1.05rem]">DAP como apoyo estructurado</h2>
             </div>
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-[1.15fr_0.85fr]">
+          <div className="mt-3 grid gap-2.5 md:grid-cols-[1.15fr_0.85fr]">
             <label className="block space-y-2">
               <span className="section-kicker">
                 Foco de sesion
@@ -610,7 +603,7 @@ export default function ClinicalNoteEditor({
                 value={template.focus}
                 onChange={(event) => setTemplate((current) => ({ ...current, focus: event.target.value }))}
                 placeholder="Ej. regulacion emocional tras conflicto familiar"
-                className="w-full rounded-[18px] px-4 py-3 text-sm focus:outline-none"
+                className="w-full rounded-[18px] px-4 py-3 text-[13px] focus:outline-none"
                 style={{
                   background: 'rgba(255,255,255,0.66)',
                   border: '1px solid rgba(255,255,255,0.46)',
@@ -637,7 +630,7 @@ export default function ClinicalNoteEditor({
             </SelectField>
           </div>
 
-          <div className="mt-5 space-y-3">
+          <div className="mt-3 space-y-2.5">
             <TextField
               label="D · Data"
               helper="Lo observado y lo reportado"
@@ -664,10 +657,10 @@ export default function ClinicalNoteEditor({
             />
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             {template.riskLevel && (
               <div
-                className="inline-flex w-fit items-center gap-2 rounded-full px-3 py-2 text-xs"
+                className="inline-flex w-fit items-center gap-2 rounded-full px-3 py-1.5 text-[11px]"
                 style={{
                   background: CLINICAL_NOTE_RISK_META[template.riskLevel].tone === 'success'
                     ? 'var(--state-success-bg)'
@@ -694,7 +687,7 @@ export default function ClinicalNoteEditor({
           type="button"
           onClick={handleSave}
           disabled={!canSave || saving}
-          className="btn-action inline-flex items-center gap-2 px-5 py-3 text-sm disabled:opacity-45"
+          className="btn-action inline-flex items-center gap-2 px-5 py-2.5 text-[13px] disabled:opacity-45"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {saving ? 'Guardando...' : 'Guardar nota'}
@@ -715,7 +708,7 @@ export default function ClinicalNoteEditor({
               onClick={(event) => event.stopPropagation()}
             >
               <div
-                className="rounded-[30px] p-4 sm:p-5"
+                className="rounded-[18px] p-3"
                 style={{
                   background: 'linear-gradient(180deg, rgba(255,252,250,0.94) 0%, rgba(255,248,244,0.88) 100%)',
                   border: '1px solid rgba(255,255,255,0.42)',
@@ -729,7 +722,7 @@ export default function ClinicalNoteEditor({
                     <p className="section-kicker">
                       Canvas manuscrito
                     </p>
-                    <h3 className="mt-1 text-[1.16rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
+                    <h3 className="editorial-panel-title mt-0.5 text-[1.05rem]">
                       Editor de dibujo
                     </h3>
                   </div>
@@ -739,7 +732,7 @@ export default function ClinicalNoteEditor({
                       <button
                         type="button"
                         onClick={handleRemoveCanvas}
-                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs"
+                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px]"
                         style={{ background: 'rgba(176,124,132,0.12)', color: 'var(--state-cancel-text)' }}
                       >
                         <Trash2 size={13} />
@@ -749,8 +742,7 @@ export default function ClinicalNoteEditor({
                     <button
                       type="button"
                       onClick={() => setIsCanvasEditorOpen(false)}
-                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs"
-                      style={{ background: 'rgba(255,255,255,0.7)', color: 'var(--ink-cool-strong)' }}
+                      className="btn-subtle inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px]"
                     >
                       <X size={13} />
                       Cerrar

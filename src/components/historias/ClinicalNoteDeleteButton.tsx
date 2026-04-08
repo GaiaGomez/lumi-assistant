@@ -47,7 +47,7 @@ export default function ClinicalNoteDeleteButton({
       type="button"
       onClick={handleDelete}
       disabled={deleting}
-      className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm disabled:opacity-45"
+      className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-[11px] disabled:opacity-45"
       style={{ background: 'rgba(176,124,132,0.12)', color: 'var(--state-cancel-text)' }}
     >
       {deleting ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}

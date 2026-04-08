@@ -90,7 +90,7 @@ export default async function PatientProfilePage({ params }: Props) {
       <div className="space-y-2.5">
         {/* ── Historia clínica ── */}
         <section className="glass-cool relative rounded-[18px] p-3">
-          <h2 className="editorial-panel-title mb-1.5 text-[1.05rem]" style={{ color: 'var(--ink-cool-strong)' }}>
+          <h2 className="editorial-panel-title mb-1.5 text-[1.05rem]">
             Historia clínica
           </h2>
           <div className="space-y-1.5">
@@ -103,7 +103,7 @@ export default async function PatientProfilePage({ params }: Props) {
 
         {/* ── Historial de citas ── */}
         <section className="glass-cool relative rounded-[18px] p-3">
-          <h2 className="editorial-panel-title mb-1.5 text-[1.05rem]" style={{ color: 'var(--ink-cool-strong)' }}>
+          <h2 className="editorial-panel-title mb-1.5 text-[1.05rem]">
             Historial de citas
           </h2>
           <div className="space-y-1.5">

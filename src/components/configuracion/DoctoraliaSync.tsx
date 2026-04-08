@@ -109,7 +109,7 @@ export default function DoctoraliaSync({ settings, userId }: Props) {
   return (
     <Card className="p-4 space-y-4">
       <div>
-        <h2 className="editorial-panel-title text-[1.05rem] mb-0.5" style={{ color: 'var(--ink-cool-strong)' }}>
+        <h2 className="editorial-panel-title text-[1.05rem] mb-0.5">
           Sincronización con Doctoralia
         </h2>
         <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink-cool-soft)' }}>
@@ -173,7 +173,7 @@ export default function DoctoraliaSync({ settings, userId }: Props) {
               variant="subtle"
               onClick={saveToken}
               disabled={saveState === 'saving' || !hasToken}
-              className="px-5 py-2.5 text-xs tracking-[0.06em] uppercase"
+              className="px-5 py-2.5 text-[13px] tracking-[0.06em] uppercase"
             >
               {saveState === 'saving' ? 'Guardando…' : 'Guardar token'}
             </Button>
@@ -241,7 +241,7 @@ export default function DoctoraliaSync({ settings, userId }: Props) {
           variant="action"
           onClick={runSync}
           disabled={syncState === 'syncing' || !hasToken}
-          className="flex items-center gap-2 px-5 py-2.5 text-xs tracking-[0.06em] uppercase"
+          className="flex items-center gap-2 px-5 py-2.5 text-[13px] tracking-[0.06em] uppercase"
         >
           <RefreshCw size={13} className={syncState === 'syncing' ? 'animate-spin' : ''} />
           {syncState === 'syncing' ? 'Importando…' : 'Importar ahora'}

@@ -349,7 +349,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
           <button onClick={() => navegar('next')} aria-label="Período siguiente" className="btn-subtle p-2 shrink-0">
             <ChevronRight size={15} />
           </button>
-          <h2 className="text-[14px] font-medium capitalize ml-1 editorial-title truncate" style={{ color: 'var(--ink-cool-strong)' }}>
+          <h2 className="editorial-panel-title ml-1 truncate capitalize text-[1.05rem]">
             {periodoLabel()}
           </h2>
           {todayCount > 0 && <Pill dot="#9488B0" text={`${todayCount} hoy`} />}

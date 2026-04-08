@@ -18,7 +18,6 @@ export default function NuevoPacientePage() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  // Actualiza el campo correspondiente en el estado del formulario
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
@@ -49,85 +48,86 @@ export default function NuevoPacientePage() {
     }
   }
 
-  // Estilos reutilizables para inputs
-  const inputStyle = {
-    color: '#111111',
-  }
-  const labelStyle = {
-    color: '#777777',
-    fontSize: '11px',
-    fontWeight: '500' as const,
-    letterSpacing: '0.08em',
-    textTransform: 'uppercase' as const,
+  const fieldStyle = {
+    background: 'rgba(255,255,255,0.66)',
+    border: '1px solid rgba(255,255,255,0.46)',
+    color: 'var(--ink-cool-strong)',
+    boxShadow: '0 10px 28px rgba(124,108,128,0.06)',
   }
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => router.back()}
-          className="p-2.5 rounded-2xl transition-colors"
-          style={{ background: 'rgba(200,198,208,0.35)' }}>
-          <ArrowLeft size={20} style={{ color: '#555555' }} />
+      <div className="flex items-center gap-3 mb-4">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="btn-subtle flex h-8 w-8 items-center justify-center"
+        >
+          <ArrowLeft size={14} />
         </button>
-        <h1 className="text-2xl font-light tracking-tight" style={{ color: '#111111' }}>
-          Nuevo paciente
-        </h1>
+        <div>
+          <p className="section-kicker mb-0.5">Pacientes</p>
+          <h1 className="page-title text-[1.6rem] leading-none">Nuevo paciente</h1>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="glass rounded-3xl p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="glass-cool rounded-[18px] p-4 space-y-3">
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block mb-1.5" style={labelStyle}>Nombre *</label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block space-y-1.5">
+            <span className="section-kicker">Nombre *</span>
             <input name="nombre" value={form.nombre} onChange={handleChange} required
-              className="w-full px-4 py-3 rounded-2xl text-base focus:outline-none transition-all"
-              style={inputStyle}
+              className="w-full rounded-[14px] px-4 py-2.5 text-[13px] focus:outline-none"
+              style={fieldStyle}
             />
-          </div>
-          <div>
-            <label className="block mb-1.5" style={labelStyle}>Apellido *</label>
+          </label>
+          <label className="block space-y-1.5">
+            <span className="section-kicker">Apellido *</span>
             <input name="apellido" value={form.apellido} onChange={handleChange} required
-              className="w-full px-4 py-3 rounded-2xl text-base focus:outline-none transition-all"
-              style={inputStyle}
+              className="w-full rounded-[14px] px-4 py-2.5 text-[13px] focus:outline-none"
+              style={fieldStyle}
             />
-          </div>
+          </label>
         </div>
 
-        <div>
-          <label className="block mb-1.5" style={labelStyle}>
-            WhatsApp <span style={{ textTransform: 'none', fontWeight: 400, color: '#BBBBBB' }}>(formato: 573001234567)</span>
-          </label>
+        <label className="block space-y-1.5">
+          <span className="section-kicker">
+            WhatsApp{' '}
+            <span className="normal-case font-normal tracking-normal" style={{ color: 'var(--ink-cool-muted)' }}>
+              (formato: 573001234567)
+            </span>
+          </span>
           <input name="whatsapp" value={form.whatsapp} onChange={handleChange}
             placeholder="573001234567"
-            className="w-full px-4 py-3 rounded-2xl text-base focus:outline-none transition-all"
-            style={inputStyle}
+            className="w-full rounded-[14px] px-4 py-2.5 text-[13px] focus:outline-none"
+            style={fieldStyle}
           />
-        </div>
+        </label>
 
-        <div>
-          <label className="block mb-1.5" style={labelStyle}>Teléfono</label>
+        <label className="block space-y-1.5">
+          <span className="section-kicker">Teléfono</span>
           <input name="telefono" value={form.telefono} onChange={handleChange}
-            className="w-full px-4 py-3 rounded-2xl text-base focus:outline-none transition-all"
-            style={inputStyle}
+            className="w-full rounded-[14px] px-4 py-2.5 text-[13px] focus:outline-none"
+            style={fieldStyle}
           />
-        </div>
+        </label>
 
-        <div>
-          <label className="block mb-1.5" style={labelStyle}>Email</label>
+        <label className="block space-y-1.5">
+          <span className="section-kicker">Email</span>
           <input name="email" type="email" value={form.email} onChange={handleChange}
-            className="w-full px-4 py-3 rounded-2xl text-base focus:outline-none transition-all"
-            style={inputStyle}
+            className="w-full rounded-[14px] px-4 py-2.5 text-[13px] focus:outline-none"
+            style={fieldStyle}
           />
-        </div>
+        </label>
 
-        <div>
-          <label className="block mb-1.5" style={labelStyle}>Notas generales</label>
+        <label className="block space-y-1.5">
+          <span className="section-kicker">Notas generales</span>
           <textarea name="notas_generales" value={form.notas_generales} onChange={handleChange}
             rows={3} placeholder="Motivo de consulta, antecedentes..."
-            className="w-full px-4 py-3 rounded-2xl text-base focus:outline-none transition-all resize-none"
-            style={inputStyle}
+            className="w-full rounded-[14px] px-4 py-2.5 text-[13px] focus:outline-none resize-none"
+            style={fieldStyle}
           />
-        </div>
+        </label>
 
         {saveError && (
           <p className="text-[12px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
@@ -135,11 +135,13 @@ export default function NuevoPacientePage() {
           </p>
         )}
 
-        <button type="submit" disabled={saving}
-          className="w-full py-3.5 rounded-2xl text-white font-medium transition-opacity disabled:opacity-50 mt-2"
-          style={{ background: 'rgba(155, 142, 160, 0.90)' }}>
-          {saving ? 'Guardando...' : 'Guardar paciente'}
-        </button>
+        <div className="flex justify-end pt-1">
+          <button type="submit" disabled={saving}
+            className="btn-action px-5 py-2.5 text-[13px] tracking-[0.06em] uppercase disabled:opacity-50"
+          >
+            {saving ? 'Guardando...' : 'Guardar paciente'}
+          </button>
+        </div>
       </form>
     </div>
   )
