@@ -92,6 +92,9 @@
   --accent-lavender: #CFC4D1;
   --accent-mauve: #C7BCC8;
   --accent-lilac: #BEB3C2;
+
+  --dashboard-nav-clearance: calc(7rem + env(safe-area-inset-bottom, 0px));
+  --dashboard-action-clearance: calc(var(--dashboard-nav-clearance) + 0.75rem);
 }
 
 * {
@@ -241,12 +244,40 @@ body.canvas-editor-open .dashboard-shell-sidebar {
 }
 
 .dashboard-shell-main {
-  padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: var(--dashboard-nav-clearance);
+  scroll-padding-bottom: var(--dashboard-action-clearance);
+}
+
+.dashboard-safe-bottom {
+  padding-bottom: var(--dashboard-action-clearance);
+  scroll-padding-bottom: var(--dashboard-action-clearance);
+}
+
+.dashboard-sticky-action {
+  bottom: var(--dashboard-action-clearance);
+}
+
+.dashboard-modal-shell {
+  padding-bottom: calc(var(--dashboard-action-clearance) + 1rem);
 }
 
 @media (min-width: 1024px) {
+  :root {
+    --dashboard-nav-clearance: 0px;
+    --dashboard-action-clearance: 0.75rem;
+  }
+
   .dashboard-shell-main {
     padding-bottom: 0;
+  }
+
+  .dashboard-safe-bottom {
+    padding-bottom: 0.75rem;
+    scroll-padding-bottom: 0.75rem;
+  }
+
+  .dashboard-modal-shell {
+    padding-bottom: 1rem;
   }
 }
 

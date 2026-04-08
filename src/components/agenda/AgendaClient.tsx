@@ -308,9 +308,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
   }
 
   const periodoLabelMobile = () => {
-    const s = moment(currentDate).startOf('week')
-    const e = moment(currentDate).endOf('week')
-    return `${s.format('D')} – ${e.format('D MMM YYYY')}`
+    return periodoLabel()
   }
 
   function navegar(dir: 'prev' | 'next' | 'today') {
@@ -322,8 +320,8 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
 
   function navegarMobile(dir: 'prev' | 'next' | 'today') {
     if (dir === 'today')     setCurrentDate(new Date())
-    else if (dir === 'prev') setCurrentDate((d) => moment(d).subtract(1, 'week').toDate())
-    else                     setCurrentDate((d) => moment(d).add(1, 'week').toDate())
+    else if (dir === 'prev') setCurrentDate((d) => moment(d).subtract(1, currentView === 'month' ? 'month' : currentView === 'day' ? 'day' : 'week').toDate())
+    else                     setCurrentDate((d) => moment(d).add(1, currentView === 'month' ? 'month' : currentView === 'day' ? 'day' : 'week').toDate())
   }
 
   return (
@@ -392,6 +390,21 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex gap-0.5 p-1 rounded-full shrink-0" style={{ background: 'var(--surface-glass)', border: '1px solid var(--border-glass-white)' }}>
+            {(['day', 'week', 'month'] as View[]).map((v) => (
+              <button
+                key={v}
+                onClick={() => setCurrentView(v)}
+                className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all shrink-0"
+                style={currentView === v
+                  ? { background: 'rgba(255,255,255,0.92)', color: 'var(--ink-cool-strong)', boxShadow: 'var(--shadow-glass)' }
+                  : { color: 'var(--ink-cool-faint)', background: 'transparent' }
+                }
+              >
+                {v === 'day' ? 'Día' : v === 'week' ? 'Semana' : 'Mes'}
+              </button>
+            ))}
+          </div>
           {todayCount > 0 && (
             <span className="text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0" style={{ background: 'rgba(148,136,176,0.16)', color: 'var(--ink-cool-soft)' }}>
               {todayCount} hoy
@@ -528,12 +541,52 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
 
       {/* ── Agenda mobile ── */}
       <div className="block lg:hidden">
-        <MobileAgenda
-          appointments={visibleAppointments}
-          currentDate={currentDate}
-          onSelectAppointment={setSelectedAppointment}
-          onNewSlot={setNewSlotStart}
-        />
+        {currentView === 'week' ? (
+          <MobileAgenda
+            appointments={visibleAppointments}
+            currentDate={currentDate}
+            onSelectAppointment={setSelectedAppointment}
+            onNewSlot={setNewSlotStart}
+          />
+        ) : (
+          <div className="glass-cool rounded-[20px] overflow-hidden">
+            <div
+              className="p-3 sm:p-4"
+              style={{ height: currentView === 'month' ? '620px' : '720px' }}
+            >
+              <Calendar
+                localizer={localizer}
+                events={visibleEvents}
+                view={currentView}
+                date={currentDate}
+                onView={setCurrentView}
+                onNavigate={setCurrentDate}
+                onSelectEvent={handleSelectEvent}
+                selectable
+                onSelectSlot={handleSelectSlot}
+                eventPropGetter={eventPropGetter}
+                dayPropGetter={dayPropGetter}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                components={{ event: EventoCalendario, dateHeader: CabechaFecha, header: ColumnaHeader } as any}
+                min={new Date(0, 0, 0, 8, 0)}
+                max={new Date(0, 0, 0, 21, 0)}
+                messages={{
+                  today: 'Hoy',
+                  previous: '‹',
+                  next: '›',
+                  month: 'Mes',
+                  week: 'Semana',
+                  day: 'Día',
+                  agenda: 'Lista',
+                  noEventsInRange: 'No hay citas en este período',
+                  showMore: (total) => `+${total} más`,
+                }}
+                culture="es"
+                toolbar={false}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal al tocar una cita existente */}

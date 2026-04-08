@@ -21,13 +21,17 @@ interface ModalShellProps {
 export default function ModalShell({ onClose, children, maxWidth = 'max-w-md' }: ModalShellProps) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+      className="dashboard-modal-shell fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
       style={{ background: 'var(--overlay-modal)', backdropFilter: 'blur(8px)' }}
       onClick={onClose}
     >
       <div
         className={`glass-cool w-full ${maxWidth} rounded-[24px] overflow-hidden`}
-        style={{ boxShadow: 'var(--shadow-float)' }}
+        style={{
+          boxShadow: 'var(--shadow-float)',
+          maxHeight: 'calc(100vh - var(--dashboard-action-clearance) - 2rem)',
+          overflowY: 'auto',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {children}

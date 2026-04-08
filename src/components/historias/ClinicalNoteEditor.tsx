@@ -682,7 +682,7 @@ export default function ClinicalNoteEditor({
         </section>
       </div>
 
-      <div className="sticky bottom-4 z-10 flex justify-end pt-1">
+      <div className="dashboard-sticky-action sticky z-10 flex justify-end pt-1">
         <button
           type="button"
           onClick={handleSave}
