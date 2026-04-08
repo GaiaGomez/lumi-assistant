@@ -242,7 +242,9 @@ body.canvas-editor-open .dashboard-shell-sidebar,
 body.dashboard-overlay-open .dashboard-shell-nav,
 body.dashboard-overlay-open .dashboard-shell-sidebar {
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
+  transform: translateY(12px);
 }
 
 .dashboard-shell-main {
@@ -261,6 +263,19 @@ body.dashboard-overlay-open .dashboard-shell-sidebar {
 
 .dashboard-modal-shell {
   padding-bottom: calc(var(--dashboard-action-clearance) + 1rem);
+}
+
+.dashboard-modal-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-top: auto;
+  padding: 0.85rem 1rem calc(var(--dashboard-action-clearance) + 0.35rem);
+  background:
+    linear-gradient(180deg, rgba(255, 252, 250, 0.72) 0%, rgba(255, 248, 244, 0.96) 42%);
+  border-top: 1px solid rgba(255, 255, 255, 0.48);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
 }
 
 @media (min-width: 1024px) {

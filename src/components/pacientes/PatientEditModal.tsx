@@ -123,13 +123,13 @@ export default function PatientEditModal({ patient }: Props) {
 
       {open && (
         <div
-          className="dashboard-modal-shell fixed inset-0 z-50 bg-[rgba(52,34,55,0.22)] backdrop-blur-[10px]"
+          className="dashboard-modal-shell fixed inset-0 z-[90] bg-[rgba(52,34,55,0.28)] backdrop-blur-[12px]"
           style={{ overscrollBehavior: 'contain' }}
           onClick={closeModal}
         >
           <div className="flex min-h-full items-start justify-center px-4 py-8 sm:items-center">
             <div
-              className="w-full max-w-[480px] rounded-[18px] p-4 space-y-3"
+              className="w-full max-w-[480px] rounded-[18px] p-4 space-y-3 flex flex-col"
               style={{
                 background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
                 border: '1px solid var(--border-glass-white)',
@@ -248,13 +248,12 @@ export default function PatientEditModal({ patient }: Props) {
                 </p>
               )}
 
-              {/* Footer */}
-              <div className="flex items-center justify-between gap-2 pt-1">
+              <div className="dashboard-modal-footer -mx-4 -mb-4 mt-auto space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-2">
                 <button
                   type="button"
                   onClick={handleDelete}
                   disabled={deleting || saving}
-                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] disabled:opacity-45"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] disabled:opacity-45"
                   style={{ background: 'rgba(176,124,132,0.12)', color: 'var(--state-cancel-text)' }}
                 >
                   {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
@@ -265,7 +264,7 @@ export default function PatientEditModal({ patient }: Props) {
                   type="button"
                   onClick={handleSave}
                   disabled={saving || deleting}
-                  className="btn-action inline-flex items-center gap-1.5 px-4 py-2 text-[14px] disabled:opacity-45"
+                  className="btn-action inline-flex items-center justify-center gap-1.5 px-4 py-3 text-[14px] disabled:opacity-45"
                 >
                   {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                   {saving ? 'Guardando...' : 'Guardar cambios'}

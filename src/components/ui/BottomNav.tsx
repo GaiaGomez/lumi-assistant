@@ -24,7 +24,7 @@ export default function BottomNav() {
     <>
       {/* ── BOTTOM NAV — iPad portrait / móvil, estilo frosted glass ── */}
       <nav
-        className="dashboard-shell-nav fixed bottom-4 left-4 right-4 flex lg:hidden z-50 rounded-2xl overflow-hidden"
+        className="dashboard-shell-nav fixed bottom-4 left-4 right-4 flex lg:hidden z-40 rounded-2xl overflow-hidden transition-all duration-200"
         style={{
           bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)',
           left: 'calc(env(safe-area-inset-left, 0px) + 1rem)',
@@ -58,7 +58,7 @@ export default function BottomNav() {
 
       {/* ── SIDEBAR — iPad landscape / pantallas grandes ── */}
       <aside
-        className="dashboard-shell-sidebar hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-64 z-50"
+        className="dashboard-shell-sidebar hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-64 z-40 transition-all duration-200"
         style={{
           background: 'rgba(255,255,255,0.75)',
           backdropFilter: 'blur(24px) saturate(160%)',
