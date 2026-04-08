@@ -55,6 +55,10 @@ export const SETTINGS_KEYS = [
 
 export type SettingsKey = (typeof SETTINGS_KEYS)[number]
 export type SettingsMap = Record<SettingsKey, string>
+export type SettingsRow = {
+  key: string
+  value: string
+}
 
 // Valores por defecto si el usuario aún no ha personalizado
 export const DEFAULT_SETTINGS: SettingsMap = {
@@ -137,13 +141,7 @@ export async function fetchSettings(
     .select('key, value')
     .eq('user_id', userId)
 
-  const result: SettingsMap = { ...DEFAULT_SETTINGS }
-  for (const row of data ?? []) {
-    if ((SETTINGS_KEYS as readonly string[]).includes(row.key)) {
-      result[row.key as SettingsKey] = row.value
-    }
-  }
-  return result
+  return mergeSettingsRows(data)
 }
 
 export async function upsertSettingValue(
@@ -178,4 +176,18 @@ export function resolveAgendaAppointmentDurationMinutes(
   }
 
   return rawValue
+}
+
+export function mergeSettingsRows(
+  rows: SettingsRow[] | null | undefined
+): SettingsMap {
+  const result: SettingsMap = { ...DEFAULT_SETTINGS }
+
+  for (const row of rows ?? []) {
+    if ((SETTINGS_KEYS as readonly string[]).includes(row.key)) {
+      result[row.key as SettingsKey] = row.value
+    }
+  }
+
+  return result
 }

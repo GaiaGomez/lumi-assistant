@@ -384,12 +384,12 @@ function RecordatoriosSection({ settings, userId }: Props) {
       <SettingsCard>
         <p className="section-kicker mb-0.5">Envío automático</p>
         <p className="text-[13px] mb-3" style={{ color: 'var(--ink-cool-faint)' }}>
-          Control de cuándo y cómo se envían los mensajes.
+          Control de cuándo se preparan los recordatorios por WhatsApp.
         </p>
 
         <SettingRow
           label="Mensajes automáticos"
-          description="Activa el envío automático de recordatorios por WhatsApp"
+          description="Activa la preparación automática de recordatorios por WhatsApp"
         >
           <Toggle checked={activo} onChange={setActivo} />
         </SettingRow>
@@ -423,6 +423,18 @@ function RecordatoriosSection({ settings, userId }: Props) {
             placeholder="Ej: Un saludo, Lu"
             className="w-full rounded-[14px] px-3.5 py-2.5 text-[14px] leading-relaxed resize-none focus:outline-none"
           />
+        </div>
+
+        <div
+          className="mt-3 rounded-[14px] px-3.5 py-3 text-[13px]"
+          style={{
+            background: 'rgba(255,255,255,0.46)',
+            border: '1px solid var(--border-glass-white)',
+            color: 'var(--ink-cool-soft)',
+          }}
+        >
+          Lumi ya deja los recordatorios listos en una cola segura y evita duplicados.
+          El canal de envío automático todavía no está conectado, así que por ahora se preparan para despacho futuro.
         </div>
 
         <SaveButton state={state} onClick={handleSave} />
