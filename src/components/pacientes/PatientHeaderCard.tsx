@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Phone, Plus } from 'lucide-react'
 import { Patient } from '@/types'
@@ -8,12 +9,14 @@ interface PatientHeaderCardProps {
   patient: Patient
   lastAppointmentDate: string | null
   newNoteHref: string
+  editSlot?: ReactNode
 }
 
 export default function PatientHeaderCard({
   patient,
   lastAppointmentDate,
   newNoteHref,
+  editSlot,
 }: PatientHeaderCardProps) {
   return (
     <div className="relative mb-2.5 overflow-hidden rounded-[18px]">
@@ -68,13 +71,16 @@ export default function PatientHeaderCard({
             </div>
           </div>
 
-          <Link
-            href={newNoteHref}
-            className="btn-action shrink-0 gap-1.5 px-4 py-2 text-[13px]"
-          >
-            <Plus size={12} />
-            Nueva nota
-          </Link>
+          <div className="flex items-center gap-2 shrink-0">
+            {editSlot}
+            <Link
+              href={newNoteHref}
+              className="btn-action gap-1.5 px-4 py-2 text-[13px]"
+            >
+              <Plus size={12} />
+              Nueva nota
+            </Link>
+          </div>
         </div>
       </div>
     </div>

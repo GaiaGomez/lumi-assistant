@@ -22,6 +22,7 @@ import {
 import PageBlobs from '@/components/ui/PageBlobs'
 import EmptyState from '@/components/ui/EmptyState'
 import PatientCaseNotesCard from '@/components/pacientes/PatientCaseNotesCard'
+import PatientEditModal from '@/components/pacientes/PatientEditModal'
 import PatientHeaderCard from '@/components/pacientes/PatientHeaderCard'
 import PatientTopMosaic from '@/components/pacientes/PatientTopMosaic'
 import AppointmentQuickStateEditor from '@/components/appointments/AppointmentQuickStateEditor'
@@ -75,6 +76,7 @@ export default async function PatientProfilePage({ params }: Props) {
         patient={p}
         lastAppointmentDate={lastPastAppointment?.fecha_inicio ?? null}
         newNoteHref={`/historias/nueva?paciente=${id}`}
+        editSlot={<PatientEditModal patient={p} />}
       />
 
       <PatientTopMosaic
