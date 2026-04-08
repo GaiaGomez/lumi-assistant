@@ -27,9 +27,7 @@ export const SETTINGS_KEYS = [
   'agenda_vista_default',    // "day"/"week"/"month"
   'agenda_intervalo',        // "15"/"30"/"60" (minutos por celda)
 
-  // ── Recordatorios ─────────────────────────────────────────
-  'recordatorio_activo',     // "true"/"false"
-  'recordatorio_cuando',     // "dia"/"horas"/"ambos"/"ninguno"
+  // ── WhatsApp manual ──────────────────────────────────────
   'recordatorio_firma',      // Texto de firma al final de los mensajes
 
   // ── Modalidades / Consultorios ────────────────────────────
@@ -85,10 +83,8 @@ export const DEFAULT_SETTINGS: SettingsMap = {
   agenda_vista_default:    'week',
   agenda_intervalo:        '30',
 
-  // Recordatorios
-  recordatorio_activo:  'true',
-  recordatorio_cuando:  'ambos',
-  recordatorio_firma:   '',
+  // WhatsApp manual
+  recordatorio_firma: '',
 
   // Modalidades
   modalidad_medellin_nombre:       'Medellín',

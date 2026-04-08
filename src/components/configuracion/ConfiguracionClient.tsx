@@ -10,7 +10,7 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  Calendar, Bell, MapPin, Users, FileText, Shield,
+  Calendar, MessageCircle, MapPin, Users, FileText, Shield,
   Check, AlertCircle, Download, ChevronDown, Eye, EyeOff, Loader2,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -31,7 +31,7 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 const TABS = [
   { id: 'agenda',        label: 'Agenda',        icon: Calendar },
-  { id: 'recordatorios', label: 'Recordatorios', icon: Bell },
+  { id: 'recordatorios', label: 'WhatsApp',      icon: MessageCircle },
   { id: 'consultorios',  label: 'Consultorios',  icon: MapPin },
   { id: 'pacientes',     label: 'Pacientes',     icon: Users },
   { id: 'historial',     label: 'Historial',     icon: FileText },
@@ -367,53 +367,24 @@ function AgendaSection({ settings, userId }: Props) {
 function RecordatoriosSection({ settings, userId }: Props) {
   const { state, save } = useSave(userId)
 
-  const [activo, setActivo]   = useState(settings['recordatorio_activo'] !== 'false')
-  const [cuando, setCuando]   = useState(settings['recordatorio_cuando'] ?? 'ambos')
-  const [firma,  setFirma]    = useState(settings['recordatorio_firma']  ?? '')
+  const [firma, setFirma] = useState(settings['recordatorio_firma'] ?? '')
 
   function handleSave() {
-    save([
-      ['recordatorio_activo', activo ? 'true' : 'false'],
-      ['recordatorio_cuando', cuando],
-      ['recordatorio_firma',  firma],
-    ])
+    save([['recordatorio_firma', firma]])
   }
 
   return (
     <div className="space-y-3">
       <SettingsCard>
-        <p className="section-kicker mb-0.5">Envío automático</p>
+        <p className="section-kicker mb-0.5">WhatsApp manual</p>
         <p className="text-[13px] mb-3" style={{ color: 'var(--ink-cool-faint)' }}>
-          Control de cuándo se preparan los recordatorios por WhatsApp.
+          Ajusta la firma que se añade a los mensajes manuales de WhatsApp.
         </p>
-
-        <SettingRow
-          label="Mensajes automáticos"
-          description="Activa la preparación automática de recordatorios por WhatsApp"
-        >
-          <Toggle checked={activo} onChange={setActivo} />
-        </SettingRow>
-
-        <SettingRow
-          label="Momento del recordatorio"
-          description="Con cuánta anticipación se envía el mensaje antes de la cita"
-        >
-          <LumiSelect
-            value={cuando}
-            onChange={setCuando}
-            options={[
-              { value: 'dia',     label: '1 día antes' },
-              { value: 'horas',   label: '2 horas antes' },
-              { value: 'ambos',   label: 'Ambos' },
-              { value: 'ninguno', label: 'Ninguno' },
-            ]}
-          />
-        </SettingRow>
 
         <div className="pt-3.5">
           <p className="section-kicker mb-1.5">Firma automática</p>
           <p className="text-[13px] mb-2" style={{ color: 'var(--ink-cool-faint)' }}>
-            Se añade al final de todos los mensajes de WhatsApp.
+            Se añade al final de los mensajes manuales que Lumi abre con WhatsApp.
             Deja vacío para no usar firma.
           </p>
           <textarea
@@ -423,18 +394,6 @@ function RecordatoriosSection({ settings, userId }: Props) {
             placeholder="Ej: Un saludo, Lu"
             className="w-full rounded-[14px] px-3.5 py-2.5 text-[14px] leading-relaxed resize-none focus:outline-none"
           />
-        </div>
-
-        <div
-          className="mt-3 rounded-[14px] px-3.5 py-3 text-[13px]"
-          style={{
-            background: 'rgba(255,255,255,0.46)',
-            border: '1px solid var(--border-glass-white)',
-            color: 'var(--ink-cool-soft)',
-          }}
-        >
-          Lumi ya deja los recordatorios listos en una cola segura y evita duplicados.
-          El canal de envío automático todavía no está conectado, así que por ahora se preparan para despacho futuro.
         </div>
 
         <SaveButton state={state} onClick={handleSave} />
@@ -478,7 +437,7 @@ const MODALIDADES_DEFS = [
     campoKey:      'modalidad_online_enlace'  as SettingsKey,
     campoLabel:    'Enlace de videollamada',
     campoPlaceholder: 'https://meet.google.com/tu-sala',
-    campoHint:     'Link que se enviará automáticamente en las confirmaciones online.',
+    campoHint:     'Link que podrás reutilizar en los mensajes manuales para sesiones online.',
   },
   {
     id:            'retiro' as const,

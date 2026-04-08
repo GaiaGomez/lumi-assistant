@@ -83,34 +83,6 @@ create table if not exists settings (
   unique (user_id, key)
 );
 
--- TABLA: reminder_dispatches
--- Cola segura de recordatorios preparados para despacho futuro.
--- Evita duplicados por cita/tipo/canal aunque el cron se ejecute varias veces.
-create table if not exists reminder_dispatches (
-  id             uuid default gen_random_uuid() primary key,
-  user_id        uuid references auth.users(id) on delete cascade not null,
-  appointment_id uuid references appointments(id) on delete cascade not null,
-  patient_id     uuid references patients(id) on delete set null,
-  reminder_type  text not null
-                 check (reminder_type in ('1d', '2h')),
-  channel        text not null
-                 check (channel in ('whatsapp')),
-  status         text default 'ready' not null
-                 check (status in ('ready', 'sent', 'failed', 'cancelled')),
-  scheduled_for  timestamptz not null,
-  payload        jsonb not null default '{}'::jsonb,
-  sent_at        timestamptz,
-  created_at     timestamptz default now(),
-  updated_at     timestamptz default now(),
-  unique (user_id, appointment_id, reminder_type, channel)
-);
-
-create index if not exists reminder_dispatches_status_scheduled_for_idx
-  on reminder_dispatches(status, scheduled_for);
-
-create index if not exists reminder_dispatches_appointment_idx
-  on reminder_dispatches(appointment_id);
-
 -- TABLA: clinical_notes
 -- Una nota clínica por sesión. Tiene texto escrito con teclado Y/O imagen del canvas
 create table if not exists clinical_notes (
@@ -152,10 +124,6 @@ create trigger update_settings_updated_at
   before update on settings
   for each row execute function update_updated_at_column();
 
-create trigger update_reminder_dispatches_updated_at
-  before update on reminder_dispatches
-  for each row execute function update_updated_at_column();
-
 -- ============================================================
 -- ROW LEVEL SECURITY (RLS) — MUY IMPORTANTE
 -- Cada usuario solo puede ver y modificar SUS propios datos
@@ -166,7 +134,6 @@ alter table patients        enable row level security;
 alter table appointments    enable row level security;
 alter table doctoralia_imports enable row level security;
 alter table clinical_notes  enable row level security;
-alter table reminder_dispatches enable row level security;
 alter table settings        enable row level security;
 
 -- Políticas para patients
@@ -198,12 +165,6 @@ create policy "settings: solo el dueño puede ver"   on settings for select usin
 create policy "settings: solo el dueño puede crear" on settings for insert with check (auth.uid() = user_id);
 create policy "settings: solo el dueño puede editar" on settings for update using (auth.uid() = user_id);
 create policy "settings: solo el dueño puede borrar" on settings for delete using (auth.uid() = user_id);
-
--- Políticas para reminder_dispatches
-create policy "reminder_dispatches: solo el dueño puede ver" on reminder_dispatches for select using (auth.uid() = user_id);
-create policy "reminder_dispatches: solo el dueño puede crear" on reminder_dispatches for insert with check (auth.uid() = user_id);
-create policy "reminder_dispatches: solo el dueño puede editar" on reminder_dispatches for update using (auth.uid() = user_id);
-create policy "reminder_dispatches: solo el dueño puede borrar" on reminder_dispatches for delete using (auth.uid() = user_id);
 
 -- ============================================================
 -- STORAGE BUCKET — para guardar las imágenes del canvas

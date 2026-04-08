@@ -553,7 +553,7 @@ export default function AppointmentModal({
 
             {appointment.patient && resolveWhatsApp(appointment.patient) && appointment.event_type === 'patient' && (
               <a
-                href={linkRecordatorioCita(appointment.patient, appointment)}
+                href={linkRecordatorioCita(appointment.patient, appointment, settings)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-action flex-1 gap-2 py-3 text-[14px]"

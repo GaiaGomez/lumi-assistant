@@ -10,6 +10,7 @@
 
 import { Patient, Appointment } from '@/types'
 import { formatInBogota } from '@/lib/datetime'
+import { appendFirma, type SettingsMap } from '@/lib/settings'
 
 export type AppointmentReminderLead = '1d' | '2h'
 
@@ -37,8 +38,17 @@ export function mensajeRecordatorioCita(
   return `Hola, ${patient.nombre}. Te escribo para recordarte nuestra sesión de mañana a las ${horaFormateada}. ¿Confirmamos?`
 }
 
-export function linkRecordatorioCita(patient: Patient, appointment: Appointment): string {
-  return generarLinkWhatsApp(resolveWhatsApp(patient), mensajeRecordatorioCita(patient, appointment))
+export function linkRecordatorioCita(
+  patient: Patient,
+  appointment: Appointment,
+  settings?: SettingsMap,
+  lead: AppointmentReminderLead = '1d'
+): string {
+  const message = settings
+    ? appendFirma(mensajeRecordatorioCita(patient, appointment, lead), settings)
+    : mensajeRecordatorioCita(patient, appointment, lead)
+
+  return generarLinkWhatsApp(resolveWhatsApp(patient), message)
 }
 
 /**

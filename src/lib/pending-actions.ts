@@ -181,7 +181,7 @@ export function buildPendingActions(
     .forEach((appointment) => {
       if (!appointment.patient) return
       const patient = appointment.patient
-      const rawMsg = mensajeRecordatorioCita(patient, appointment)
+      const rawMsg = mensajeRecordatorioCita(patient, appointment, '2h')
       actions.push({
         id: `confirmar-hoy-${appointment.id}`,
         type: 'confirmar_cita_hoy',
@@ -207,7 +207,7 @@ export function buildPendingActions(
     .forEach((appointment) => {
       if (!appointment.patient) return
       const patient = appointment.patient
-      const rawMsg = mensajeRecordatorioCita(patient, appointment)
+      const rawMsg = mensajeRecordatorioCita(patient, appointment, '1d')
       actions.push({
         id: `confirmar-manana-${appointment.id}`,
         type: 'confirmar_cita_manana',
