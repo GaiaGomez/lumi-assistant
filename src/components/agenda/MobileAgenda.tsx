@@ -70,10 +70,7 @@ const SLOT_MINUTES = 30
 const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60
 const SLOT_COUNT = TOTAL_MINUTES / SLOT_MINUTES
 const OVERLAP_GAP_PX = 3
-const MIN_VISIBLE_DAYS = 3
-const MAX_VISIBLE_DAYS = 5
-const MIN_DAY_WIDTH = 98
-const MAX_DAY_WIDTH = 148
+const MIN_DAY_WIDTH = 90
 
 function interpolate(min: number, max: number, ratio: number) {
   return min + (max - min) * ratio
@@ -432,38 +429,32 @@ export default function MobileAgenda({
   const layout = useMemo<MobileAgendaLayout>(() => {
     const width = Math.max(viewportWidth, 320)
     const ratio = Math.max(0, Math.min((width - 320) / 480, 1))
-    const isTablet = width >= 680
-    const dayGap = Math.round(interpolate(4, isTablet ? 9 : 7, ratio))
-    const preferredMinDayWidth = Math.round(
-      interpolate(MIN_DAY_WIDTH, isTablet ? 126 : 112, ratio)
-    )
-    const visibleDays = isTablet
-      ? 5
-      : Math.max(
-          MIN_VISIBLE_DAYS,
-          Math.min(
-            MAX_VISIBLE_DAYS,
-            Math.floor((width + dayGap) / (preferredMinDayWidth + dayGap))
-          )
-        )
+    // isTablet activates at viewportWidth ≥ 640 (~710px device, covers iPad mini+)
+    const isTablet = width >= 640
+    // Phone: always 3 days — predictable, comfortable scale
+    // Tablet: 4 days — spacious columns, better legibility
+    const visibleDays = isTablet ? 4 : 3
+    const dayGap = Math.round(interpolate(4, isTablet ? 10 : 6, ratio))
     const rawDayWidth = (width - dayGap * (visibleDays - 1)) / visibleDays
     const dayColumnWidth = Math.max(
       MIN_DAY_WIDTH,
-      Math.min(MAX_DAY_WIDTH, rawDayWidth)
+      Math.min(isTablet ? 190 : 148, rawDayWidth)
     )
-    const slotHeight = Math.round(interpolate(28, isTablet ? 42 : 36, ratio))
-    const headerHeight = Math.round(interpolate(42, isTablet ? 60 : 52, ratio))
-    const timeGutterWidth = Math.round(interpolate(30, isTablet ? 42 : 38, ratio))
-    const metaSize = Math.round(interpolate(9, isTablet ? 11 : 10, ratio))
-    const titleSize = Math.round(interpolate(11, isTablet ? 13 : 12, ratio))
-    const iconSize = Math.round(interpolate(9, isTablet ? 11 : 10, ratio))
-    const cardPaddingX = Math.round(interpolate(5, isTablet ? 8 : 7, ratio))
-    const cardPaddingY = Math.round(interpolate(4, isTablet ? 7 : 6, ratio))
-    const badgeSize = Math.round(interpolate(12, isTablet ? 16 : 14, ratio))
-    const eventRadius = Math.round(interpolate(8, isTablet ? 11 : 10, ratio))
-    const eventMinHeight = Math.round(interpolate(20, isTablet ? 28 : 24, ratio))
-    const headerGap = Math.round(interpolate(4, isTablet ? 8 : 6, ratio))
-    const outerGap = Math.round(interpolate(4, isTablet ? 8 : 6, ratio))
+    // Phone: compact (24→30px) — recovers from previous inflated state
+    // Tablet: spacious (52px) — significantly bigger for legibility
+    const slotHeight = Math.round(interpolate(24, isTablet ? 52 : 30, ratio))
+    const headerHeight = Math.round(interpolate(40, isTablet ? 68 : 50, ratio))
+    const timeGutterWidth = Math.round(interpolate(30, isTablet ? 48 : 36, ratio))
+    const metaSize = Math.round(interpolate(9, isTablet ? 12 : 10, ratio))
+    const titleSize = Math.round(interpolate(11, isTablet ? 15 : 12, ratio))
+    const iconSize = Math.round(interpolate(9, isTablet ? 12 : 10, ratio))
+    const cardPaddingX = Math.round(interpolate(5, isTablet ? 10 : 7, ratio))
+    const cardPaddingY = Math.round(interpolate(4, isTablet ? 8 : 5, ratio))
+    const badgeSize = Math.round(interpolate(12, isTablet ? 18 : 14, ratio))
+    const eventRadius = Math.round(interpolate(8, isTablet ? 12 : 10, ratio))
+    const eventMinHeight = Math.round(interpolate(20, isTablet ? 32 : 24, ratio))
+    const headerGap = Math.round(interpolate(4, isTablet ? 10 : 6, ratio))
+    const outerGap = Math.round(interpolate(4, isTablet ? 10 : 6, ratio))
 
     return {
       visibleDays,
