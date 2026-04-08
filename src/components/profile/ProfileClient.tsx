@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertCircle, Check, Mail, Save } from 'lucide-react'
+import { AlertCircle, Check, Eye, EyeOff, KeyRound, Mail, Save } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -23,6 +23,12 @@ export default function ProfileClient({ userId, identity }: ProfileClientProps) 
   const [workspaceName, setWorkspaceName] = useState(identity.workspaceName)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [errorMessage, setErrorMessage] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [passwordState, setPasswordState] = useState<SaveState>('idle')
+  const [passwordError, setPasswordError] = useState('')
 
   const avatarLabel = getAvatarLabel(displayName.trim() || identity.displayName)
 
@@ -58,6 +64,39 @@ export default function ProfileClient({ userId, identity }: ProfileClientProps) 
     } catch (error) {
       setSaveState('error')
       setErrorMessage(error instanceof Error ? error.message : 'No se pudo guardar tu perfil.')
+    }
+  }
+
+  async function handlePasswordSave() {
+    if (newPassword !== confirmPassword) {
+      setPasswordState('error')
+      setPasswordError('Las contraseñas no coinciden.')
+      return
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordState('error')
+      setPasswordError('La contraseña debe tener al menos 6 caracteres.')
+      return
+    }
+
+    setPasswordState('saving')
+    setPasswordError('')
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) throw error
+
+      setNewPassword('')
+      setConfirmPassword('')
+      setShowNewPassword(false)
+      setShowConfirmPassword(false)
+      setPasswordState('saved')
+      window.setTimeout(() => setPasswordState('idle'), 2500)
+    } catch (error) {
+      setPasswordState('error')
+      setPasswordError(error instanceof Error ? error.message : 'No se pudo cambiar la contraseña.')
     }
   }
 
@@ -166,6 +205,115 @@ export default function ProfileClient({ userId, identity }: ProfileClientProps) 
             >
               <Save size={14} />
               {saveState === 'saving' ? 'Guardando…' : 'Guardar cambios'}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="p-3 sm:p-4">
+        <div className="space-y-3">
+          <div>
+            <p className="section-kicker mb-0.5">Acceso</p>
+            <p className="text-[13px]" style={{ color: 'var(--ink-cool-faint)' }}>
+              Cambia la contraseña que usas para entrar a Lumi.
+            </p>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <label className="card-label block" style={{ color: 'var(--ink-cool-faint)' }}>
+                Nueva contraseña
+              </label>
+              <div className="relative">
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(event) => {
+                    setNewPassword(event.target.value)
+                    if (passwordState === 'error') {
+                      setPasswordState('idle')
+                      setPasswordError('')
+                    }
+                  }}
+                  autoComplete="new-password"
+                  minLength={6}
+                  className="w-full rounded-[14px] px-3.5 py-3 pr-10 text-[14px] focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword((current) => !current)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  style={{ color: 'var(--ink-cool-faint)' }}
+                  aria-label={showNewPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                >
+                  {showNewPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="card-label block" style={{ color: 'var(--ink-cool-faint)' }}>
+                Confirmar contraseña
+              </label>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(event) => {
+                    setConfirmPassword(event.target.value)
+                    if (passwordState === 'error') {
+                      setPasswordState('idle')
+                      setPasswordError('')
+                    }
+                  }}
+                  autoComplete="new-password"
+                  minLength={6}
+                  className="w-full rounded-[14px] px-3.5 py-3 pr-10 text-[14px] focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((current) => !current)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  style={{ color: 'var(--ink-cool-faint)' }}
+                  aria-label={showConfirmPassword ? 'Ocultar confirmación' : 'Mostrar confirmación'}
+                >
+                  {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-[12px]" style={{ color: 'var(--ink-cool-muted)' }}>
+            Usa una contraseña de al menos 6 caracteres.
+          </p>
+
+          <div
+            className="flex flex-col gap-2 border-t pt-3 sm:flex-row sm:items-center sm:justify-between"
+            style={{ borderColor: 'var(--border-glass-muted)' }}
+          >
+            <div className="min-h-[20px]">
+              {passwordState === 'saved' && (
+                <span className="flex items-center gap-1.5 text-[13px]" style={{ color: 'var(--state-success-text)' }}>
+                  <Check size={14} />
+                  Contraseña actualizada correctamente.
+                </span>
+              )}
+              {passwordState === 'error' && (
+                <span className="flex items-center gap-1.5 text-[13px]" style={{ color: 'var(--state-cancel-text)' }}>
+                  <AlertCircle size={14} />
+                  {passwordError}
+                </span>
+              )}
+            </div>
+
+            <Button
+              variant="subtle"
+              onClick={handlePasswordSave}
+              disabled={passwordState === 'saving'}
+              className="px-4 py-2 text-[13px] inline-flex items-center gap-2"
+            >
+              <KeyRound size={14} />
+              {passwordState === 'saving' ? 'Guardando…' : 'Cambiar contraseña'}
             </Button>
           </div>
         </div>
