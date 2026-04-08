@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Calendar, Users, MessageCircle, Settings } from 'lucide-react'
 import AccountMenu from './AccountMenu'
+import type { ProfileIdentity } from '@/lib/profile'
 
 const navItems = [
   { href: '/agenda',        label: 'Agenda',     icon: Calendar },
@@ -18,7 +19,7 @@ const navItems = [
   { href: '/configuracion', label: 'Ajustes',    icon: Settings },
 ]
 
-export default function BottomNav() {
+export default function BottomNav({ identity }: { identity: ProfileIdentity }) {
   const pathname = usePathname()
 
   return (
@@ -42,20 +43,20 @@ export default function BottomNav() {
             className="w-8 h-8 rounded-[10px] flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg, #C4B0C8 0%, #9A9AB8 100%)' }}
           >
-            <span className="text-white text-[13px] font-light select-none">L</span>
+            <span className="text-white text-[13px] font-light select-none">{identity.avatarLabel}</span>
           </div>
           <div>
             <p className="text-[13px] font-medium leading-none" style={{ color: 'var(--ink-cool-strong)' }}>
-              Lumi
+              {identity.displayName}
             </p>
             <p className="text-[10px] tracking-wide leading-tight mt-0.5" style={{ color: 'var(--ink-cool-muted)' }}>
-              Consultorio privado
+              {identity.workspaceName}
             </p>
           </div>
         </div>
 
         {/* Trigger de cuenta (solo avatar en modo compacto) */}
-        <AccountMenu compact />
+        <AccountMenu compact identity={identity} />
       </header>
 
       {/* ── BOTTOM NAV — mobile/tablet ── */}
@@ -105,7 +106,7 @@ export default function BottomNav() {
       >
         {/* Account menu completo — avatar + nombre + dropdown */}
         <div className="p-4 pb-2">
-          <AccountMenu />
+          <AccountMenu identity={identity} />
         </div>
 
         {/* Separador sutil */}

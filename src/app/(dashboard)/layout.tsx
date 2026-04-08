@@ -8,6 +8,8 @@ export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import BottomNav from '@/components/ui/BottomNav'
+import { fetchSettings } from '@/lib/settings'
+import { resolveProfileIdentity } from '@/lib/profile'
 
 export default async function DashboardLayout({
   children,
@@ -19,6 +21,9 @@ export default async function DashboardLayout({
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
+
+  const settings = await fetchSettings(supabase, user.id)
+  const identity = resolveProfileIdentity(user, settings)
 
   return (
     <div className="relative flex h-full">
@@ -49,7 +54,7 @@ export default async function DashboardLayout({
       </div>
 
       {/* Sidebar/BottomNav — z-50 para estar por encima de los blobs */}
-      <BottomNav />
+      <BottomNav identity={identity} />
 
       {/* Contenido principal — z-10 por encima de los blobs */}
       {/* lg:ml-64 — en pantallas grandes deja espacio para el sidebar */}

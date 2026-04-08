@@ -30,6 +30,10 @@ export const SETTINGS_KEYS = [
   // ── WhatsApp manual ──────────────────────────────────────
   'recordatorio_firma',      // Texto de firma al final de los mensajes
 
+  // ── Perfil ───────────────────────────────────────────────
+  'perfil_nombre_mostrado',
+  'perfil_nombre_consultorio',
+
   // ── Modalidades / Consultorios ────────────────────────────
   'modalidad_medellin_nombre',
   'modalidad_medellin_color',
@@ -85,6 +89,10 @@ export const DEFAULT_SETTINGS: SettingsMap = {
 
   // WhatsApp manual
   recordatorio_firma: '',
+
+  // Perfil
+  perfil_nombre_mostrado: '',
+  perfil_nombre_consultorio: 'Consultorio privado',
 
   // Modalidades
   modalidad_medellin_nombre:       'Medellín',

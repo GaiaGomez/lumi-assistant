@@ -10,13 +10,15 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ChevronDown, User, Settings, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import type { ProfileIdentity } from '@/lib/profile'
 
 interface AccountMenuProps {
   /** compact = true → solo avatar circular, sin nombre ni chevron (mobile header) */
   compact?: boolean
+  identity: ProfileIdentity
 }
 
-export default function AccountMenu({ compact = false }: AccountMenuProps) {
+export default function AccountMenu({ compact = false, identity }: AccountMenuProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -56,7 +58,7 @@ export default function AccountMenu({ compact = false }: AccountMenuProps) {
           className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ background: 'linear-gradient(135deg, #C4B0C8 0%, #9A9AB8 100%)' }}
         >
-          <span className="text-white text-[14px] font-light select-none">L</span>
+          <span className="text-white text-[14px] font-light select-none">{identity.avatarLabel}</span>
         </div>
 
         {/* Nombre + subtítulo (solo en modo completo) */}
@@ -64,10 +66,10 @@ export default function AccountMenu({ compact = false }: AccountMenuProps) {
           <>
             <div className="flex-1 text-left min-w-0">
               <p className="text-[14px] font-medium truncate" style={{ color: 'var(--ink-cool-strong)' }}>
-                Lu Assistant
+                {identity.displayName}
               </p>
               <p className="text-[11px] tracking-wide truncate" style={{ color: 'var(--ink-cool-muted)' }}>
-                Consultorio privado
+                {identity.workspaceName}
               </p>
             </div>
 
@@ -101,6 +103,23 @@ export default function AccountMenu({ compact = false }: AccountMenuProps) {
             boxShadow: '0 8px 32px rgba(120,108,130,0.18)',
           }}
         >
+          <div className="px-4 py-3">
+            <p className="text-[14px] font-medium truncate" style={{ color: 'var(--ink-cool-strong)' }}>
+              {identity.displayName}
+            </p>
+            <p className="text-[11px] tracking-wide truncate" style={{ color: 'var(--ink-cool-muted)' }}>
+              {identity.workspaceName}
+            </p>
+            <p className="text-[12px] mt-1 truncate" style={{ color: 'var(--ink-cool-faint)' }}>
+              {identity.email}
+            </p>
+          </div>
+
+          <div
+            className="mb-1 mx-2"
+            style={{ borderTop: '1px solid var(--border-glass-muted)' }}
+          />
+
           <Link
             href="/profile"
             onClick={() => setOpen(false)}
