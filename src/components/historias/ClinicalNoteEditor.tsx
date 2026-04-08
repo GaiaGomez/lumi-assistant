@@ -47,7 +47,7 @@ function SelectField({
 }) {
   return (
     <label className="block space-y-2">
-      <span className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+      <span className="section-kicker">
         {label}
       </span>
       <select
@@ -85,7 +85,7 @@ function TextField({
   return (
     <label className="block space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+        <span className="section-kicker">
           {label}
         </span>
         {helper && (
@@ -392,30 +392,25 @@ export default function ClinicalNoteEditor({
   }
 
   return (
-    <div className="mx-auto max-w-[920px] space-y-5 pb-8">
-      <div className="flex flex-wrap items-start gap-3 pt-1">
+    <div className="mx-auto max-w-[920px] space-y-3 pb-6">
+      <div className="flex flex-wrap items-start gap-3">
         <button
           type="button"
           onClick={() => router.push(cancelHref)}
-          className="flex h-10 w-10 items-center justify-center rounded-full"
-          style={{
-            background: 'rgba(255,255,255,0.46)',
-            border: '1px solid rgba(255,255,255,0.42)',
-            color: 'var(--ink-cool-soft)',
-          }}
+          className="btn-subtle flex h-8 w-8 items-center justify-center"
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft size={14} />
         </button>
 
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
-            {mode === 'edit' ? 'Editar nota clinica' : 'Nueva nota clinica'}
+          <p className="section-kicker mb-0.5">
+            {mode === 'edit' ? 'Editar nota clínica' : 'Nueva nota clínica'}
           </p>
-          <h1 className="page-title text-[1.75rem]" style={{ color: 'var(--ink-cool-strong)' }}>
+          <h1 className="page-title text-[1.6rem] leading-none">
             {patient.nombre} {patient.apellido}
           </h1>
           {mode === 'edit' && note && (
-            <p className="text-sm" style={{ color: 'var(--ink-cool-soft)' }}>
+            <p className="text-[12px] mt-1" style={{ color: 'var(--ink-cool-soft)' }}>
               {`Ultima actualizacion ${formatDateTimeFull(note.updated_at)}`}
             </p>
           )}
@@ -435,7 +430,7 @@ export default function ClinicalNoteEditor({
         <section className="glass rounded-[30px] p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+              <p className="section-kicker">
                 Canvas manuscrito
               </p>
               <h2 className="mt-1 text-[1.18rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
@@ -530,7 +525,7 @@ export default function ClinicalNoteEditor({
         <section className="glass rounded-[30px] p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+              <p className="section-kicker">
                 Notas libres
               </p>
               <h2 className="mt-1 text-[1.08rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
@@ -555,7 +550,7 @@ export default function ClinicalNoteEditor({
               >
                 <div className="flex items-center gap-2">
                   <CalendarDays size={16} style={{ color: 'var(--ink-cool-soft)' }} />
-                  <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+                  <p className="section-kicker">
                     Sesion asociada
                   </p>
                 </div>
@@ -575,7 +570,7 @@ export default function ClinicalNoteEditor({
                 className="rounded-[20px] p-4"
                 style={{ background: 'rgba(255,255,255,0.48)', border: '1px solid rgba(255,255,255,0.42)' }}
               >
-                <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+                <p className="section-kicker">
                   Resumen de guardado
                 </p>
                 <div className="mt-3 space-y-2 text-sm" style={{ color: 'var(--ink-cool-soft)' }}>
@@ -597,7 +592,7 @@ export default function ClinicalNoteEditor({
         <section className="glass rounded-[30px] p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+              <p className="section-kicker">
                 Plantilla escrita
               </p>
               <h2 className="mt-1 text-[1.12rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
@@ -608,7 +603,7 @@ export default function ClinicalNoteEditor({
 
           <div className="mt-5 grid gap-3 md:grid-cols-[1.15fr_0.85fr]">
             <label className="block space-y-2">
-              <span className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+              <span className="section-kicker">
                 Foco de sesion
               </span>
               <input
@@ -731,7 +726,7 @@ export default function ClinicalNoteEditor({
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
+                    <p className="section-kicker">
                       Canvas manuscrito
                     </p>
                     <h3 className="mt-1 text-[1.16rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>

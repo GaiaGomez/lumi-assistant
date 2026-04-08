@@ -32,7 +32,7 @@ function countSummary(actions: PendingAction[]) {
 function SummaryMiniCard({ label, value }: { label: string; value: number }) {
   return (
     <div
-      className="rounded-[16px]"
+      className="rounded-[14px]"
       style={{
         minHeight: value === 0 ? '60px' : '66px',
         padding: value === 0 ? '9px 11px' : '10px 12px',
@@ -61,7 +61,7 @@ function PendingActionCard({ action }: { action: PendingAction }) {
 
   return (
     <div
-      className="rounded-[16px]"
+      className="rounded-[14px]"
       style={{
         padding: '10px 11px',
         background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
@@ -137,8 +137,7 @@ function PendingActionCard({ action }: { action: PendingAction }) {
             href={action.externalAction.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-action shrink-0 gap-1.5 self-start"
-            style={{ height: '28px', padding: '0 10px', fontSize: '11px' }}
+            className="btn-action shrink-0 gap-1.5 self-start px-3 py-1.5 text-[12px]"
           >
             <MessageCircle size={12} />
             {action.externalAction.label}
@@ -159,20 +158,11 @@ function PendingSection({
   if (actions.length === 0) return null
 
   return (
-    <section
-      className="rounded-[18px] p-2.5"
-      style={{
-        background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
-        border: '1px solid var(--border-glass-white)',
-        boxShadow: 'var(--shadow-glass)',
-        backdropFilter: 'blur(22px) saturate(140%)',
-        WebkitBackdropFilter: 'blur(22px) saturate(140%)',
-      }}
-    >
-      <h2 className="editorial-panel-title text-[0.98rem] sm:text-[1.04rem]" style={{ color: 'var(--ink-cool-strong)' }}>
+    <section className="glass-cool rounded-[18px] p-3">
+      <h2 className="editorial-panel-title text-[1.05rem]">
         {PENDING_ACTION_SECTION_LABEL[type]}
       </h2>
-      <div className="mt-1.5 space-y-1.5">
+      <div className="mt-2 space-y-1.5">
         {actions.map((action) => (
           <PendingActionCard key={action.id} action={action} />
         ))}
@@ -212,39 +202,24 @@ export default async function PendingPage() {
     <div className="relative mx-auto max-w-[1180px] px-4 pb-1 font-sans sm:px-5">
       <PageBlobs />
 
-      <section
-        className="relative mb-3 rounded-[18px] p-2.5"
-        style={{
-          background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
-          border: '1px solid var(--border-glass-white)',
-          boxShadow: 'var(--shadow-glass)',
-          backdropFilter: 'blur(22px) saturate(140%)',
-          WebkitBackdropFilter: 'blur(22px) saturate(140%)',
-        }}
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="editorial-panel-title text-[1.3rem] sm:text-[1.4rem]" style={{ color: 'var(--ink-cool-strong)' }}>
-              Pendientes
-            </h1>
-            <p className="mt-0.5 text-[11px]" style={{ color: 'var(--ink-cool-soft)' }}>
-              Acciones operativas listas para resolver
-            </p>
-          </div>
-          <div
-            className="rounded-full px-2.5 py-0.5 text-[10px] font-medium"
-            style={{
-              color: 'var(--ink-cool-soft)',
-              background: 'rgba(255,255,255,0.42)',
-              border: '1px solid var(--border-glass-white)',
-            }}
-          >
-            {pendingActions.length} acciones
-          </div>
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <div>
+          <h1 className="page-title text-[1.6rem] leading-none">Pendientes</h1>
+          <p className="page-subtitle mt-1">Acciones operativas listas para resolver</p>
         </div>
-      </section>
+        <span
+          className="mb-0.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium"
+          style={{
+            color: 'var(--ink-cool-soft)',
+            background: 'rgba(255,255,255,0.52)',
+            border: '1px solid var(--border-glass-white)',
+          }}
+        >
+          {pendingActions.length} acciones
+        </span>
+      </div>
 
-      <div className="mb-3 grid gap-[10px] sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-2.5 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryMiniCard label="Confirmar hoy" value={summary.confirmarHoy} />
         <SummaryMiniCard label="Confirmar mañana" value={summary.confirmarManana} />
         <SummaryMiniCard label="Cobros" value={summary.cobros} />
@@ -252,16 +227,7 @@ export default async function PendingPage() {
       </div>
 
       {pendingActions.length === 0 ? (
-        <section
-          className="rounded-[18px] p-3"
-          style={{
-            background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
-            border: '1px solid var(--border-glass-white)',
-            boxShadow: 'var(--shadow-glass)',
-            backdropFilter: 'blur(22px) saturate(140%)',
-            WebkitBackdropFilter: 'blur(22px) saturate(140%)',
-          }}
-        >
+        <section className="glass-cool rounded-[18px] p-3">
           <EmptyState
             message="No hay acciones pendientes reales en este momento."
             hint="Cuando aparezcan citas por confirmar, cobros o pacientes sin seguimiento, se verán aquí."

@@ -295,7 +295,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
             <SectionHeader label="Reagendar" className="mb-2.5" />
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <label className="space-y-1">
-                <span className="text-[11px] uppercase tracking-[0.08em]" style={{ color: 'var(--ink-cool-faint)' }}>
+                <span className="section-kicker">
                   Fecha
                 </span>
                 <span className="lumi-control-shell">
@@ -311,7 +311,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                 </span>
               </label>
               <label className="space-y-1">
-                <span className="text-[11px] uppercase tracking-[0.08em]" style={{ color: 'var(--ink-cool-faint)' }}>
+                <span className="section-kicker">
                   Inicio
                 </span>
                 <span className="lumi-control-shell">
@@ -327,7 +327,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                 </span>
               </label>
               <label className="space-y-1">
-                <span className="text-[11px] uppercase tracking-[0.08em]" style={{ color: 'var(--ink-cool-faint)' }}>
+                <span className="section-kicker">
                   Duración
                 </span>
                 <span className="lumi-control-shell">
@@ -357,7 +357,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                 className="mt-2 rounded-[10px] px-3 py-2"
                 style={{ background: 'rgba(143,165,189,0.10)', border: '1px solid rgba(143,165,189,0.16)' }}
               >
-                <p className="text-[11px] uppercase tracking-[0.08em]" style={{ color: 'var(--ink-cool-faint)' }}>
+                <p className="section-kicker">
                   Nuevo horario
                 </p>
                 <p className="text-[13px] font-medium capitalize mt-1" style={{ color: 'var(--ink-cool-strong)' }}>

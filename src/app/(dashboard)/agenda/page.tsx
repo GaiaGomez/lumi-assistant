@@ -24,7 +24,7 @@ export default async function AgendaPage() {
 
   return (
     <div>
-      <div className="mb-3">
+      <div className="mb-2.5">
         <h1 className="page-title text-[1.6rem] leading-none">Agenda</h1>
       </div>
       <AgendaClient appointments={allAppointments} />

@@ -26,14 +26,10 @@ function SectionCard({
   children: ReactNode
 }) {
   return (
-    <section className="glass rounded-[28px] p-5">
-      <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
-        {kicker}
-      </p>
-      <h2 className="mt-1 text-[1.08rem] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
-        {title}
-      </h2>
-      <div className="mt-4">{children}</div>
+    <section className="glass-cool rounded-[18px] p-3">
+      <p className="section-kicker mb-0.5">{kicker}</p>
+      <h2 className="editorial-panel-title text-[1.05rem]">{title}</h2>
+      <div className="mt-3">{children}</div>
     </section>
   )
 }
@@ -63,28 +59,21 @@ export default async function HistoriaPage({ params }: Props) {
     : null
 
   return (
-    <div className="mx-auto max-w-[980px] space-y-4">
+    <div className="relative mx-auto max-w-[980px] space-y-2.5 font-sans">
       <div className="flex flex-wrap items-center gap-3">
         <Link
           href={`/pacientes/${clinicalNote.patient_id}`}
-          className="flex h-10 w-10 items-center justify-center rounded-full"
-          style={{
-            background: 'rgba(255,255,255,0.46)',
-            border: '1px solid rgba(255,255,255,0.42)',
-            color: 'var(--ink-cool-soft)',
-          }}
+          className="btn-subtle flex h-9 w-9 items-center justify-center"
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft size={16} />
         </Link>
 
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
-            Nota clínica
-          </p>
-          <h1 className="page-title text-[1.75rem]" style={{ color: 'var(--ink-cool-strong)' }}>
+          <p className="section-kicker mb-0.5">Nota clínica</p>
+          <h1 className="page-title text-[1.6rem] leading-none">
             {clinicalNote.patient.nombre} {clinicalNote.patient.apellido}
           </h1>
-          <p className="text-sm" style={{ color: 'var(--ink-cool-soft)' }}>
+          <p className="text-[12px] mt-1" style={{ color: 'var(--ink-cool-soft)' }}>
             Creada {formatDateTimeFull(clinicalNote.created_at)}
             {clinicalNote.updated_at !== clinicalNote.created_at ? ` · actualizada ${formatDateTimeFull(clinicalNote.updated_at)}` : ''}
           </p>
@@ -93,8 +82,7 @@ export default async function HistoriaPage({ params }: Props) {
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href={`/historias/${clinicalNote.id}/editar`}
-            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm"
-            style={{ background: 'rgba(207,196,209,0.24)', color: 'var(--ink-cool-strong)' }}
+            className="btn-subtle inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px]"
           >
             <SquarePen size={15} />
             Editar
@@ -107,14 +95,14 @@ export default async function HistoriaPage({ params }: Props) {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="space-y-4">
+      <div className="grid gap-2.5 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="space-y-2.5">
           {clinicalNote.template_data && (
             <SectionCard kicker="Plantilla DAP" title={clinicalNote.template_data.focus.trim() || 'Nota de progreso'}>
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <span
-                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs"
+                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px]"
                     style={{ background: 'rgba(207,196,209,0.24)', color: 'var(--ink-cool-soft)' }}
                   >
                     <FilePenLine size={13} />
@@ -123,7 +111,7 @@ export default async function HistoriaPage({ params }: Props) {
 
                   {riskMeta && (
                     <span
-                      className="rounded-full px-3 py-1.5 text-xs"
+                      className="rounded-full px-2.5 py-1 text-[11px]"
                       style={{
                         background: riskMeta.tone === 'success'
                           ? 'var(--state-success-bg)'
@@ -143,7 +131,7 @@ export default async function HistoriaPage({ params }: Props) {
 
                   {clinicalNote.appointment && (
                     <span
-                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs"
+                      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px]"
                       style={{ background: 'rgba(255,255,255,0.52)', color: 'var(--ink-cool-soft)' }}
                     >
                       <CalendarDays size={13} />
@@ -152,7 +140,7 @@ export default async function HistoriaPage({ params }: Props) {
                   )}
                 </div>
 
-                <div className="grid gap-3">
+                <div className="grid gap-2">
                   {[
                     {
                       key: 'data',
@@ -174,13 +162,11 @@ export default async function HistoriaPage({ params }: Props) {
                     .map((section) => (
                       <div
                         key={section.key}
-                        className="rounded-[20px] p-4"
-                        style={{ background: 'rgba(255,255,255,0.46)', border: '1px solid rgba(255,255,255,0.42)' }}
+                        className="rounded-[14px] p-3"
+                        style={{ background: 'rgba(255,255,255,0.46)', border: '1px solid var(--border-glass-white)' }}
                       >
-                        <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ink-cool-faint)' }}>
-                          {section.title}
-                        </p>
-                        <p className="mt-2 whitespace-pre-wrap text-sm leading-7" style={{ color: 'var(--ink-cool-strong)' }}>
+                        <p className="section-kicker mb-1">{section.title}</p>
+                        <p className="whitespace-pre-wrap text-[13px] leading-6" style={{ color: 'var(--ink-cool-strong)' }}>
                           {section.value}
                         </p>
                       </div>
@@ -192,18 +178,18 @@ export default async function HistoriaPage({ params }: Props) {
 
           {clinicalNote.texto && (
             <SectionCard kicker="Texto libre" title="Observaciones complementarias">
-              <p className="whitespace-pre-wrap text-sm leading-7" style={{ color: 'var(--ink-cool-strong)' }}>
+              <p className="whitespace-pre-wrap text-[13px] leading-6" style={{ color: 'var(--ink-cool-strong)' }}>
                 {clinicalNote.texto}
               </p>
             </SectionCard>
           )}
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-2.5">
           {canvasSignedUrl && (
             <SectionCard kicker="Canvas manuscrito" title="Registro visual de sesión">
               <div
-                className="overflow-hidden rounded-[24px]"
+                className="overflow-hidden rounded-[14px]"
                 style={{ border: '1px solid rgba(255,255,255,0.42)', boxShadow: '0 18px 42px rgba(120,110,130,0.10)' }}
               >
                 <Image
@@ -215,7 +201,7 @@ export default async function HistoriaPage({ params }: Props) {
                   className="h-auto w-full"
                 />
               </div>
-              <p className="mt-3 inline-flex items-center gap-1.5 text-xs" style={{ color: 'var(--ink-cool-muted)' }}>
+              <p className="mt-2 inline-flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--ink-cool-muted)' }}>
                 <PencilLine size={13} />
                 {clinicalNote.canvas_paths?.length
                   ? 'Esta version conserva trazos editables para futuras actualizaciones.'
@@ -226,7 +212,7 @@ export default async function HistoriaPage({ params }: Props) {
 
           {!clinicalNote.template_data && !clinicalNote.texto && (
             <SectionCard kicker="Nota" title="Sin contenido escrito">
-              <p className="text-sm" style={{ color: 'var(--ink-cool-soft)' }}>
+              <p className="text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>
                 Esta nota depende solo del canvas manuscrito.
               </p>
             </SectionCard>

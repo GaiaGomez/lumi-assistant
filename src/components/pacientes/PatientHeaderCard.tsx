@@ -16,7 +16,7 @@ export default function PatientHeaderCard({
   newNoteHref,
 }: PatientHeaderCardProps) {
   return (
-    <div className="relative mb-3 overflow-hidden rounded-[22px]">
+    <div className="relative mb-2.5 overflow-hidden rounded-[18px]">
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -26,10 +26,9 @@ export default function PatientHeaderCard({
       />
 
       <div
-        className="relative rounded-[22px]"
+        className="relative rounded-[18px]"
         style={{
-          minHeight: '88px',
-          padding: '14px 18px',
+          padding: '12px 16px',
           background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
           border: '1px solid var(--border-glass-white)',
           boxShadow: 'var(--shadow-glass-soft)',
@@ -41,26 +40,15 @@ export default function PatientHeaderCard({
           <div className="flex min-w-0 items-center gap-2.5">
             <Link
               href="/pacientes"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-              style={{
-                color: 'var(--ink-cool-soft)',
-                background: 'rgba(255,255,255,0.42)',
-                border: '1px solid var(--border-glass-white)',
-                boxShadow: 'var(--shadow-glass)',
-                backdropFilter: 'blur(18px) saturate(135%)',
-                WebkitBackdropFilter: 'blur(18px) saturate(135%)',
-              }}
+              className="btn-subtle flex h-8 w-8 shrink-0 items-center justify-center"
             >
-              <ArrowLeft size={15} />
+              <ArrowLeft size={14} />
             </Link>
 
             <Avatar nombre={patient.nombre} apellido={patient.apellido} size="md" />
 
-            <div className="min-w-0 pt-2.5">
-              <h1
-                className="editorial-panel-title truncate leading-none"
-                style={{ color: 'var(--ink-cool-strong)', fontSize: '25px' }}
-              >
+            <div className="min-w-0 pt-1">
+              <h1 className="page-title text-[1.6rem] truncate leading-none">
                 {patient.nombre} {patient.apellido}
               </h1>
               <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
@@ -82,8 +70,7 @@ export default function PatientHeaderCard({
 
           <Link
             href={newNoteHref}
-            className="btn-action shrink-0 gap-1.5"
-            style={{ height: '34px', padding: '0 14px', fontSize: '13px' }}
+            className="btn-action shrink-0 gap-1.5 px-4 py-2 text-[13px]"
           >
             <Plus size={12} />
             Nueva nota

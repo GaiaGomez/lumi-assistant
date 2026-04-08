@@ -123,7 +123,7 @@ export default function DoctoraliaSync({ settings, userId }: Props) {
         className="rounded-[12px] px-3.5 py-3 space-y-1.5"
         style={{ background: 'var(--surface-glass)', border: '1px solid var(--border-soft)' }}
       >
-        <p className="text-[11px] font-semibold tracking-[0.06em] uppercase" style={{ color: 'var(--ink-cool-muted)' }}>
+        <p className="section-kicker">
           Cómo obtener el token
         </p>
         <ol className="text-[12px] space-y-1 list-decimal list-inside leading-relaxed" style={{ color: 'var(--ink-cool-soft)' }}>

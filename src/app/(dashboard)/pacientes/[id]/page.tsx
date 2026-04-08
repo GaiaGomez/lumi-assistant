@@ -89,8 +89,8 @@ export default async function PatientProfilePage({ params }: Props) {
 
       <div className="space-y-2.5">
         {/* ── Historia clínica ── */}
-        <section className="glass-cool relative rounded-[18px] p-2.5">
-          <h2 className="editorial-panel-title mb-1.5 text-[1.08rem] sm:text-[1.16rem]" style={{ color: 'var(--ink-cool-strong)' }}>
+        <section className="glass-cool relative rounded-[18px] p-3">
+          <h2 className="editorial-panel-title mb-1.5 text-[1.05rem]" style={{ color: 'var(--ink-cool-strong)' }}>
             Historia clínica
           </h2>
           <div className="space-y-1.5">
@@ -102,8 +102,8 @@ export default async function PatientProfilePage({ params }: Props) {
         </section>
 
         {/* ── Historial de citas ── */}
-        <section className="glass-cool relative rounded-[18px] p-2.5">
-          <h2 className="editorial-panel-title mb-1.5 text-[1.08rem] sm:text-[1.16rem]" style={{ color: 'var(--ink-cool-strong)' }}>
+        <section className="glass-cool relative rounded-[18px] p-3">
+          <h2 className="editorial-panel-title mb-1.5 text-[1.05rem]" style={{ color: 'var(--ink-cool-strong)' }}>
             Historial de citas
           </h2>
           <div className="space-y-1.5">
@@ -111,7 +111,7 @@ export default async function PatientProfilePage({ params }: Props) {
             {patientAppointments.map((apt) => (
               <div
                 key={apt.id}
-                className="rounded-[14px] px-[10px] py-2"
+                className="rounded-[14px] px-3 py-2"
                 style={{
                   background: 'linear-gradient(180deg, rgba(255,255,255,0.48) 0%, rgba(255,255,255,0.32) 100%)',
                   border: '1px solid var(--border-glass-white)',

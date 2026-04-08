@@ -46,10 +46,10 @@ function ActionCard({
 }) {
   const content = (
     <div
-      className="h-full rounded-[16px] font-sans"
+      className="h-full rounded-[14px] font-sans"
       style={{
-        minHeight: '72px',
-        padding: '12px 14px',
+        minHeight: '64px',
+        padding: '10px 12px',
         background: accent === 'soft'
           ? 'linear-gradient(160deg, rgba(207,196,209,0.92) 0%, rgba(190,179,194,0.86) 100%)'
           : 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
@@ -70,10 +70,10 @@ function ActionCard({
           <MessageCircle size={13} />
         </span>
         <div className="min-w-0">
-          <p className="font-medium leading-snug" style={{ color: 'var(--ink-cool-strong)', fontSize: '15px' }}>
+          <p className="text-[13px] font-medium leading-snug" style={{ color: 'var(--ink-cool-strong)' }}>
             {label}
           </p>
-          <p className="mt-1 text-[10px] leading-tight" style={{ color: 'var(--ink-cool-soft)' }}>
+          <p className="mt-0.5 text-[11px] leading-tight" style={{ color: 'var(--ink-cool-soft)' }}>
             {hint}
           </p>
         </div>
@@ -128,8 +128,8 @@ export default function PatientTopMosaic({
   }>
 
   return (
-    <div className="mb-3 space-y-[10px]">
-      <div className="grid gap-[10px] md:grid-cols-4">
+    <div className="mb-2.5 space-y-2.5">
+      <div className="grid gap-2.5 md:grid-cols-4">
         <StatCard
           label="Próxima cita"
           value={nextAppointmentText ? nextAppointmentText.primary : 'Sin cita'}
@@ -157,7 +157,7 @@ export default function PatientTopMosaic({
       </div>
 
       {actionCards.length > 0 && (
-        <div className={`grid gap-[10px] ${actionCards.length === 1 ? 'md:grid-cols-1' : actionCards.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
+        <div className={`grid gap-2.5 ${actionCards.length === 1 ? 'md:grid-cols-1' : actionCards.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
           {actionCards.map((action) => (
             <ActionCard
               key={action.key}

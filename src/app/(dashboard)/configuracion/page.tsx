@@ -20,22 +20,22 @@ export default async function ConfiguracionPage() {
     <div className="relative mx-auto max-w-[860px] px-4 pb-1 font-sans sm:px-5">
       <PageBlobs />
 
-      <div className="relative mb-4">
-        <p className="section-kicker mb-2">Configuración</p>
-        <h1 className="page-title text-[2rem] leading-none">Ajustes</h1>
-        <p className="page-subtitle mt-1.5 text-[0.9rem]">
+      <div className="relative mb-3">
+        <p className="section-kicker mb-1.5">Configuración</p>
+        <h1 className="page-title text-[1.6rem] leading-none">Ajustes</h1>
+        <p className="page-subtitle mt-1">
           Personaliza tu agenda, mensajes y conexiones externas.
         </p>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         <section>
-          <p className="section-kicker mb-3">Doctoralia</p>
+          <p className="section-kicker mb-2">Doctoralia</p>
           <DoctoraliaSync settings={settings} userId={user!.id} />
         </section>
 
         <section>
-          <p className="section-kicker mb-3">Mensajes de WhatsApp</p>
+          <p className="section-kicker mb-2">Mensajes de WhatsApp</p>
           <TemplateEditor settings={settings} userId={user!.id} />
         </section>
       </div>
