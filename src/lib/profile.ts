@@ -5,6 +5,7 @@ export interface ProfileIdentity {
   displayName: string
   workspaceName: string
   email: string
+  pendingEmail: string
   avatarLabel: string
 }
 
@@ -48,11 +49,14 @@ export function resolveProfileIdentity(
 ): ProfileIdentity {
   const displayName = settings?.perfil_nombre_mostrado?.trim() || resolveFallbackDisplayName(user)
   const workspaceName = settings?.perfil_nombre_consultorio?.trim() || 'Consultorio privado'
+  const email = user?.email?.trim() ?? ''
+  const pendingEmail = user?.new_email?.trim() ?? ''
 
   return {
     displayName,
     workspaceName,
-    email: user?.email ?? '',
+    email,
+    pendingEmail,
     avatarLabel: getAvatarLabel(displayName),
   }
 }

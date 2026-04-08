@@ -21,8 +21,12 @@ export default function ProfileClient({ userId, identity }: ProfileClientProps) 
   const router = useRouter()
   const [displayName, setDisplayName] = useState(identity.displayName)
   const [workspaceName, setWorkspaceName] = useState(identity.workspaceName)
+  const [email, setEmail] = useState(identity.email)
+  const [currentAuthEmail, setCurrentAuthEmail] = useState(identity.email)
+  const [pendingEmail, setPendingEmail] = useState(identity.pendingEmail)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [errorMessage, setErrorMessage] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showNewPassword, setShowNewPassword] = useState(false)
@@ -32,38 +36,116 @@ export default function ProfileClient({ userId, identity }: ProfileClientProps) 
 
   const avatarLabel = getAvatarLabel(displayName.trim() || identity.displayName)
 
+  function isValidEmail(value: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+  }
+
   async function handleSave() {
     const nextDisplayName = displayName.trim()
     const nextWorkspaceName = workspaceName.trim()
+    const nextEmail = email.trim().toLowerCase()
+    const currentEmail = currentAuthEmail.trim().toLowerCase()
+    const profileChanged =
+      nextDisplayName !== identity.displayName ||
+      nextWorkspaceName !== identity.workspaceName
+    const emailChanged = nextEmail !== currentEmail
 
     if (!nextDisplayName) {
       setSaveState('error')
       setErrorMessage('Escribe un nombre para mostrar en Lumi.')
+      setSuccessMessage('')
       return
     }
 
     if (!nextWorkspaceName) {
       setSaveState('error')
       setErrorMessage('Escribe un nombre para tu consultorio o espacio.')
+      setSuccessMessage('')
+      return
+    }
+
+    if (!nextEmail) {
+      setSaveState('error')
+      setErrorMessage('Escribe un correo para tu cuenta.')
+      setSuccessMessage('')
+      return
+    }
+
+    if (!isValidEmail(nextEmail)) {
+      setSaveState('error')
+      setErrorMessage('Escribe un correo válido.')
+      setSuccessMessage('')
+      return
+    }
+
+    if (!profileChanged && !emailChanged) {
+      setSaveState('saved')
+      setErrorMessage('')
+      setSuccessMessage('No había cambios por guardar.')
+      window.setTimeout(() => setSaveState('idle'), 2500)
       return
     }
 
     setSaveState('saving')
     setErrorMessage('')
+    setSuccessMessage('')
 
+    let profileSaved = false
     try {
       const supabase = createClient()
-      await Promise.all([
-        upsertSettingValue(supabase, userId, 'perfil_nombre_mostrado', nextDisplayName),
-        upsertSettingValue(supabase, userId, 'perfil_nombre_consultorio', nextWorkspaceName),
-      ])
+
+      if (profileChanged) {
+        await Promise.all([
+          upsertSettingValue(supabase, userId, 'perfil_nombre_mostrado', nextDisplayName),
+          upsertSettingValue(supabase, userId, 'perfil_nombre_consultorio', nextWorkspaceName),
+        ])
+        profileSaved = true
+      }
+
+      let nextSuccessMessage = profileSaved ? 'Perfil guardado.' : ''
+
+      if (emailChanged) {
+        const { data, error } = await supabase.auth.updateUser(
+          { email: nextEmail },
+          { emailRedirectTo: `${window.location.origin}/profile` }
+        )
+
+        if (error) throw error
+
+        const updatedUser = data.user
+        const resolvedCurrentEmail = updatedUser?.email?.trim() || nextEmail
+        const resolvedPendingEmail = updatedUser?.new_email?.trim() || ''
+
+        if (resolvedPendingEmail && resolvedPendingEmail !== resolvedCurrentEmail) {
+          setPendingEmail(resolvedPendingEmail)
+          setEmail(resolvedCurrentEmail)
+          nextSuccessMessage = profileSaved
+            ? `Guardamos tu perfil. Para cambiar el correo de acceso, confirma el mensaje enviado a ${resolvedPendingEmail}.`
+            : `Te enviamos un correo de confirmación a ${resolvedPendingEmail}. Hasta que lo confirmes, seguirás entrando con ${resolvedCurrentEmail}.`
+        } else {
+          setCurrentAuthEmail(resolvedCurrentEmail)
+          setEmail(resolvedCurrentEmail)
+          setPendingEmail('')
+          nextSuccessMessage = profileSaved
+            ? `Perfil guardado. Tu correo de acceso ahora es ${resolvedCurrentEmail}.`
+            : `Tu correo de acceso ahora es ${resolvedCurrentEmail}.`
+        }
+      }
 
       setSaveState('saved')
+      setSuccessMessage(nextSuccessMessage || 'Perfil guardado.')
       router.refresh()
       window.setTimeout(() => setSaveState('idle'), 2500)
     } catch (error) {
       setSaveState('error')
-      setErrorMessage(error instanceof Error ? error.message : 'No se pudo guardar tu perfil.')
+      const message = error instanceof Error ? error.message : 'No se pudo guardar tu perfil.'
+      setSuccessMessage('')
+      setErrorMessage(
+        profileSaved
+          ? `Guardamos tu identidad, pero no pudimos actualizar el correo: ${message}`
+          : message
+      )
+      if (profileSaved) router.refresh()
     }
   }
 
@@ -135,12 +217,13 @@ export default function ProfileClient({ userId, identity }: ProfileClientProps) 
               label="Nombre mostrado"
               value={displayName}
               onChange={(event) => {
-                setDisplayName(event.target.value)
-                if (saveState === 'error') {
-                  setSaveState('idle')
-                  setErrorMessage('')
-                }
-              }}
+                    setDisplayName(event.target.value)
+                    if (saveState === 'error') {
+                      setSaveState('idle')
+                      setErrorMessage('')
+                    }
+                    if (successMessage) setSuccessMessage('')
+                  }}
               placeholder="Tu nombre"
             />
 
@@ -148,35 +231,52 @@ export default function ProfileClient({ userId, identity }: ProfileClientProps) 
               label="Consultorio o espacio"
               value={workspaceName}
               onChange={(event) => {
-                setWorkspaceName(event.target.value)
-                if (saveState === 'error') {
-                  setSaveState('idle')
-                  setErrorMessage('')
-                }
-              }}
+                    setWorkspaceName(event.target.value)
+                    if (saveState === 'error') {
+                      setSaveState('idle')
+                      setErrorMessage('')
+                    }
+                    if (successMessage) setSuccessMessage('')
+                  }}
               placeholder="Nombre del consultorio"
             />
           </div>
 
-          <div className="space-y-1.5">
-            <span className="card-label block" style={{ color: 'var(--ink-cool-faint)' }}>
-              Correo
-            </span>
+          <Input
+            label="Correo"
+            type="email"
+            value={email}
+            onChange={(event) => {
+              setEmail(event.target.value)
+              if (saveState === 'error') {
+                setSaveState('idle')
+                setErrorMessage('')
+              }
+              if (successMessage) setSuccessMessage('')
+            }}
+            placeholder="tu@correo.com"
+          />
+
+          {pendingEmail ? (
             <div
-              className="flex items-center gap-2 rounded-[14px] px-3.5 py-3 text-[14px]"
+              className="flex items-start gap-2 rounded-[14px] px-3.5 py-3 text-[13px]"
               style={{
-                background: 'rgba(255,255,255,0.52)',
+                background: 'rgba(200,188,205,0.16)',
                 border: '1px solid var(--border-glass-white)',
                 color: 'var(--ink-cool-soft)',
               }}
             >
-              <Mail size={14} />
-              <span className="truncate">{identity.email || 'Correo no disponible'}</span>
+              <Mail size={14} className="mt-0.5 shrink-0" />
+              <p className="leading-snug">
+                Hay un cambio de correo pendiente para <strong>{pendingEmail}</strong>. Hasta que lo confirmes desde ese correo,
+                seguirás entrando a Lumi con <strong>{currentAuthEmail}</strong>.
+              </p>
             </div>
+          ) : (
             <p className="text-[12px]" style={{ color: 'var(--ink-cool-muted)' }}>
-              El correo viene de tu cuenta de acceso y no se edita desde esta pantalla.
+              Este es el mismo correo que usas para iniciar sesión en Lumi.
             </p>
-          </div>
+          )}
 
           <div
             className="flex flex-col gap-2 border-t pt-3 sm:flex-row sm:items-center sm:justify-between"
@@ -186,7 +286,7 @@ export default function ProfileClient({ userId, identity }: ProfileClientProps) 
               {saveState === 'saved' && (
                 <span className="flex items-center gap-1.5 text-[13px]" style={{ color: 'var(--state-success-text)' }}>
                   <Check size={14} />
-                  Perfil guardado.
+                  {successMessage || 'Perfil guardado.'}
                 </span>
               )}
               {saveState === 'error' && (
