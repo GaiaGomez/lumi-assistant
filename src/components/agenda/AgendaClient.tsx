@@ -9,7 +9,7 @@ import { Calendar, momentLocalizer, View, SlotInfo } from 'react-big-calendar'
 import moment from 'moment-timezone'
 import 'moment/locale/es'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
-import { Appointment, CalendarEvent } from '@/types'
+import { Appointment, CalendarEvent, Consultorio } from '@/types'
 import AppointmentModal from './AppointmentModal'
 import NewAppointmentModal from './NewAppointmentModal'
 import MobileAgenda from './MobileAgenda'
@@ -19,9 +19,12 @@ import {
   appointmentNeedsAttention,
   isAppointmentConfirmed,
   isAppointmentPaid,
-  resolveAppointmentCategory,
-  resolveAppointmentCategoryConfig,
+  resolveAppointmentVisualConfig,
 } from '@/lib/appointment-ui'
+import {
+  buildConsultorioFilterOptions,
+  resolveAppointmentConsultorioFilterKey,
+} from '@/lib/consultorios'
 import { type SettingsMap } from '@/lib/settings'
 import { FESTIVOS_CO } from './festivos'
 
@@ -48,9 +51,11 @@ function toDateKey(date: Date): string {
 function EventoCalendario({
   event,
   settings,
+  consultorios,
 }: {
   event: CalendarEvent
   settings: SettingsMap
+  consultorios: Consultorio[]
 }) {
   const apt = event.resource
   if (apt.event_type === 'general') {
@@ -82,7 +87,7 @@ function EventoCalendario({
     )
   }
 
-  const { Icon } = resolveAppointmentCategoryConfig(resolveAppointmentCategory(apt), settings)
+  const { Icon } = resolveAppointmentVisualConfig(apt, consultorios, settings)
   const isConfirmed = isAppointmentConfirmed(apt)
   const isPaid = isAppointmentPaid(apt)
   const needsAction = appointmentNeedsAttention(apt)
@@ -187,17 +192,16 @@ function Pill({ dot, text }: { dot: string; text: string }) {
 
 interface AgendaClientProps {
   appointments: Appointment[]
+  consultorios: Consultorio[]
   settings: SettingsMap
 }
 
-type ModalidadFiltro = 'online' | 'medellin' | 'retiro'
-
-export default function AgendaClient({ appointments, settings }: AgendaClientProps) {
+export default function AgendaClient({ appointments, consultorios, settings }: AgendaClientProps) {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
   const [newSlotStart, setNewSlotStart] = useState<Date | null>(null)
   const [currentView, setCurrentView] = useState<View>((settings['agenda_vista_default'] as View) ?? 'week')
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [filtrosActivos, setFiltrosActivos] = useState<Set<ModalidadFiltro>>(new Set())
+  const [filtrosActivos, setFiltrosActivos] = useState<Set<string>>(new Set())
 
   // Derivados de settings
   const calMin = useMemo(() => {
@@ -217,7 +221,7 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
 
   const mostrarFestivos = settings['agenda_mostrar_festivos'] !== 'false'
 
-  function toggleFiltro(key: ModalidadFiltro) {
+  function toggleFiltro(key: string) {
     setFiltrosActivos((prev) => {
       const next = new Set(prev)
       if (next.has(key)) next.delete(key)
@@ -270,20 +274,30 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
       resource: apt,
     }))
 
+  const consultorioFilterOptions = useMemo(
+    () => buildConsultorioFilterOptions(consultorios, appointments, settings),
+    [appointments, consultorios, settings]
+  )
+
   // Aplicar filtro de modalidad — si no hay filtros activos, se muestran todos
   const visibleEvents = useMemo(() =>
     filtrosActivos.size === 0
       ? events
-      : events.filter((evt) => filtrosActivos.has(resolveAppointmentCategory(evt.resource) as ModalidadFiltro)),
-    [events, filtrosActivos]
+      : events.filter((evt) => {
+          const filterKey = resolveAppointmentConsultorioFilterKey(evt.resource, consultorios)
+          return filterKey ? filtrosActivos.has(filterKey) : false
+        }),
+    [consultorios, events, filtrosActivos]
   )
   const visibleAppointments = useMemo(
     () => visibleEvents.map((event) => event.resource),
     [visibleEvents]
   )
   const calendarEventComponent = useCallback(
-    ({ event }: { event: CalendarEvent }) => <EventoCalendario event={event} settings={settings} />,
-    [settings]
+    ({ event }: { event: CalendarEvent }) => (
+      <EventoCalendario event={event} settings={settings} consultorios={consultorios} />
+    ),
+    [consultorios, settings]
   )
 
   const handleSelectEvent = useCallback((event: CalendarEvent) => {
@@ -299,7 +313,7 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
     const isSoftPast = event.resource.estado_sesion === 'realizada' && getAppointmentEnd(event.resource) <= new Date()
     const backgroundColor = event.resource.event_type === 'general' && event.resource.color
       ? event.resource.color
-      : resolveAppointmentCategoryConfig(resolveAppointmentCategory(event.resource), settings).bg
+      : resolveAppointmentVisualConfig(event.resource, consultorios, settings).bg
     return {
       style: {
         backgroundColor,
@@ -314,7 +328,7 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
         filter: isSoftPast ? 'saturate(85%)' : 'none',
       }
     }
-  }, [settings])
+  }, [consultorios, settings])
 
   // Fondo de cada día: festivos (tinte muy sutil) + fines de semana (mauve apenas perceptible)
   const dayPropGetter = useCallback((date: Date) => {
@@ -458,30 +472,29 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
         </div>
       </div>
 
-      {/* ── Filtros de modalidad — desktop ── */}
+      {/* ── Filtros de consultorio — desktop ── */}
       <div className="hidden lg:flex items-center gap-2 px-1">
-        {((['online', 'medellin', 'retiro'] as const)).map((key) => {
-          const cfg = resolveAppointmentCategoryConfig(key, settings)
-          const Icon = cfg.Icon
-          const activo = filtrosActivos.has(key)
+        {consultorioFilterOptions.map((option) => {
+          const Icon = option.Icon
+          const activo = filtrosActivos.has(option.key)
           return (
             <button
-              key={key}
-              onClick={() => toggleFiltro(key)}
+              key={option.key}
+              onClick={() => toggleFiltro(option.key)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all"
               style={activo ? {
-                background: cfg.bg,
+                background: option.bg,
                 color: 'white',
-                border: `1px solid ${cfg.bg}`,
-                boxShadow: `0 2px 8px ${cfg.bg}44`,
+                border: `1px solid ${option.bg}`,
+                boxShadow: `0 2px 8px ${option.bg}44`,
               } : {
                 background: 'rgba(255,255,255,0.38)',
                 color: 'var(--ink-cool-muted)',
                 border: '1px solid transparent',
               }}
             >
-              {Icon && <Icon size={10} style={{ color: activo ? 'white' : cfg.bg }} />}
-              {cfg.label}
+              {Icon && <Icon size={10} style={{ color: activo ? 'white' : option.bg }} />}
+              {option.label}
             </button>
           )
         })}
@@ -496,29 +509,28 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
         )}
       </div>
 
-      {/* ── Filtros de modalidad — mobile (scroll horizontal) ── */}
+      {/* ── Filtros de consultorio — mobile (scroll horizontal) ── */}
       <div className="flex lg:hidden items-center gap-1.5 sm:gap-2 px-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-        {((['online', 'medellin', 'retiro'] as const)).map((key) => {
-          const cfg = resolveAppointmentCategoryConfig(key, settings)
-          const Icon = cfg.Icon
-          const activo = filtrosActivos.has(key)
+        {consultorioFilterOptions.map((option) => {
+          const Icon = option.Icon
+          const activo = filtrosActivos.has(option.key)
           return (
             <button
-              key={key}
-              onClick={() => toggleFiltro(key)}
+              key={option.key}
+              onClick={() => toggleFiltro(option.key)}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all shrink-0"
               style={activo ? {
-                background: cfg.bg,
+                background: option.bg,
                 color: 'white',
-                border: `1px solid ${cfg.bg}`,
+                border: `1px solid ${option.bg}`,
               } : {
                 background: 'rgba(255,255,255,0.38)',
                 color: 'var(--ink-cool-muted)',
                 border: '1px solid transparent',
               }}
             >
-              {Icon && <Icon size={10} style={{ color: activo ? 'white' : cfg.bg }} />}
-              {cfg.label}
+              {Icon && <Icon size={10} style={{ color: activo ? 'white' : option.bg }} />}
+              {option.label}
             </button>
           )
         })}
@@ -576,6 +588,7 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
         {currentView === 'week' ? (
           <MobileAgenda
             appointments={visibleAppointments}
+            consultorios={consultorios}
             currentDate={currentDate}
             settings={settings}
             onSelectAppointment={setSelectedAppointment}
@@ -600,7 +613,7 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
                 eventPropGetter={eventPropGetter}
                 dayPropGetter={dayPropGetter}
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                components={{ event: EventoCalendario, dateHeader: CabechaFecha, header: ColumnaHeader } as any}
+                components={{ event: calendarEventComponent, dateHeader: CabechaFecha, header: ColumnaHeader } as any}
                 min={new Date(0, 0, 0, 8, 0)}
                 max={new Date(0, 0, 0, 21, 0)}
                 messages={{
@@ -624,21 +637,23 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
 
       {/* Modal al tocar una cita existente */}
       {selectedAppointment && (
-        <AppointmentModal
-          appointment={selectedAppointment}
-          appointments={appointments}
-          settings={settings}
-          onClose={() => setSelectedAppointment(null)}
-        />
+            <AppointmentModal
+              appointment={selectedAppointment}
+              appointments={appointments}
+              consultorios={consultorios}
+              settings={settings}
+              onClose={() => setSelectedAppointment(null)}
+            />
       )}
 
       {/* Modal para crear una cita nueva */}
       {newSlotStart && (
-        <NewAppointmentModal
-          appointments={appointments}
-          defaultStart={newSlotStart}
-          settings={settings}
-          onClose={() => setNewSlotStart(null)}
+            <NewAppointmentModal
+              appointments={appointments}
+              consultorios={consultorios}
+              defaultStart={newSlotStart}
+              settings={settings}
+              onClose={() => setNewSlotStart(null)}
         />
       )}
     </div>

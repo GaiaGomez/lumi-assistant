@@ -1,11 +1,11 @@
-import type { Appointment, ClinicalNote, Patient } from '@/types'
+import type { Appointment, ClinicalNote, Consultorio, Patient } from '@/types'
 import {
   normalizeClinicalCanvasPaths,
   normalizeClinicalNoteTemplateData,
 } from '@/lib/clinical-note-template'
 import { normalizeAppointmentRecurrenceRule } from '@/lib/appointment-recurrence'
 
-export const APPOINTMENT_SELECT = 'id, patient_id, user_id, source_system, event_type, title, category, color, recurrence_group_id, recurrence_rule, doctoralia_uid, doctoralia_estado_sesion, estado_sesion_override, doctoralia_paciente_nombre, doctoralia_last_synced_at, doctoralia_last_seen_at, doctoralia_removed_at, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at, patient:patients(*)'
+export const APPOINTMENT_SELECT = 'id, patient_id, consultorio_id, user_id, source_system, event_type, title, category, color, recurrence_group_id, recurrence_rule, doctoralia_uid, doctoralia_estado_sesion, estado_sesion_override, doctoralia_paciente_nombre, doctoralia_last_synced_at, doctoralia_last_seen_at, doctoralia_removed_at, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at, patient:patients(*), consultorio:consultorios(*)'
 
 type SupabaseRow = Record<string, unknown>
 
@@ -32,9 +32,39 @@ function optionalPatient(value: unknown): Patient | undefined {
   return mapPatientRow(value)
 }
 
+function optionalConsultorio(value: unknown): Consultorio | undefined {
+  if (!value) return undefined
+  return mapConsultorioRow(value)
+}
+
 function optionalAppointment(value: unknown): Appointment | undefined {
   if (!value) return undefined
   return mapAppointmentRow(value)
+}
+
+export function mapConsultorioRow(row: unknown): Consultorio {
+  const record = expectRecord(row, 'consultorio')
+  return {
+    id: expectString(record.id, 'consultorio.id'),
+    user_id: expectString(record.user_id, 'consultorio.user_id'),
+    nombre: expectString(record.nombre, 'consultorio.nombre'),
+    color: expectString(record.color, 'consultorio.color'),
+    icono: expectString(record.icono, 'consultorio.icono'),
+    dato_principal_tipo: (
+      optionalString(record.dato_principal_tipo) as Consultorio['dato_principal_tipo']
+    ) ?? null,
+    dato_principal: optionalString(record.dato_principal),
+    legacy_key: (
+      optionalString(record.legacy_key) as Consultorio['legacy_key']
+    ) ?? null,
+    created_at: expectString(record.created_at, 'consultorio.created_at'),
+    updated_at: expectString(record.updated_at, 'consultorio.updated_at'),
+  }
+}
+
+export function mapConsultorioRows(rows: unknown): Consultorio[] {
+  if (!Array.isArray(rows)) return []
+  return rows.map(mapConsultorioRow)
 }
 
 export function mapPatientRow(row: unknown): Patient {
@@ -77,6 +107,7 @@ export function mapAppointmentRow(row: unknown): Appointment {
   return {
     id: expectString(record.id, 'appointment.id'),
     patient_id: optionalString(record.patient_id),
+    consultorio_id: optionalString(record.consultorio_id),
     user_id: expectString(record.user_id, 'appointment.user_id'),
     source_system: sourceSystem,
     event_type: record.event_type === 'general' ? 'general' : 'patient',
@@ -101,6 +132,7 @@ export function mapAppointmentRow(row: unknown): Appointment {
     created_at: expectString(record.created_at, 'appointment.created_at'),
     updated_at: optionalString(record.updated_at) ?? undefined,
     patient: optionalPatient(record.patient),
+    consultorio: optionalConsultorio(record.consultorio),
   }
 }
 

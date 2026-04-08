@@ -83,6 +83,33 @@ create table if not exists settings (
   unique (user_id, key)
 );
 
+-- TABLA: consultorios
+-- Entidad editable por usuario para representar lugares o modalidades reales.
+create table if not exists consultorios (
+  id                 uuid default gen_random_uuid() primary key,
+  user_id            uuid references auth.users(id) on delete cascade not null,
+  nombre             text not null,
+  color              text not null default '#9488B0',
+  icono              text not null default 'map-pin',
+  dato_principal_tipo text
+                     check (dato_principal_tipo in ('direccion', 'enlace', 'nota')),
+  dato_principal     text,
+  legacy_key         text
+                     check (legacy_key in ('online', 'medellin', 'retiro')),
+  created_at         timestamptz default now(),
+  updated_at         timestamptz default now()
+);
+
+create unique index if not exists consultorios_user_legacy_key_idx
+  on consultorios(user_id, legacy_key)
+  where legacy_key is not null;
+
+alter table appointments
+  add column if not exists consultorio_id uuid references consultorios(id) on delete set null;
+
+create index if not exists appointments_consultorio_id_idx
+  on appointments(consultorio_id);
+
 -- TABLA: clinical_notes
 -- Una nota clínica por sesión. Tiene texto escrito con teclado Y/O imagen del canvas
 create table if not exists clinical_notes (
@@ -124,6 +151,10 @@ create trigger update_settings_updated_at
   before update on settings
   for each row execute function update_updated_at_column();
 
+create trigger update_consultorios_updated_at
+  before update on consultorios
+  for each row execute function update_updated_at_column();
+
 -- ============================================================
 -- ROW LEVEL SECURITY (RLS) — MUY IMPORTANTE
 -- Cada usuario solo puede ver y modificar SUS propios datos
@@ -135,6 +166,7 @@ alter table appointments    enable row level security;
 alter table doctoralia_imports enable row level security;
 alter table clinical_notes  enable row level security;
 alter table settings        enable row level security;
+alter table consultorios    enable row level security;
 
 -- Políticas para patients
 create policy "patients: solo el dueño puede ver"   on patients for select using (auth.uid() = user_id);
@@ -165,6 +197,12 @@ create policy "settings: solo el dueño puede ver"   on settings for select usin
 create policy "settings: solo el dueño puede crear" on settings for insert with check (auth.uid() = user_id);
 create policy "settings: solo el dueño puede editar" on settings for update using (auth.uid() = user_id);
 create policy "settings: solo el dueño puede borrar" on settings for delete using (auth.uid() = user_id);
+
+-- Políticas para consultorios
+create policy "consultorios: solo el dueño puede ver" on consultorios for select using (auth.uid() = user_id);
+create policy "consultorios: solo el dueño puede crear" on consultorios for insert with check (auth.uid() = user_id);
+create policy "consultorios: solo el dueño puede editar" on consultorios for update using (auth.uid() = user_id);
+create policy "consultorios: solo el dueño puede borrar" on consultorios for delete using (auth.uid() = user_id);
 
 -- ============================================================
 -- STORAGE BUCKET — para guardar las imágenes del canvas

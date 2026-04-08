@@ -31,6 +31,9 @@ DECLARE
   p_brad      uuid := gen_random_uuid();
   p_zendaya   uuid := gen_random_uuid();
   p_leo       uuid := gen_random_uuid();
+  c_online    uuid := gen_random_uuid();
+  c_medellin  uuid := gen_random_uuid();
+  c_retiro    uuid := gen_random_uuid();
 
 BEGIN
 
@@ -65,6 +68,18 @@ BEGIN
       'Johansson','Reynolds','Stone','Evans','Robbie',
       'Reeves','Lawrence','Pitt','Coleman','DiCaprio'
     );
+
+  DELETE FROM consultorios
+  WHERE user_id = v_user_id
+    AND legacy_key IN ('online', 'medellin', 'retiro');
+
+  -- ── PASO 2.5: insertar consultorios demo ──────────────────
+  INSERT INTO consultorios
+    (id, user_id, nombre, color, icono, dato_principal_tipo, dato_principal, legacy_key)
+  VALUES
+    (c_online, v_user_id, 'Online', '#8FA5BD', 'monitor', 'enlace', 'https://meet.google.com/demo-lumi', 'online'),
+    (c_medellin, v_user_id, 'Medellín', '#9488B0', 'map-pin', 'direccion', 'Calle 10 # 43D-28, El Poblado', 'medellin'),
+    (c_retiro, v_user_id, 'Retiro', '#7EA88F', 'leaf', 'nota', 'Llevar ropa cómoda y llegar 10 minutos antes.', 'retiro');
 
   -- ── PASO 3: insertar pacientes demo ───────────────────────
   INSERT INTO patients

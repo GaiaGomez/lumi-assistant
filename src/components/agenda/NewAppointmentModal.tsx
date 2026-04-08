@@ -8,6 +8,7 @@ import {
   ChevronDown,
   Clock3,
   Loader2,
+  MapPin,
   Plus,
   Repeat2,
   Type,
@@ -21,6 +22,7 @@ import type {
   AppointmentRecurrenceRule,
   AppointmentRecurrenceUnit,
   AppointmentWeekday,
+  Consultorio,
   Patient,
 } from '@/types'
 import {
@@ -31,6 +33,7 @@ import {
   getAppointmentScheduleError,
 } from '@/lib/appointments'
 import { createAppointments } from '@/lib/appointment-updates'
+import { resolveConsultorioDisplayConfig } from '@/lib/consultorios'
 import { mapPatientRows } from '@/lib/supabase/mappers'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -43,6 +46,7 @@ import SectionHeader from '@/components/ui/SectionHeader'
 
 interface NewAppointmentModalProps {
   appointments: Appointment[]
+  consultorios: Consultorio[]
   defaultStart: Date
   settings: SettingsMap
   onClose: () => void
@@ -119,6 +123,7 @@ function getWeekdayFromDate(date: Date): AppointmentWeekday {
 
 export default function NewAppointmentModal({
   appointments,
+  consultorios,
   defaultStart,
   settings,
   onClose,
@@ -153,6 +158,9 @@ export default function NewAppointmentModal({
   const [newPatientTelefono, setNewPatientTelefono] = useState('')
   const [newPatientEmail, setNewPatientEmail] = useState('')
   const [savingNewPatient, setSavingNewPatient] = useState(false)
+  const [selectedConsultorioId, setSelectedConsultorioId] = useState<string | null>(
+    consultorios[0]?.id ?? null
+  )
 
   useEffect(() => {
     supabase
@@ -174,6 +182,12 @@ export default function NewAppointmentModal({
 
     setHoraFinValue(toTimeInputValue(addMinutes(nextStart, defaultDurationMinutes)))
   }, [defaultDurationMinutes, fechaValue, horaFinTouched, horaInicioValue])
+
+  useEffect(() => {
+    if (selectedConsultorioId) return
+    if (consultorios.length === 0) return
+    setSelectedConsultorioId(consultorios[0].id)
+  }, [consultorios, selectedConsultorioId])
 
   const filteredPatients = search
     ? patients.filter((patient) =>
@@ -305,6 +319,7 @@ export default function NewAppointmentModal({
   }, [appointments, occurrences])
 
   const eventType: AppointmentEventType = selectedPatient ? 'patient' : 'general'
+  const selectedConsultorio = consultorios.find((consultorio) => consultorio.id === selectedConsultorioId) ?? null
 
   const titleError = eventType === 'general' && !title.trim()
     ? 'Escribe un titulo o selecciona un paciente.'
@@ -333,6 +348,7 @@ export default function NewAppointmentModal({
 
     const payload = occurrences.map((occurrence) => ({
       patient_id: eventType === 'patient' ? selectedPatient?.id ?? null : null,
+      consultorio_id: eventType === 'patient' ? selectedConsultorioId : null,
       user_id: user.id,
       event_type: eventType,
       title: title.trim() || null,
@@ -342,7 +358,7 @@ export default function NewAppointmentModal({
       recurrence_rule: recurrenceRule,
       fecha_inicio: occurrence.start.toISOString(),
       fecha_fin: occurrence.end.toISOString(),
-      modalidad: eventType === 'patient' ? ('online' as const) : null,
+      modalidad: null,
       notas: null,
     }))
 
@@ -527,6 +543,52 @@ export default function NewAppointmentModal({
               </div>
             )}
           </div>
+
+          {eventType === 'patient' && (
+            <div>
+              <SectionHeader label="Consultorio" className="mb-2" />
+              {consultorios.length > 0 ? (
+                <div className="space-y-2">
+                  <span className="lumi-control-shell">
+                    <span className="lumi-control-icon" aria-hidden="true">
+                      {selectedConsultorio ? (
+                        (() => {
+                          const { Icon } = resolveConsultorioDisplayConfig(selectedConsultorio)
+                          return <Icon size={14} />
+                        })()
+                      ) : (
+                        <MapPin size={14} />
+                      )}
+                    </span>
+                    <select
+                      value={selectedConsultorioId ?? ''}
+                      onChange={(event) => setSelectedConsultorioId(event.target.value || null)}
+                      className="lumi-control-field lumi-control-field--select w-full"
+                    >
+                      {consultorios.map((consultorio) => (
+                        <option key={consultorio.id} value={consultorio.id}>
+                          {consultorio.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </span>
+
+                  {selectedConsultorio && (() => {
+                    const display = resolveConsultorioDisplayConfig(selectedConsultorio)
+                    return display.primaryValue ? (
+                      <p className="text-[12px] leading-snug" style={{ color: 'var(--ink-cool-faint)' }}>
+                        {display.primaryValue}
+                      </p>
+                    ) : null
+                  })()}
+                </div>
+              ) : (
+                <p className="text-[13px] leading-snug" style={{ color: 'var(--ink-cool-faint)' }}>
+                  Aún no tienes consultorios creados. Puedes agregarlos en Configuración.
+                </p>
+              )}
+            </div>
+          )}
 
           <div>
             <SectionHeader label="Titulo" className="mb-2" />

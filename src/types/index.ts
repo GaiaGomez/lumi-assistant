@@ -17,6 +17,7 @@ export interface Patient {
 }
 
 export type AppointmentModalidad = 'online' | 'medellin' | 'retiro'
+export type ConsultorioPrimaryType = 'direccion' | 'enlace' | 'nota'
 export type AppointmentEventType = 'patient' | 'general'
 export type AppointmentSourceSystem = 'manual' | 'doctoralia'
 export type AppointmentRecurrencePreset =
@@ -65,9 +66,23 @@ export interface ClinicalCanvasPath {
   endTimestamp?: number
 }
 
+export interface Consultorio {
+  id: string
+  user_id: string
+  nombre: string
+  color: string
+  icono: string
+  dato_principal_tipo: ConsultorioPrimaryType | null
+  dato_principal: string | null
+  legacy_key: AppointmentModalidad | null
+  created_at: string
+  updated_at: string
+}
+
 export interface Appointment {
   id: string
   patient_id: string | null
+  consultorio_id: string | null
   user_id: string
   source_system: AppointmentSourceSystem
   event_type: AppointmentEventType
@@ -97,6 +112,7 @@ export interface Appointment {
   updated_at?: string
   // Relación expandida — viene del JOIN con patients
   patient?: Patient
+  consultorio?: Consultorio
 }
 
 export interface ClinicalNote {
@@ -124,4 +140,3 @@ export interface CalendarEvent {
   end: Date
   resource: Appointment  // el objeto completo de la cita vive acá
 }
-

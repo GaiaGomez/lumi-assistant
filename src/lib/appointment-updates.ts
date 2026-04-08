@@ -7,6 +7,7 @@ export type AppointmentUpdateInput = Partial<Pick<
   | 'estado_sesion'
   | 'estado_sesion_override'
   | 'estado_pago'
+  | 'consultorio_id'
   | 'modalidad'
   | 'fecha_inicio'
   | 'fecha_fin'
@@ -18,6 +19,7 @@ export type AppointmentUpdateInput = Partial<Pick<
 
 export interface CreateAppointmentInput {
   patient_id: string | null
+  consultorio_id: string | null
   user_id: string
   event_type: Appointment['event_type']
   title?: Appointment['title']
@@ -60,6 +62,7 @@ export async function updateAppointmentById(
 function buildAppointmentPayload(input: CreateAppointmentInput) {
   return {
     patient_id: input.patient_id,
+    consultorio_id: input.consultorio_id,
     user_id: input.user_id,
     event_type: input.event_type,
     title: normalizeText(input.title),

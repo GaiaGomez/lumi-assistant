@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic'
 // ============================================================
 
 import { createClient } from '@/lib/supabase/server'
+import { fetchConsultorios } from '@/lib/consultorios'
 import { fetchSettings } from '@/lib/settings'
 import PageBlobs from '@/components/ui/PageBlobs'
 import ConfiguracionClient from '@/components/configuracion/ConfiguracionClient'
@@ -15,7 +16,10 @@ export default async function ConfiguracionPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const settings = await fetchSettings(supabase, user!.id)
+  const [settings, consultorios] = await Promise.all([
+    fetchSettings(supabase, user!.id),
+    fetchConsultorios(supabase, user!.id),
+  ])
 
   return (
     <div className="relative mx-auto max-w-[860px] pb-1">
@@ -32,7 +36,7 @@ export default async function ConfiguracionPage() {
 
       {/* Client tabs + secciones */}
       <div className="relative">
-        <ConfiguracionClient settings={settings} userId={user!.id} />
+        <ConfiguracionClient settings={settings} consultorios={consultorios} userId={user!.id} />
       </div>
     </div>
   )

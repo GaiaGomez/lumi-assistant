@@ -6,8 +6,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, FileText, MessageCircle, AlertTriangle, Trash2, CalendarDays, Clock3, ChevronDown, Tag, Type } from 'lucide-react'
-import { Appointment, AppointmentModalidad } from '@/types'
+import { X, FileText, MessageCircle, AlertTriangle, Trash2, CalendarDays, Clock3, ChevronDown, MapPin, Tag, Type } from 'lucide-react'
+import { Appointment, Consultorio } from '@/types'
 import {
   APPOINTMENT_SESSION_LABEL,
   APPOINTMENT_SESSION_STATES,
@@ -19,8 +19,11 @@ import {
 } from '@/lib/datetime'
 import {
   GENERAL_EVENT_COLOR_PRESETS,
-  resolveAppointmentModalidadConfig,
 } from '@/lib/appointment-ui'
+import {
+  resolveAppointmentConsultorioSelectionId,
+  resolveConsultorioDisplayConfig,
+} from '@/lib/consultorios'
 import {
   buildAppointmentDisplayTitle,
   buildLocalAppointmentStart,
@@ -42,6 +45,7 @@ import ModalShell from '@/components/ui/ModalShell'
 interface AppointmentModalProps {
   appointment: Appointment
   appointments: Appointment[]
+  consultorios: Consultorio[]
   settings: SettingsMap
   onClose: () => void
 }
@@ -99,6 +103,7 @@ function formatConflictDateTime(appointment: Appointment): string {
 export default function AppointmentModal({
   appointment,
   appointments,
+  consultorios,
   settings,
   onClose,
 }: AppointmentModalProps) {
@@ -107,7 +112,9 @@ export default function AppointmentModal({
 
   const [estadoSesion, setEstadoSesion] = useState(appointment.estado_sesion)
   const [estadoPago, setEstadoPago] = useState(appointment.estado_pago)
-  const [modalidadEdit, setModalidadEdit] = useState<AppointmentModalidad | null>(appointment.modalidad)
+  const [consultorioIdEdit, setConsultorioIdEdit] = useState<string | null>(
+    resolveAppointmentConsultorioSelectionId(appointment, consultorios)
+  )
   const [title, setTitle] = useState(appointment.title ?? '')
   const [category, setCategory] = useState(appointment.category ?? '')
   const [color, setColor] = useState(appointment.color ?? null)
@@ -124,6 +131,7 @@ export default function AppointmentModal({
   const [deudaCount, setDeudaCount] = useState<number | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const selectedConsultorio = consultorios.find((consultorio) => consultorio.id === consultorioIdEdit) ?? null
   // Deuda del paciente — sesiones realizadas sin pagar (excluye la cita actual)
   useEffect(() => {
     async function loadDeuda() {
@@ -163,7 +171,7 @@ export default function AppointmentModal({
   const hasChanges =
     estadoSesion !== appointment.estado_sesion ||
     estadoPago !== appointment.estado_pago ||
-    modalidadEdit !== appointment.modalidad ||
+    consultorioIdEdit !== resolveAppointmentConsultorioSelectionId(appointment, consultorios) ||
     title.trim() !== (appointment.title ?? '') ||
     category.trim() !== (appointment.category ?? '') ||
     color !== (appointment.color ?? null) ||
@@ -185,7 +193,8 @@ export default function AppointmentModal({
         estado_sesion: estadoSesion,
         estado_sesion_override: null,
         estado_pago:   estadoPago,
-        modalidad:     modalidadEdit,
+        consultorio_id: consultorioIdEdit,
+        modalidad:     consultorioIdEdit ? null : appointment.modalidad,
         title:         title.trim() || null,
         category:      category.trim() || null,
         color,
@@ -445,28 +454,50 @@ export default function AppointmentModal({
               </div>
 
               <div>
-                <SectionHeader label="Modalidad" className="mb-2.5" />
-                <div className="grid grid-cols-3 gap-1.5">
-                  {(['online', 'medellin', 'retiro'] as AppointmentModalidad[]).map((value) => {
-                    const { label, color, textColor, Icon } = resolveAppointmentModalidadConfig(value, settings)
-                    const isActive = modalidadEdit === value
-                    return (
-                      <button
-                        key={value}
-                        onClick={() => setModalidadEdit(value)}
-                        className="py-2.5 px-3 rounded-[14px] text-[14px] font-medium transition-all flex items-center justify-center gap-1.5"
-                        style={isActive ? {
-                          background: `${color}22`,
-                          color: textColor,
-                          border: `1px solid ${color}44`,
-                        } : inactiveToggle}
+                <SectionHeader label="Consultorio" className="mb-2.5" />
+                {consultorios.length > 0 ? (
+                  <div className="space-y-2">
+                    <span className="lumi-control-shell">
+                      <span className="lumi-control-icon" aria-hidden="true">
+                        {selectedConsultorio ? (
+                          (() => {
+                            const { Icon } = resolveConsultorioDisplayConfig(selectedConsultorio)
+                            return <Icon size={14} />
+                          })()
+                        ) : (
+                          <MapPin size={14} />
+                        )}
+                      </span>
+                      <span className="lumi-control-affordance" aria-hidden="true">
+                        <ChevronDown size={14} />
+                      </span>
+                      <select
+                        value={consultorioIdEdit ?? ''}
+                        onChange={(event) => setConsultorioIdEdit(event.target.value || null)}
+                        className="lumi-control-field lumi-control-field--select w-full"
                       >
-                        <Icon size={12} style={{ color: isActive ? color : undefined }} />
-                        {label}
-                      </button>
-                    )
-                  })}
-                </div>
+                        {consultorios.map((consultorio) => (
+                          <option key={consultorio.id} value={consultorio.id}>
+                            {consultorio.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </span>
+
+                    {selectedConsultorio && (() => {
+                      const display = resolveConsultorioDisplayConfig(selectedConsultorio)
+                      return display.primaryValue ? (
+                        <p className="text-[12px] leading-snug" style={{ color: 'var(--ink-cool-faint)' }}>
+                          {display.primaryValue}
+                        </p>
+                      ) : null
+                    })()}
+                  </div>
+                ) : (
+                  <p className="text-[13px] leading-snug" style={{ color: 'var(--ink-cool-faint)' }}>
+                    Esta cita no tiene un consultorio disponible en tu configuración actual.
+                  </p>
+                )}
               </div>
 
               <div>

@@ -10,17 +10,25 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  Calendar, MessageCircle, MapPin, Users, FileText, Shield,
+  Building2, Calendar, MessageCircle, MapPin, Plus, Trash2, Users, FileText, Shield,
   Check, AlertCircle, Download, ChevronDown, Eye, EyeOff, Loader2,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import {
+  CONSULTORIO_ICON_OPTIONS,
+  type ConsultorioIconKey,
+  resolveConsultorioDisplayConfig,
+} from '@/lib/consultorios'
+import { mapConsultorioRow } from '@/lib/supabase/mappers'
 import { upsertSettingValue, type SettingsKey, type SettingsMap } from '@/lib/settings'
+import type { Consultorio, ConsultorioPrimaryType } from '@/types'
 import TemplateEditor from './TemplateEditor'
 import DoctoraliaSync from './DoctoraliaSync'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
 interface Props {
+  consultorios: Consultorio[]
   settings: SettingsMap
   userId: string
 }
@@ -197,9 +205,15 @@ function LumiSelect({
   )
 }
 
+const inactiveToggle = {
+  background: 'rgba(255,255,255,0.42)',
+  color: 'var(--ink-cool-strong)',
+  border: '1px solid transparent',
+}
+
 // ── AGENDA ─────────────────────────────────────────────────────────────────
 
-function AgendaSection({ settings, userId }: Props) {
+function AgendaSection({ settings, userId }: Pick<Props, 'settings' | 'userId'>) {
   const { state, save } = useSave(userId)
 
   const [duracion,    setDuracion]    = useState(settings['agenda_duracion_cita']    ?? '60')
@@ -364,7 +378,7 @@ function AgendaSection({ settings, userId }: Props) {
 
 // ── RECORDATORIOS ──────────────────────────────────────────────────────────
 
-function RecordatoriosSection({ settings, userId }: Props) {
+function RecordatoriosSection({ settings, userId }: Pick<Props, 'settings' | 'userId'>) {
   const { state, save } = useSave(userId)
 
   const [firma, setFirma] = useState(settings['recordatorio_firma'] ?? '')
@@ -416,143 +430,446 @@ function RecordatoriosSection({ settings, userId }: Props) {
 
 // ── CONSULTORIOS ───────────────────────────────────────────────────────────
 
-const MODALIDADES_DEFS = [
-  {
-    id:            'medellin' as const,
-    emoji:         '🏢',
-    defaultColor:  '#9488B0',
-    nombreKey:     'modalidad_medellin_nombre'     as SettingsKey,
-    colorKey:      'modalidad_medellin_color'      as SettingsKey,
-    campoKey:      'modalidad_medellin_direccion'  as SettingsKey,
-    campoLabel:    'Dirección del consultorio',
-    campoPlaceholder: 'Calle 10 # 43D-28, El Poblado',
-    campoHint:     'Dirección que se enviará en los mensajes de confirmación.',
-  },
-  {
-    id:            'online' as const,
-    emoji:         '💻',
-    defaultColor:  '#8FA5BD',
-    nombreKey:     'modalidad_online_nombre'  as SettingsKey,
-    colorKey:      'modalidad_online_color'   as SettingsKey,
-    campoKey:      'modalidad_online_enlace'  as SettingsKey,
-    campoLabel:    'Enlace de videollamada',
-    campoPlaceholder: 'https://meet.google.com/tu-sala',
-    campoHint:     'Link que podrás reutilizar en los mensajes manuales para sesiones online.',
-  },
-  {
-    id:            'retiro' as const,
-    emoji:         '🌿',
-    defaultColor:  '#7EA88F',
-    nombreKey:     'modalidad_retiro_nombre'         as SettingsKey,
-    colorKey:      'modalidad_retiro_color'          as SettingsKey,
-    campoKey:      'modalidad_retiro_instrucciones'  as SettingsKey,
-    campoLabel:    'Instrucciones logísticas',
-    campoPlaceholder: 'Ej: Llevar ropa cómoda. El encuentro es en Parque Arví.',
-    campoHint:     'Nota que se incluirá al confirmar sesiones de retiro.',
-  },
-] as const
+type ConsultorioFormValue = {
+  nombre: string
+  color: string
+  icono: ConsultorioIconKey
+  dato_principal_tipo: ConsultorioPrimaryType | ''
+  dato_principal: string
+}
 
-function ModalidadCard({ def, settings, userId }: {
-  def: typeof MODALIDADES_DEFS[number]
-  settings: SettingsMap
+function toConsultorioFormValue(consultorio?: Consultorio | null): ConsultorioFormValue {
+  return {
+    nombre: consultorio?.nombre ?? '',
+    color: consultorio?.color ?? '#9488B0',
+    icono: (consultorio?.icono as ConsultorioIconKey | undefined) ?? 'map-pin',
+    dato_principal_tipo: consultorio?.dato_principal_tipo ?? '',
+    dato_principal: consultorio?.dato_principal ?? '',
+  }
+}
+
+function buildPrimaryFieldCopy(tipo: ConsultorioPrimaryType | '') {
+  if (!tipo) {
+    return {
+      label: 'Detalle opcional',
+      placeholder: 'Selecciona primero el tipo de dato principal.',
+      inputType: 'text' as const,
+    }
+  }
+  if (tipo === 'direccion') {
+    return {
+      label: 'Dirección',
+      placeholder: 'Ej. Calle 10 # 43D-28, El Poblado',
+      inputType: 'text' as const,
+    }
+  }
+  if (tipo === 'enlace') {
+    return {
+      label: 'Enlace',
+      placeholder: 'https://meet.google.com/tu-sala',
+      inputType: 'url' as const,
+    }
+  }
+  return {
+    label: 'Nota corta',
+    placeholder: 'Ej. Llevar ropa cómoda o llegar 10 min antes.',
+    inputType: 'text' as const,
+  }
+}
+
+function ConsultorioCard({
+  consultorio,
+  userId,
+  onCancelNew,
+  onDeleted,
+  onSaved,
+}: {
+  consultorio?: Consultorio
   userId: string
+  onCancelNew?: () => void
+  onDeleted: (consultorioId: string) => void
+  onSaved: (consultorio: Consultorio) => void
 }) {
-  const { state, save } = useSave(userId)
+  const router = useRouter()
+  const supabase = createClient()
+  const [state, setState] = useState<SaveState>('idle')
+  const [error, setError] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [form, setForm] = useState<ConsultorioFormValue>(() => toConsultorioFormValue(consultorio))
 
-  const [nombre, setNombre] = useState(settings[def.nombreKey] || def.id.charAt(0).toUpperCase() + def.id.slice(1))
-  const [color,  setColor]  = useState(settings[def.colorKey]  || def.defaultColor)
-  const [campo,  setCampo]  = useState(settings[def.campoKey]  ?? '')
+  const preview = resolveConsultorioDisplayConfig({
+    id: consultorio?.id ?? 'preview',
+    nombre: form.nombre.trim() || 'Consultorio',
+    color: form.color,
+    icono: form.icono,
+    dato_principal_tipo: form.dato_principal_tipo || null,
+    dato_principal: form.dato_principal,
+  })
+  const primaryFieldCopy = buildPrimaryFieldCopy(form.dato_principal_tipo)
 
-  function handleSave() {
-    save([
-      [def.nombreKey, nombre],
-      [def.colorKey,  color],
-      [def.campoKey,  campo],
-    ])
+  function updateForm<K extends keyof ConsultorioFormValue>(key: K, value: ConsultorioFormValue[K]) {
+    setForm((current) => ({ ...current, [key]: value }))
+  }
+
+  async function handleSave() {
+    if (!form.nombre.trim()) {
+      setError('Escribe un nombre para el consultorio.')
+      return
+    }
+
+    setState('saving')
+    setError(null)
+
+    const payload = {
+      user_id: userId,
+      nombre: form.nombre.trim(),
+      color: form.color,
+      icono: form.icono,
+      dato_principal_tipo: form.dato_principal_tipo || null,
+      dato_principal: form.dato_principal_tipo ? form.dato_principal.trim() || null : null,
+    }
+
+    try {
+      const response = consultorio
+        ? await supabase
+            .from('consultorios')
+            .update(payload)
+            .eq('id', consultorio.id)
+            .select('*')
+            .single()
+        : await supabase
+            .from('consultorios')
+            .insert(payload)
+            .select('*')
+            .single()
+
+      if (response.error || !response.data) {
+        throw response.error ?? new Error('No se pudo guardar el consultorio.')
+      }
+
+      onSaved(mapConsultorioRow(response.data))
+      setState('saved')
+      router.refresh()
+      setTimeout(() => setState('idle'), 2500)
+    } catch {
+      setState('error')
+      setError('No se pudo guardar. Intenta de nuevo.')
+    }
+  }
+
+  async function handleDelete() {
+    if (!consultorio) {
+      onCancelNew?.()
+      return
+    }
+
+    setState('saving')
+    setError(null)
+
+    const { count, error: usageError } = await supabase
+      .from('appointments')
+      .select('id', { count: 'exact', head: true })
+      .eq('consultorio_id', consultorio.id)
+
+    if (usageError) {
+      setState('error')
+      setError('No se pudo validar el uso del consultorio.')
+      return
+    }
+
+    if ((count ?? 0) > 0) {
+      setState('error')
+      setConfirmDelete(false)
+      setError('No puedes eliminar este consultorio porque ya está siendo usado por citas existentes.')
+      return
+    }
+
+    const { error: deleteError } = await supabase
+      .from('consultorios')
+      .delete()
+      .eq('id', consultorio.id)
+
+    if (deleteError) {
+      setState('error')
+      setError('No se pudo eliminar. Intenta de nuevo.')
+      return
+    }
+
+    onDeleted(consultorio.id)
+    router.refresh()
   }
 
   return (
     <SettingsCard>
       <div className="flex items-center gap-3 mb-4">
         <div
-          className="w-10 h-10 rounded-[12px] flex items-center justify-center flex-shrink-0 text-[18px]"
-          style={{ background: `${color}28`, border: `1px solid ${color}44` }}
+          className="w-11 h-11 rounded-[14px] flex items-center justify-center flex-shrink-0"
+          style={{ background: `${preview.color}22`, border: `1px solid ${preview.color}44` }}
         >
-          {def.emoji}
+          <preview.Icon size={18} style={{ color: preview.color }} />
         </div>
+
         <div className="flex-1 min-w-0">
           <input
             type="text"
-            value={nombre}
-            onChange={e => setNombre(e.target.value)}
+            value={form.nombre}
+            onChange={(event) => updateForm('nombre', event.target.value)}
             className="text-[14px] font-medium bg-transparent border-b w-full focus:outline-none pb-0.5"
             style={{
               color: 'var(--ink-cool-strong)',
               borderColor: 'var(--border-glass-muted)',
             }}
+            placeholder="Nombre del consultorio"
           />
           <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-cool-muted)' }}>
-            Nombre de la modalidad
+            Nombre visible en agenda y citas
           </p>
         </div>
-        {/* Color picker */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+
+        <label className="relative cursor-pointer flex items-center gap-2 flex-shrink-0">
           <span className="text-[12px]" style={{ color: 'var(--ink-cool-faint)' }}>Color</span>
-          <label className="relative cursor-pointer">
-            <div
-              className="w-7 h-7 rounded-full border-2"
-              style={{ background: color, borderColor: 'var(--border-glass-muted)' }}
+          <div
+            className="w-7 h-7 rounded-full border-2"
+            style={{ background: form.color, borderColor: 'var(--border-glass-muted)' }}
+          />
+          <input
+            type="color"
+            value={form.color}
+            onChange={(event) => updateForm('color', event.target.value)}
+            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+          />
+        </label>
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <p className="section-kicker mb-1.5">Ícono</p>
+          <div className="flex flex-wrap gap-1.5">
+            {CONSULTORIO_ICON_OPTIONS.map((option) => {
+              const isActive = form.icono === option.value
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => updateForm('icono', option.value)}
+                  className="py-2 px-3 rounded-[12px] text-[13px] font-medium transition-all flex items-center gap-1.5"
+                  style={isActive ? {
+                    background: `${preview.color}22`,
+                    color: preview.textColor,
+                    border: `1px solid ${preview.color}44`,
+                  } : inactiveToggle}
+                >
+                  <option.Icon size={13} style={{ color: isActive ? preview.color : undefined }} />
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-[180px_minmax(0,1fr)] gap-2">
+          <div>
+            <p className="section-kicker mb-1.5">Dato principal</p>
+            <LumiSelect
+              value={form.dato_principal_tipo}
+              onChange={(value) => updateForm('dato_principal_tipo', value as ConsultorioPrimaryType | '')}
+              options={[
+                { value: '', label: 'Sin dato extra' },
+                { value: 'direccion', label: 'Dirección' },
+                { value: 'enlace', label: 'Enlace' },
+                { value: 'nota', label: 'Nota corta' },
+              ]}
             />
+          </div>
+
+          <div>
+            <p className="section-kicker mb-1.5">{primaryFieldCopy.label}</p>
             <input
-              type="color"
-              value={color}
-              onChange={e => setColor(e.target.value)}
-              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+              type={primaryFieldCopy.inputType}
+              value={form.dato_principal}
+              onChange={(event) => updateForm('dato_principal', event.target.value)}
+              placeholder={primaryFieldCopy.placeholder}
+              disabled={!form.dato_principal_tipo}
+              className="w-full rounded-[12px] px-3.5 py-2.5 text-[14px] focus:outline-none disabled:opacity-50"
+              style={{
+                background: 'rgba(255,255,255,0.72)',
+                border: '1px solid var(--border-glass-white)',
+                color: 'var(--ink-cool-strong)',
+              }}
             />
-          </label>
+          </div>
+        </div>
+
+        {preview.primaryValue && (
+          <p className="text-[12px] leading-snug" style={{ color: 'var(--ink-cool-faint)' }}>
+            {preview.primaryValue}
+          </p>
+        )}
+      </div>
+
+      {error && (
+        <p className="mt-3 text-[13px]" style={{ color: 'var(--state-cancel-text)' }}>
+          {error}
+        </p>
+      )}
+
+      <div className="flex items-center justify-between pt-3 mt-3" style={{ borderTop: '1px solid var(--border-glass-muted)' }}>
+        <div className="flex items-center gap-2">
+          {consultorio ? (
+            confirmDelete ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(false)}
+                  className="btn-subtle px-3 py-2 text-[12px]"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={state === 'saving'}
+                  className="btn-subtle px-3 py-2 text-[12px] flex items-center gap-1.5"
+                  style={{ color: 'var(--state-cancel-text)' }}
+                >
+                  <Trash2 size={12} />
+                  Confirmar borrado
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                className="btn-subtle px-3 py-2 text-[12px] flex items-center gap-1.5"
+              >
+                <Trash2 size={12} />
+                Eliminar
+              </button>
+            )
+          ) : (
+            <button
+              type="button"
+              onClick={onCancelNew}
+              className="btn-subtle px-3 py-2 text-[12px]"
+            >
+              Cancelar
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          {state === 'saved' && (
+            <span className="flex items-center gap-1.5 text-[13px]" style={{ color: 'var(--state-success-text)' }}>
+              <Check size={14} />
+              Guardado
+            </span>
+          )}
+          {state === 'error' && !error && (
+            <span className="flex items-center gap-1.5 text-[13px]" style={{ color: 'var(--state-cancel-text)' }}>
+              <AlertCircle size={14} />
+              Error
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={state === 'saving'}
+            className="btn-action px-4 py-2 text-[11px] tracking-[0.06em] uppercase flex items-center gap-2"
+          >
+            {state === 'saving' && <Loader2 size={12} className="animate-spin" />}
+            {state === 'saving' ? 'Guardando…' : 'Guardar'}
+          </button>
         </div>
       </div>
-
-      <div>
-        <p className="section-kicker mb-1.5">{def.campoLabel}</p>
-        <input
-          type={def.id === 'online' ? 'url' : 'text'}
-          value={campo}
-          onChange={e => setCampo(e.target.value)}
-          placeholder={def.campoPlaceholder}
-          className="w-full rounded-[12px] px-3.5 py-2.5 text-[14px] focus:outline-none"
-          style={{
-            background: 'rgba(255,255,255,0.72)',
-            border: '1px solid var(--border-glass-white)',
-            color: 'var(--ink-cool-strong)',
-          }}
-        />
-        <p className="text-[12px] mt-1.5" style={{ color: 'var(--ink-cool-muted)' }}>
-          {def.campoHint}
-        </p>
-      </div>
-
-      <SaveButton state={state} onClick={handleSave} />
     </SettingsCard>
   )
 }
 
-function ConsultoriosSection({ settings, userId }: Props) {
+function ConsultoriosSection({ consultorios, userId }: Pick<Props, 'consultorios' | 'userId'>) {
+  const [items, setItems] = useState(consultorios)
+  const [showNewCard, setShowNewCard] = useState(false)
+
+  function handleSaved(saved: Consultorio) {
+    setItems((current) => {
+      const exists = current.some((item) => item.id === saved.id)
+      if (exists) {
+        return current.map((item) => item.id === saved.id ? saved : item)
+      }
+      return [...current, saved]
+    })
+    setShowNewCard(false)
+  }
+
+  function handleDeleted(consultorioId: string) {
+    setItems((current) => current.filter((item) => item.id !== consultorioId))
+  }
+
   return (
     <div className="space-y-3">
-      <p className="text-[13px] mb-1" style={{ color: 'var(--ink-cool-faint)' }}>
-        Configura el nombre, color e información de cada modalidad de atención.
-      </p>
-      {MODALIDADES_DEFS.map(def => (
-        <ModalidadCard key={def.id} def={def} settings={settings} userId={userId} />
-      ))}
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[13px]" style={{ color: 'var(--ink-cool-faint)' }}>
+            Crea y edita los consultorios reales que quieres usar en agenda y citas.
+          </p>
+        </div>
+        {!showNewCard && (
+          <button
+            type="button"
+            onClick={() => setShowNewCard(true)}
+            className="btn-action px-3 py-2 text-[12px] flex items-center gap-1.5 shrink-0"
+          >
+            <Plus size={12} />
+            Agregar consultorio
+          </button>
+        )}
+      </div>
+
+      {showNewCard && (
+        <ConsultorioCard
+          userId={userId}
+          onCancelNew={() => setShowNewCard(false)}
+          onDeleted={() => undefined}
+          onSaved={handleSaved}
+        />
+      )}
+
+      {items.length === 0 && !showNewCard ? (
+        <SettingsCard>
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-[12px] flex items-center justify-center"
+              style={{ background: 'rgba(148,136,176,0.14)', border: '1px solid var(--border-glass-white)' }}
+            >
+              <Building2 size={18} style={{ color: 'var(--ink-cool-soft)' }} />
+            </div>
+            <div>
+              <p className="text-[14px] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
+                Aún no tienes consultorios
+              </p>
+              <p className="text-[13px]" style={{ color: 'var(--ink-cool-faint)' }}>
+                Crea el primero para usarlo al crear o editar citas.
+              </p>
+            </div>
+          </div>
+        </SettingsCard>
+      ) : (
+        items.map((consultorio) => (
+          <ConsultorioCard
+            key={consultorio.id}
+            consultorio={consultorio}
+            userId={userId}
+            onDeleted={handleDeleted}
+            onSaved={handleSaved}
+          />
+        ))
+      )}
     </div>
   )
 }
 
 // ── PACIENTES ──────────────────────────────────────────────────────────────
 
-function PacientesSection({ settings, userId }: Props) {
+function PacientesSection({ settings, userId }: Pick<Props, 'settings' | 'userId'>) {
   const { state, save } = useSave(userId)
 
   const [whatsappPrincipal, setWhatsappPrincipal] = useState(settings['pacientes_whatsapp_principal'] !== 'false')
@@ -644,7 +961,7 @@ function PacientesSection({ settings, userId }: Props) {
 
 const TEMPLATE_DEFAULT = `## Motivo de consulta\n\n## Contenido de la sesión\n\n## Intervenciones aplicadas\n\n## Plan y próximos pasos`
 
-function HistorialSection({ settings, userId }: Props) {
+function HistorialSection({ settings, userId }: Pick<Props, 'settings' | 'userId'>) {
   const { state, save } = useSave(userId)
 
   const [vista,    setVista]    = useState<'compacta' | 'expandida'>(
@@ -956,14 +1273,14 @@ function SeguridadSection() {
 
 // ── MAIN ───────────────────────────────────────────────────────────────────
 
-export default function ConfiguracionClient({ settings, userId }: Props) {
+export default function ConfiguracionClient({ settings, consultorios, userId }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>('agenda')
 
   const section = (() => {
     switch (activeTab) {
       case 'agenda':        return <AgendaSection        settings={settings} userId={userId} />
       case 'recordatorios': return <RecordatoriosSection settings={settings} userId={userId} />
-      case 'consultorios':  return <ConsultoriosSection  settings={settings} userId={userId} />
+      case 'consultorios':  return <ConsultoriosSection consultorios={consultorios} userId={userId} />
       case 'pacientes':     return <PacientesSection     settings={settings} userId={userId} />
       case 'historial':     return <HistorialSection     settings={settings} userId={userId} />
       case 'seguridad':     return <SeguridadSection />
