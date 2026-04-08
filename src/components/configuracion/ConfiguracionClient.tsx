@@ -616,7 +616,7 @@ function PacientesSection({ settings, userId }: Props) {
         <p className="section-kicker mb-0.5">Actividad y seguimiento</p>
         <p className="text-[13px] mb-3" style={{ color: 'var(--ink-cool-faint)' }}>
           Reglas para detectar pacientes inactivos y activar sugerencias de reactivación.
-          Estos umbrales afectan la sección "Pendientes" directamente.
+          Estos umbrales afectan la sección {`"Pendientes"`} directamente.
         </p>
 
         <SettingRow

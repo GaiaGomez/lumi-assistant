@@ -17,7 +17,10 @@ import {
   toBogotaDateInputValue,
   toBogotaTimeInputValue,
 } from '@/lib/datetime'
-import { APPOINTMENT_MODALIDAD_CONFIG, GENERAL_EVENT_COLOR_PRESETS } from '@/lib/appointment-ui'
+import {
+  GENERAL_EVENT_COLOR_PRESETS,
+  resolveAppointmentModalidadConfig,
+} from '@/lib/appointment-ui'
 import {
   buildAppointmentDisplayTitle,
   buildLocalAppointmentStart,
@@ -27,9 +30,9 @@ import {
   getAppointmentEnd,
   getAppointmentEndFromDuration,
   getAppointmentScheduleError,
-  isDoctoraliaAppointment,
 } from '@/lib/appointments'
 import { deleteAppointmentById, updateAppointmentById } from '@/lib/appointment-updates'
+import { type SettingsMap } from '@/lib/settings'
 import { createClient } from '@/lib/supabase/client'
 import { linkRecordatorioCita, resolveWhatsApp } from '@/lib/whatsapp'
 import Button from '@/components/ui/Button'
@@ -39,6 +42,7 @@ import ModalShell from '@/components/ui/ModalShell'
 interface AppointmentModalProps {
   appointment: Appointment
   appointments: Appointment[]
+  settings: SettingsMap
   onClose: () => void
 }
 
@@ -92,7 +96,12 @@ function formatConflictDateTime(appointment: Appointment): string {
   })} · ${formatTimeRange(start, end)}`
 }
 
-export default function AppointmentModal({ appointment, appointments, onClose }: AppointmentModalProps) {
+export default function AppointmentModal({
+  appointment,
+  appointments,
+  settings,
+  onClose,
+}: AppointmentModalProps) {
   const router = useRouter()
   const supabase = createClient()
 
@@ -115,8 +124,6 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
   const [deudaCount, setDeudaCount] = useState<number | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const isDoctoraliaSource = isDoctoraliaAppointment(appointment)
-
   // Deuda del paciente — sesiones realizadas sin pagar (excluye la cita actual)
   useEffect(() => {
     async function loadDeuda() {
@@ -440,7 +447,8 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
               <div>
                 <SectionHeader label="Modalidad" className="mb-2.5" />
                 <div className="grid grid-cols-3 gap-1.5">
-                  {(Object.entries(APPOINTMENT_MODALIDAD_CONFIG) as [AppointmentModalidad, typeof APPOINTMENT_MODALIDAD_CONFIG[AppointmentModalidad]][]).map(([value, { label, color, textColor, Icon }]) => {
+                  {(['online', 'medellin', 'retiro'] as AppointmentModalidad[]).map((value) => {
+                    const { label, color, textColor, Icon } = resolveAppointmentModalidadConfig(value, settings)
                     const isActive = modalidadEdit === value
                     return (
                       <button

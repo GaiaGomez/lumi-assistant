@@ -16,11 +16,11 @@ import MobileAgenda from './MobileAgenda'
 import { AlertTriangle, Briefcase, Check, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, HandCoins, Plus } from 'lucide-react'
 import { buildAppointmentDisplayTitle, getAppointmentEnd, getTodayAppointments } from '@/lib/appointments'
 import {
-  APPOINTMENT_CATEGORY_CONFIG,
   appointmentNeedsAttention,
   isAppointmentConfirmed,
   isAppointmentPaid,
   resolveAppointmentCategory,
+  resolveAppointmentCategoryConfig,
 } from '@/lib/appointment-ui'
 import { type SettingsMap } from '@/lib/settings'
 import { FESTIVOS_CO } from './festivos'
@@ -45,7 +45,13 @@ function toDateKey(date: Date): string {
 //   Línea 1: Nombre del paciente
 //   Línea 2: Iconos compactos de modalidad / confirmación / pago / alerta
 // Las canceladas se filtran antes de llegar aquí
-function EventoCalendario({ event }: { event: CalendarEvent }) {
+function EventoCalendario({
+  event,
+  settings,
+}: {
+  event: CalendarEvent
+  settings: SettingsMap
+}) {
   const apt = event.resource
   if (apt.event_type === 'general') {
     return (
@@ -76,7 +82,7 @@ function EventoCalendario({ event }: { event: CalendarEvent }) {
     )
   }
 
-  const { Icon } = APPOINTMENT_CATEGORY_CONFIG[resolveAppointmentCategory(apt)]
+  const { Icon } = resolveAppointmentCategoryConfig(resolveAppointmentCategory(apt), settings)
   const isConfirmed = isAppointmentConfirmed(apt)
   const isPaid = isAppointmentPaid(apt)
   const needsAction = appointmentNeedsAttention(apt)
@@ -275,6 +281,10 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
     () => visibleEvents.map((event) => event.resource),
     [visibleEvents]
   )
+  const calendarEventComponent = useCallback(
+    ({ event }: { event: CalendarEvent }) => <EventoCalendario event={event} settings={settings} />,
+    [settings]
+  )
 
   const handleSelectEvent = useCallback((event: CalendarEvent) => {
     setSelectedAppointment(event.resource)
@@ -289,7 +299,7 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
     const isSoftPast = event.resource.estado_sesion === 'realizada' && getAppointmentEnd(event.resource) <= new Date()
     const backgroundColor = event.resource.event_type === 'general' && event.resource.color
       ? event.resource.color
-      : APPOINTMENT_CATEGORY_CONFIG[resolveAppointmentCategory(event.resource)].bg
+      : resolveAppointmentCategoryConfig(resolveAppointmentCategory(event.resource), settings).bg
     return {
       style: {
         backgroundColor,
@@ -304,7 +314,7 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
         filter: isSoftPast ? 'saturate(85%)' : 'none',
       }
     }
-  }, [])
+  }, [settings])
 
   // Fondo de cada día: festivos (tinte muy sutil) + fines de semana (mauve apenas perceptible)
   const dayPropGetter = useCallback((date: Date) => {
@@ -451,7 +461,7 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
       {/* ── Filtros de modalidad — desktop ── */}
       <div className="hidden lg:flex items-center gap-2 px-1">
         {((['online', 'medellin', 'retiro'] as const)).map((key) => {
-          const cfg = APPOINTMENT_CATEGORY_CONFIG[key]
+          const cfg = resolveAppointmentCategoryConfig(key, settings)
           const Icon = cfg.Icon
           const activo = filtrosActivos.has(key)
           return (
@@ -489,7 +499,7 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
       {/* ── Filtros de modalidad — mobile (scroll horizontal) ── */}
       <div className="flex lg:hidden items-center gap-1.5 sm:gap-2 px-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         {((['online', 'medellin', 'retiro'] as const)).map((key) => {
-          const cfg = APPOINTMENT_CATEGORY_CONFIG[key]
+          const cfg = resolveAppointmentCategoryConfig(key, settings)
           const Icon = cfg.Icon
           const activo = filtrosActivos.has(key)
           return (
@@ -539,7 +549,7 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
             eventPropGetter={eventPropGetter}
             dayPropGetter={dayPropGetter}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            components={{ event: EventoCalendario, dateHeader: CabechaFecha, header: ColumnaHeader } as any}
+            components={{ event: calendarEventComponent, dateHeader: CabechaFecha, header: ColumnaHeader } as any}
             min={calMin}
             max={calMax}
             step={calStep}
@@ -567,6 +577,7 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
           <MobileAgenda
             appointments={visibleAppointments}
             currentDate={currentDate}
+            settings={settings}
             onSelectAppointment={setSelectedAppointment}
             onNewSlot={setNewSlotStart}
           />
@@ -616,6 +627,7 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
         <AppointmentModal
           appointment={selectedAppointment}
           appointments={appointments}
+          settings={settings}
           onClose={() => setSelectedAppointment(null)}
         />
       )}
@@ -625,6 +637,7 @@ export default function AgendaClient({ appointments, settings }: AgendaClientPro
         <NewAppointmentModal
           appointments={appointments}
           defaultStart={newSlotStart}
+          settings={settings}
           onClose={() => setNewSlotStart(null)}
         />
       )}

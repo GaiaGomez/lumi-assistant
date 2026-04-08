@@ -4,6 +4,7 @@
 // ============================================================
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { DEFAULT_APPOINTMENT_DURATION_MINUTES } from '@/lib/appointments'
 
 export const SETTINGS_KEYS = [
   // ── Doctoralia ────────────────────────────────────────────
@@ -162,4 +163,19 @@ export async function upsertSettingValue(
       },
       { onConflict: 'user_id,key' }
     )
+}
+
+export function resolveAgendaAppointmentDurationMinutes(
+  settings: Partial<Pick<SettingsMap, 'agenda_duracion_cita'>> | null | undefined
+): number {
+  const rawValue = Number.parseInt(
+    settings?.agenda_duracion_cita ?? DEFAULT_SETTINGS.agenda_duracion_cita,
+    10
+  )
+
+  if (Number.isNaN(rawValue) || rawValue < 15) {
+    return DEFAULT_APPOINTMENT_DURATION_MINUTES
+  }
+
+  return rawValue
 }

@@ -28,6 +28,7 @@ interface ClinicalNoteEditorProps {
   mode: EditorMode
   patientId?: string | null
   noteId?: string
+  initialTextTemplate?: string
 }
 
 function formatAppointmentOption(appointment: Appointment) {
@@ -115,6 +116,7 @@ export default function ClinicalNoteEditor({
   mode,
   patientId,
   noteId,
+  initialTextTemplate = '',
 }: ClinicalNoteEditorProps) {
   const router = useRouter()
   const [supabase] = useState(() => createClient())
@@ -214,7 +216,7 @@ export default function ClinicalNoteEditor({
           setNote(null)
           setAppointmentId('')
           setTemplate(createEmptyClinicalNoteTemplate())
-          setTextoLibre('')
+          setTextoLibre(initialTextTemplate)
           setCanvasInitialPaths(null)
           setCanvasPaths(null)
           setCanvasBackgroundImage(null)
@@ -237,7 +239,7 @@ export default function ClinicalNoteEditor({
     return () => {
       cancelled = true
     }
-  }, [mode, noteId, patientId, supabase])
+  }, [initialTextTemplate, mode, noteId, patientId, supabase])
 
   useEffect(() => {
     if (!isCanvasEditorOpen) return

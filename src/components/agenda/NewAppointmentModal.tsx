@@ -33,6 +33,10 @@ import {
 import { createAppointments } from '@/lib/appointment-updates'
 import { mapPatientRows } from '@/lib/supabase/mappers'
 import { createClient } from '@/lib/supabase/client'
+import {
+  resolveAgendaAppointmentDurationMinutes,
+  type SettingsMap,
+} from '@/lib/settings'
 import ModalShell from '@/components/ui/ModalShell'
 import Button from '@/components/ui/Button'
 import SectionHeader from '@/components/ui/SectionHeader'
@@ -40,6 +44,7 @@ import SectionHeader from '@/components/ui/SectionHeader'
 interface NewAppointmentModalProps {
   appointments: Appointment[]
   defaultStart: Date
+  settings: SettingsMap
   onClose: () => void
 }
 
@@ -112,11 +117,17 @@ function getWeekdayFromDate(date: Date): AppointmentWeekday {
   return (['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa'][date.getDay()] ?? 'mo') as AppointmentWeekday
 }
 
-export default function NewAppointmentModal({ appointments, defaultStart, onClose }: NewAppointmentModalProps) {
+export default function NewAppointmentModal({
+  appointments,
+  defaultStart,
+  settings,
+  onClose,
+}: NewAppointmentModalProps) {
   const router = useRouter()
   const supabase = createClient()
 
-  const defaultEnd = addMinutes(defaultStart, 60)
+  const defaultDurationMinutes = resolveAgendaAppointmentDurationMinutes(settings)
+  const defaultEnd = addMinutes(defaultStart, defaultDurationMinutes)
 
   const [patients, setPatients] = useState<Patient[]>([])
   const [loadingPatients, setLoadingPatients] = useState(true)
@@ -127,6 +138,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
   const [fechaValue, setFechaValue] = useState(toDateInputValue(defaultStart))
   const [horaInicioValue, setHoraInicioValue] = useState(toTimeInputValue(defaultStart))
   const [horaFinValue, setHoraFinValue] = useState(toTimeInputValue(defaultEnd))
+  const [horaFinTouched, setHoraFinTouched] = useState(false)
   const [recurrencePreset, setRecurrencePreset] = useState<AppointmentRecurrencePreset>('none')
   const [recurrenceUntilDate, setRecurrenceUntilDate] = useState('')
   const [selectedWeekdays, setSelectedWeekdays] = useState<AppointmentWeekday[]>([getWeekdayFromDate(defaultStart)])
@@ -153,6 +165,15 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
       })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (horaFinTouched) return
+
+    const nextStart = buildLocalAppointmentStart(fechaValue, horaInicioValue)
+    if (!nextStart) return
+
+    setHoraFinValue(toTimeInputValue(addMinutes(nextStart, defaultDurationMinutes)))
+  }, [defaultDurationMinutes, fechaValue, horaFinTouched, horaInicioValue])
 
   const filteredPatients = search
     ? patients.filter((patient) =>
@@ -419,7 +440,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                         ))}
                         {filteredPatients.length === 0 && search && (
                           <p className="px-3.5 py-2.5 text-[13px]" style={{ color: 'var(--ink-cool-muted)' }}>
-                            Sin resultados para "{search}"
+                            {`Sin resultados para "${search}"`}
                           </p>
                         )}
                       </div>
@@ -563,7 +584,10 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                 <input
                   type="time"
                   value={horaFinValue}
-                  onChange={(event) => setHoraFinValue(event.target.value)}
+                  onChange={(event) => {
+                    setHoraFinTouched(true)
+                    setHoraFinValue(event.target.value)
+                  }}
                   className="lumi-control-field lumi-control-field--time w-full"
                 />
               </span>

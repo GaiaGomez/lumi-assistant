@@ -18,18 +18,20 @@ import {
 } from 'lucide-react'
 import type { Appointment } from '@/types'
 import {
-  APPOINTMENT_CATEGORY_CONFIG,
   appointmentNeedsAttention,
   isAppointmentConfirmed,
   isAppointmentPaid,
   resolveAppointmentCategory,
+  resolveAppointmentCategoryConfig,
 } from '@/lib/appointment-ui'
 import { buildAppointmentDisplayTitle, getAppointmentEnd } from '@/lib/appointments'
+import type { SettingsMap } from '@/lib/settings'
 import { FESTIVOS_CO } from './festivos'
 
 interface MobileAgendaProps {
   appointments: Appointment[]
   currentDate: Date
+  settings: SettingsMap
   onSelectAppointment: (apt: Appointment) => void
   onNewSlot: (date: Date) => void
 }
@@ -192,13 +194,15 @@ function EventCard({
   top,
   height,
   layout,
+  settings,
   onClick,
 }: PositionedAppointment & {
   layout: MobileAgendaLayout
+  settings: SettingsMap
   onClick: () => void
 }) {
   const category = resolveAppointmentCategory(apt)
-  const { Icon, bg } = APPOINTMENT_CATEGORY_CONFIG[category]
+  const { Icon, bg } = resolveAppointmentCategoryConfig(category, settings)
   const isConfirmed = isAppointmentConfirmed(apt)
   const isPaid = isAppointmentPaid(apt)
   const needsAction = appointmentNeedsAttention(apt)
@@ -392,6 +396,7 @@ function HourGutter({
 export default function MobileAgenda({
   appointments,
   currentDate,
+  settings,
   onSelectAppointment,
   onNewSlot,
 }: MobileAgendaProps) {
@@ -697,6 +702,7 @@ export default function MobileAgenda({
                           key={positioned.apt.id}
                           {...positioned}
                           layout={layout}
+                          settings={settings}
                           onClick={() => onSelectAppointment(positioned.apt)}
                         />
                       ))}
