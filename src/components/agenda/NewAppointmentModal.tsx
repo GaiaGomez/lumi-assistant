@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   AlertTriangle,
@@ -135,6 +135,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [creatingPatient, setCreatingPatient] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const [newPatientNombre, setNewPatientNombre] = useState('')
   const [newPatientApellido, setNewPatientApellido] = useState('')
   const [newPatientTelefono, setNewPatientTelefono] = useState('')
@@ -360,7 +361,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                     <span className="lumi-control-icon" aria-hidden="true" style={{ position: 'static', transform: 'none' }}>
                       <UserRound size={14} />
                     </span>
-                    <span className="text-[13px] truncate" style={{ color: 'var(--ink-cool-strong)' }}>
+                    <span className="text-[14px] truncate" style={{ color: 'var(--ink-cool-strong)' }}>
                       {selectedPatient.nombre} {selectedPatient.apellido}
                     </span>
                   </div>
@@ -385,7 +386,10 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                     value={search}
                     onChange={(event) => { setSearch(event.target.value); setShowDropdown(true) }}
                     onFocus={() => setShowDropdown(true)}
-                    onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+                    onBlur={(e) => {
+                      if (dropdownRef.current?.contains(e.relatedTarget as Node)) return
+                      setTimeout(() => setShowDropdown(false), 100)
+                    }}
                     className="lumi-control-field w-full"
                     disabled={loadingPatients}
                     autoComplete="off"
@@ -393,6 +397,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                 </span>
                 {showDropdown && (
                   <div
+                    ref={dropdownRef}
                     className="absolute left-0 right-0 z-10 mt-1 rounded-[14px] overflow-hidden"
                     style={{ background: 'rgba(255,250,247,0.98)', border: '1px solid var(--border-glass-white)', boxShadow: 'var(--shadow-float)' }}
                   >
@@ -404,7 +409,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                             key={patient.id}
                             type="button"
                             onMouseDown={() => selectPatient(patient)}
-                            className="w-full text-left px-3.5 py-2.5 text-[13px] transition-colors"
+                            className="w-full text-left px-3.5 py-2.5 text-[14px] transition-colors"
                             style={{ color: 'var(--ink-strong)' }}
                             onMouseEnter={(event) => (event.currentTarget.style.background = 'rgba(148,136,176,0.10)')}
                             onMouseLeave={(event) => (event.currentTarget.style.background = 'transparent')}
@@ -413,7 +418,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                           </button>
                         ))}
                         {filteredPatients.length === 0 && search && (
-                          <p className="px-3.5 py-2.5 text-[12px]" style={{ color: 'var(--ink-cool-muted)' }}>
+                          <p className="px-3.5 py-2.5 text-[13px]" style={{ color: 'var(--ink-cool-muted)' }}>
                             Sin resultados para "{search}"
                           </p>
                         )}
@@ -430,14 +435,14 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                             value={newPatientNombre}
                             onChange={e => setNewPatientNombre(e.target.value)}
                             placeholder="Nombre *"
-                            className="w-full rounded-[10px] px-3 py-2 text-[13px] focus:outline-none"
+                            className="w-full rounded-[10px] px-3 py-2 text-[14px] focus:outline-none"
                             style={{ background: 'rgba(255,255,255,0.82)', border: '1px solid rgba(200,196,210,0.5)', color: 'var(--ink-cool-strong)' }}
                           />
                           <input
                             value={newPatientApellido}
                             onChange={e => setNewPatientApellido(e.target.value)}
                             placeholder="Apellido *"
-                            className="w-full rounded-[10px] px-3 py-2 text-[13px] focus:outline-none"
+                            className="w-full rounded-[10px] px-3 py-2 text-[14px] focus:outline-none"
                             style={{ background: 'rgba(255,255,255,0.82)', border: '1px solid rgba(200,196,210,0.5)', color: 'var(--ink-cool-strong)' }}
                           />
                         </div>
@@ -446,7 +451,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                             value={newPatientTelefono}
                             onChange={e => setNewPatientTelefono(e.target.value)}
                             placeholder="Teléfono"
-                            className="w-full rounded-[10px] px-3 py-2 text-[13px] focus:outline-none"
+                            className="w-full rounded-[10px] px-3 py-2 text-[14px] focus:outline-none"
                             style={{ background: 'rgba(255,255,255,0.82)', border: '1px solid rgba(200,196,210,0.5)', color: 'var(--ink-cool-strong)' }}
                           />
                           <input
@@ -455,7 +460,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                             placeholder="Correo"
                             type="email"
                             onKeyDown={e => { if (e.key === 'Enter') handleCreatePatient() }}
-                            className="w-full rounded-[10px] px-3 py-2 text-[13px] focus:outline-none"
+                            className="w-full rounded-[10px] px-3 py-2 text-[14px] focus:outline-none"
                             style={{ background: 'rgba(255,255,255,0.82)', border: '1px solid rgba(200,196,210,0.5)', color: 'var(--ink-cool-strong)' }}
                           />
                         </div>
@@ -463,7 +468,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                           <button
                             type="button"
                             onMouseDown={resetNewPatientForm}
-                            className="flex-1 rounded-[10px] py-2 text-[12px]"
+                            className="flex-1 rounded-[10px] py-2 text-[13px]"
                             style={{ background: 'rgba(200,196,210,0.28)', color: 'var(--ink-cool-soft)' }}
                           >
                             Cancelar
@@ -472,7 +477,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                             type="button"
                             onMouseDown={handleCreatePatient}
                             disabled={!newPatientNombre.trim() || !newPatientApellido.trim() || savingNewPatient}
-                            className="flex-1 rounded-[10px] py-2 text-[12px] font-medium flex items-center justify-center gap-1.5 disabled:opacity-45"
+                            className="flex-1 rounded-[10px] py-2 text-[13px] font-medium flex items-center justify-center gap-1.5 disabled:opacity-45"
                             style={{ background: 'rgba(148,136,176,0.22)', color: 'var(--ink-cool-strong)' }}
                           >
                             {savingNewPatient ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
@@ -484,7 +489,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                       <button
                         type="button"
                         onMouseDown={() => setCreatingPatient(true)}
-                        className="w-full text-left px-3.5 py-2.5 text-[12px] flex items-center gap-1.5 transition-colors"
+                        className="w-full text-left px-3.5 py-2.5 text-[13px] flex items-center gap-1.5 transition-colors"
                         style={{
                           color: 'var(--ink-cool-soft)',
                           borderTop: filteredPatients.length > 0 || search ? '1px solid rgba(200,196,210,0.3)' : 'none',
@@ -652,7 +657,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                         key={option.value}
                         type="button"
                         onClick={() => toggleWeekday(option.value)}
-                        className="h-9 w-9 rounded-full text-[12px] font-medium transition-all"
+                        className="h-9 w-9 rounded-full text-[13px] font-medium transition-all"
                         style={active ? {
                           background: 'rgba(200, 188, 205, 0.30)',
                           color: 'var(--ink-cool-strong)',
@@ -669,14 +674,14 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
           </div>
 
           {occurrences.length > 1 && !scheduleError && !recurrenceError && (
-            <p className="text-[12px]" style={{ color: 'var(--ink-cool-soft)' }}>
+            <p className="text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>
               {formatOccurrenceCount(occurrences.length)} · última ocurrencia el {occurrences[occurrences.length - 1].start.toLocaleDateString('es-CO')}
             </p>
           )}
 
           {(scheduleError || recurrenceError || titleError) && (
             <div
-              className="flex items-center gap-2 rounded-[12px] px-3 py-2 text-[12px]"
+              className="flex items-center gap-2 rounded-[12px] px-3 py-2 text-[13px]"
               style={{ background: 'var(--state-cancel-bg)', color: 'var(--state-cancel-text)' }}
             >
               <AlertTriangle size={13} />
@@ -686,7 +691,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
 
           {conflict && (
             <div
-              className="flex items-center gap-2 rounded-[12px] px-3 py-2 text-[12px]"
+              className="flex items-center gap-2 rounded-[12px] px-3 py-2 text-[13px]"
               style={{ background: 'var(--state-warning-bg)', color: 'var(--state-warning-text)' }}
             >
               <AlertTriangle size={13} />
@@ -700,7 +705,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
           )}
 
           {error && (
-            <p className="text-[12px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
+            <p className="text-[13px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
               {error}
             </p>
           )}
@@ -709,7 +714,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
             variant="action"
             onClick={handleSave}
             disabled={isSaveBlocked}
-            className="w-full py-2.5 text-[13px] tracking-[0.06em] uppercase gap-2"
+            className="w-full py-2.5 text-[14px] tracking-[0.06em] uppercase gap-2"
           >
             <Plus size={14} />
             {saving ? 'Guardando…' : `Crear ${recurrenceRule ? 'serie' : 'evento'}`}

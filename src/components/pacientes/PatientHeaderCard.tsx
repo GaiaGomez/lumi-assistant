@@ -60,7 +60,7 @@ export default function PatientHeaderCard({
                 />
                 {patient.telefono && (
                   <span
-                    className="flex items-center gap-1 text-[12px]"
+                    className="flex items-center gap-1 text-[13px]"
                     style={{ color: 'var(--ink-cool-soft)' }}
                   >
                     <Phone size={11} />
@@ -75,7 +75,7 @@ export default function PatientHeaderCard({
             {editSlot}
             <Link
               href={newNoteHref}
-              className="btn-action gap-1.5 px-4 py-2 text-[13px]"
+              className="btn-action gap-1.5 px-4 py-2 text-[14px]"
             >
               <Plus size={12} />
               Nueva nota

@@ -159,7 +159,7 @@ export default function PatientEditModal({ patient }: Props) {
                   <input
                     value={form.nombre}
                     onChange={e => set('nombre', e.target.value)}
-                    className="w-full rounded-[12px] px-3 py-2 text-[13px] focus:outline-none"
+                    className="w-full rounded-[12px] px-3 py-2 text-[14px] focus:outline-none"
                     style={fieldStyle}
                   />
                 </label>
@@ -168,7 +168,7 @@ export default function PatientEditModal({ patient }: Props) {
                   <input
                     value={form.apellido}
                     onChange={e => set('apellido', e.target.value)}
-                    className="w-full rounded-[12px] px-3 py-2 text-[13px] focus:outline-none"
+                    className="w-full rounded-[12px] px-3 py-2 text-[14px] focus:outline-none"
                     style={fieldStyle}
                   />
                 </label>
@@ -182,7 +182,7 @@ export default function PatientEditModal({ patient }: Props) {
                     value={form.whatsapp}
                     onChange={e => set('whatsapp', e.target.value)}
                     placeholder="573001234567"
-                    className="w-full rounded-[12px] px-3 py-2 text-[13px] focus:outline-none"
+                    className="w-full rounded-[12px] px-3 py-2 text-[14px] focus:outline-none"
                     style={fieldStyle}
                   />
                 </label>
@@ -191,7 +191,7 @@ export default function PatientEditModal({ patient }: Props) {
                   <input
                     value={form.telefono}
                     onChange={e => set('telefono', e.target.value)}
-                    className="w-full rounded-[12px] px-3 py-2 text-[13px] focus:outline-none"
+                    className="w-full rounded-[12px] px-3 py-2 text-[14px] focus:outline-none"
                     style={fieldStyle}
                   />
                 </label>
@@ -205,7 +205,7 @@ export default function PatientEditModal({ patient }: Props) {
                     type="email"
                     value={form.email}
                     onChange={e => set('email', e.target.value)}
-                    className="w-full rounded-[12px] px-3 py-2 text-[13px] focus:outline-none"
+                    className="w-full rounded-[12px] px-3 py-2 text-[14px] focus:outline-none"
                     style={fieldStyle}
                   />
                 </label>
@@ -215,7 +215,7 @@ export default function PatientEditModal({ patient }: Props) {
                     type="date"
                     value={form.fecha_inicio}
                     onChange={e => set('fecha_inicio', e.target.value)}
-                    className="w-full rounded-[12px] px-3 py-2 text-[13px] focus:outline-none"
+                    className="w-full rounded-[12px] px-3 py-2 text-[14px] focus:outline-none"
                     style={fieldStyle}
                   />
                 </label>
@@ -229,13 +229,13 @@ export default function PatientEditModal({ patient }: Props) {
                   onChange={e => set('notas_generales', e.target.value)}
                   rows={3}
                   placeholder="Motivo de consulta, antecedentes, acuerdos..."
-                  className="w-full resize-none rounded-[12px] px-3 py-2 text-[13px] focus:outline-none"
+                  className="w-full resize-none rounded-[12px] px-3 py-2 text-[14px] focus:outline-none"
                   style={fieldStyle}
                 />
               </label>
 
               {error && (
-                <p className="text-[12px]" style={{ color: 'var(--state-cancel-text)' }}>
+                <p className="text-[13px]" style={{ color: 'var(--state-cancel-text)' }}>
                   {error}
                 </p>
               )}
@@ -257,7 +257,7 @@ export default function PatientEditModal({ patient }: Props) {
                   type="button"
                   onClick={handleSave}
                   disabled={saving || deleting}
-                  className="btn-action inline-flex items-center gap-1.5 px-4 py-2 text-[13px] disabled:opacity-45"
+                  className="btn-action inline-flex items-center gap-1.5 px-4 py-2 text-[14px] disabled:opacity-45"
                 >
                   {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                   {saving ? 'Guardando...' : 'Guardar cambios'}

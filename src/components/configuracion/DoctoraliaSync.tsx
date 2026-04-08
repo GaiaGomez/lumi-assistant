@@ -112,7 +112,7 @@ export default function DoctoraliaSync({ settings, userId }: Props) {
         <h2 className="editorial-panel-title text-[1.05rem] mb-0.5">
           Sincronización con Doctoralia
         </h2>
-        <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink-cool-soft)' }}>
+        <p className="text-[13px] leading-relaxed" style={{ color: 'var(--ink-cool-soft)' }}>
           Lumi usa Doctoralia para importar citas nuevas.
           Si una cita ya existe, el import conserva los cambios locales y solo refresca metadatos de seguimiento.
         </p>
@@ -126,7 +126,7 @@ export default function DoctoraliaSync({ settings, userId }: Props) {
         <p className="section-kicker">
           Cómo obtener el token
         </p>
-        <ol className="text-[12px] space-y-1 list-decimal list-inside leading-relaxed" style={{ color: 'var(--ink-cool-soft)' }}>
+        <ol className="text-[13px] space-y-1 list-decimal list-inside leading-relaxed" style={{ color: 'var(--ink-cool-soft)' }}>
           <li>Abre Doctoralia y ve a tu agenda semanal</li>
           <li>Presiona <strong>Cmd + Option + I</strong> → pestaña <strong>Network</strong></li>
           <li>Filtra por <strong>Fetch/XHR</strong> y recarga la página</li>
@@ -146,7 +146,7 @@ export default function DoctoraliaSync({ settings, userId }: Props) {
             value={token}
             onChange={e => setToken(e.target.value)}
             placeholder="MWY2N2I1MGYz…"
-            className="flex-1 rounded-[10px] px-3 py-2 text-[13px] outline-none"
+            className="flex-1 rounded-[10px] px-3 py-2 text-[14px] outline-none"
             style={{
               background: 'var(--surface-glass)',
               border: '1px solid var(--border-soft)',
@@ -159,12 +159,12 @@ export default function DoctoraliaSync({ settings, userId }: Props) {
         </p>
         <div className="flex items-center justify-end pt-0.5">
           {saveState === 'saved' && (
-            <span className="flex items-center gap-1.5 text-[12px] font-medium" style={{ color: 'var(--state-success-text)' }}>
+            <span className="flex items-center gap-1.5 text-[13px] font-medium" style={{ color: 'var(--state-success-text)' }}>
               <Check size={13} /> Token guardado
             </span>
           )}
           {saveState === 'error' && (
-            <span className="flex items-center gap-1.5 text-[12px] font-medium" style={{ color: 'var(--state-cancel-text)' }}>
+            <span className="flex items-center gap-1.5 text-[13px] font-medium" style={{ color: 'var(--state-cancel-text)' }}>
               <AlertCircle size={13} /> No se pudo guardar
             </span>
           )}
@@ -173,7 +173,7 @@ export default function DoctoraliaSync({ settings, userId }: Props) {
               variant="subtle"
               onClick={saveToken}
               disabled={saveState === 'saving' || !hasToken}
-              className="px-5 py-2.5 text-[13px] tracking-[0.06em] uppercase"
+              className="px-5 py-2.5 text-[14px] tracking-[0.06em] uppercase"
             >
               {saveState === 'saving' ? 'Guardando…' : 'Guardar token'}
             </Button>
@@ -190,7 +190,7 @@ export default function DoctoraliaSync({ settings, userId }: Props) {
           style={{ background: 'var(--state-success-bg)', border: '1px solid var(--border-soft)' }}
         >
           <Calendar size={14} className="mt-0.5 shrink-0" style={{ color: 'var(--state-success-text)' }} />
-          <div className="text-[12px] leading-snug" style={{ color: 'var(--state-success-text)' }}>
+          <div className="text-[13px] leading-snug" style={{ color: 'var(--state-success-text)' }}>
             <span className="font-semibold block">
               {syncState === 'done'
                 ? `${lastSync.created ?? 0} nueva${(lastSync.created ?? 0) !== 1 ? 's' : ''} importada${(lastSync.created ?? 0) !== 1 ? 's' : ''} · ${lastSync.updated ?? 0} ya existente${(lastSync.updated ?? 0) !== 1 ? 's' : ''} detectada${(lastSync.updated ?? 0) !== 1 ? 's' : ''}${typeof lastSync.repaired === 'number' ? ` · ${lastSync.repaired} reparada${lastSync.repaired !== 1 ? 's' : ''}` : ''}${typeof lastSync.patients_created === 'number' ? ` · ${lastSync.patients_created} paciente${lastSync.patients_created !== 1 ? 's' : ''} creado${lastSync.patients_created !== 1 ? 's' : ''}` : ''}`
@@ -215,7 +215,7 @@ export default function DoctoraliaSync({ settings, userId }: Props) {
           style={{ background: 'var(--state-cancel-bg)', border: '1px solid var(--border-soft)' }}
         >
           <AlertCircle size={14} className="mt-0.5 shrink-0" style={{ color: 'var(--state-cancel-text)' }} />
-          <div className="text-[12px]" style={{ color: 'var(--state-cancel-text)' }}>
+          <div className="text-[13px]" style={{ color: 'var(--state-cancel-text)' }}>
             <p className="font-semibold">Error de importación</p>
             <p>{syncError}</p>
             {syncError?.includes('expiró') && (
@@ -231,7 +231,7 @@ export default function DoctoraliaSync({ settings, userId }: Props) {
           href="https://docplanner.doctoralia.co/#/calendar/week"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-[12px]"
+          className="flex items-center gap-1.5 text-[13px]"
           style={{ color: 'var(--ink-cool-muted)' }}
         >
           <ExternalLink size={12} />
@@ -241,7 +241,7 @@ export default function DoctoraliaSync({ settings, userId }: Props) {
           variant="action"
           onClick={runSync}
           disabled={syncState === 'syncing' || !hasToken}
-          className="flex items-center gap-2 px-5 py-2.5 text-[13px] tracking-[0.06em] uppercase"
+          className="flex items-center gap-2 px-5 py-2.5 text-[14px] tracking-[0.06em] uppercase"
         >
           <RefreshCw size={13} className={syncState === 'syncing' ? 'animate-spin' : ''} />
           {syncState === 'syncing' ? 'Importando…' : 'Importar ahora'}

@@ -21,7 +21,7 @@ export default function EmptyState({ message, hint, size = 'sm' }: EmptyStatePro
           {message}
         </p>
         {hint && (
-          <p className="text-[13px] mt-1" style={{ color: 'var(--ink-cool-muted)' }}>
+          <p className="text-[14px] mt-1" style={{ color: 'var(--ink-cool-muted)' }}>
             {hint}
           </p>
         )}
@@ -31,11 +31,11 @@ export default function EmptyState({ message, hint, size = 'sm' }: EmptyStatePro
 
   return (
     <div className="py-5 text-center">
-      <p className="text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>
+      <p className="text-[14px]" style={{ color: 'var(--ink-cool-soft)' }}>
         {message}
       </p>
       {hint && (
-        <p className="text-[12px] mt-0.5" style={{ color: 'var(--ink-cool-muted)' }}>
+        <p className="text-[13px] mt-0.5" style={{ color: 'var(--ink-cool-muted)' }}>
           {hint}
         </p>
       )}

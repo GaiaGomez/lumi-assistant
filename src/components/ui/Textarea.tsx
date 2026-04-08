@@ -30,7 +30,7 @@ export default function Textarea({ label, className = '', id, ...props }: Textar
       )}
       <textarea
         id={textareaId}
-        className={`w-full rounded-[14px] px-3.5 py-3 text-[13px] leading-relaxed resize-none ${className}`}
+        className={`w-full rounded-[14px] px-3.5 py-3 text-[14px] leading-relaxed resize-none ${className}`}
         {...props}
       />
     </div>

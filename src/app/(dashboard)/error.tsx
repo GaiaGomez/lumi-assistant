@@ -15,12 +15,12 @@ export default function DashboardError({ error, reset }: ErrorProps) {
         <p className="card-label mb-3" style={{ color: 'var(--ink-cool-faint)' }}>
           Algo salió mal
         </p>
-        <p className="text-[13px] mb-4" style={{ color: 'var(--ink-cool-soft)' }}>
+        <p className="text-[14px] mb-4" style={{ color: 'var(--ink-cool-soft)' }}>
           {error.message || 'Error inesperado. Intenta de nuevo.'}
         </p>
         <button
           onClick={reset}
-          className="btn-action px-5 py-2.5 text-[13px]"
+          className="btn-action px-5 py-2.5 text-[14px]"
         >
           Reintentar
         </button>

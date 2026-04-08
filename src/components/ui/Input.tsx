@@ -31,7 +31,7 @@ export default function Input({ label, className = '', id, ...props }: InputProp
       )}
       <input
         id={inputId}
-        className={`w-full rounded-[14px] px-3.5 py-3 text-[13px] ${className}`}
+        className={`w-full rounded-[14px] px-3.5 py-3 text-[14px] ${className}`}
         {...props}
       />
     </div>

@@ -137,7 +137,7 @@ function PendingActionCard({ action }: { action: PendingAction }) {
             href={action.externalAction.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-action shrink-0 gap-1.5 self-start px-3 py-1.5 text-[12px]"
+            className="btn-action shrink-0 gap-1.5 self-start px-3 py-1.5 text-[13px]"
           >
             <MessageCircle size={12} />
             {action.externalAction.label}

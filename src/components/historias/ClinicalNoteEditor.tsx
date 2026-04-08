@@ -53,7 +53,7 @@ function SelectField({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-[18px] px-4 py-3 text-[13px] focus:outline-none"
+        className="w-full rounded-[18px] px-4 py-3 text-[14px] focus:outline-none"
         style={{
           background: 'rgba(255,255,255,0.66)',
           border: '1px solid rgba(255,255,255,0.46)',
@@ -99,7 +99,7 @@ function TextField({
         onChange={(event) => onChange(event.target.value)}
         rows={rows}
         placeholder={placeholder}
-        className="w-full resize-none rounded-[14px] px-4 py-3 text-[13px] leading-6 focus:outline-none"
+        className="w-full resize-none rounded-[14px] px-4 py-3 text-[14px] leading-6 focus:outline-none"
         style={{
           background: 'rgba(255,255,255,0.66)',
           border: '1px solid rgba(255,255,255,0.46)',
@@ -365,7 +365,7 @@ export default function ClinicalNoteEditor({
   if (loading) {
     return (
       <div className="flex min-h-[320px] items-center justify-center">
-        <div className="glass-cool rounded-[18px] px-5 py-4 text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>
+        <div className="glass-cool rounded-[18px] px-5 py-4 text-[14px]" style={{ color: 'var(--ink-cool-soft)' }}>
           Cargando editor de nota...
         </div>
       </div>
@@ -375,7 +375,7 @@ export default function ClinicalNoteEditor({
   if (loadError || !patient) {
     return (
       <div className="glass-cool rounded-[18px] p-4">
-        <p className="text-[13px]" style={{ color: 'var(--state-cancel-text)' }}>
+        <p className="text-[14px]" style={{ color: 'var(--state-cancel-text)' }}>
           {loadError ?? 'No pudimos cargar esta nota.'}
         </p>
         <button
@@ -409,7 +409,7 @@ export default function ClinicalNoteEditor({
             {patient.nombre} {patient.apellido}
           </h1>
           {mode === 'edit' && note && (
-            <p className="text-[12px] mt-1" style={{ color: 'var(--ink-cool-soft)' }}>
+            <p className="text-[13px] mt-1" style={{ color: 'var(--ink-cool-soft)' }}>
               {`Ultima actualizacion ${formatDateTimeFull(note.updated_at)}`}
             </p>
           )}
@@ -418,7 +418,7 @@ export default function ClinicalNoteEditor({
 
       {saveError && (
         <div
-          className="rounded-[14px] px-4 py-3 text-[13px]"
+          className="rounded-[14px] px-4 py-3 text-[14px]"
           style={{ background: 'rgba(176,124,132,0.12)', color: 'var(--state-cancel-text)' }}
         >
           {saveError}
@@ -474,7 +474,7 @@ export default function ClinicalNoteEditor({
                   />
                   <div className="flex items-center justify-between gap-3 px-4 py-3">
                     <div>
-                      <p className="text-[13px] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
+                      <p className="text-[14px] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
                         Vista previa del dibujo
                       </p>
                       <p className="text-[11px]" style={{ color: 'var(--ink-cool-soft)' }}>
@@ -499,7 +499,7 @@ export default function ClinicalNoteEditor({
                     Canvas
                   </div>
                   <div>
-                    <p className="text-[13px] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
+                    <p className="text-[14px] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
                       Sin dibujo aun
                     </p>
                     <p className="mt-1 text-[11px]" style={{ color: 'var(--ink-cool-soft)' }}>
@@ -568,7 +568,7 @@ export default function ClinicalNoteEditor({
                 <p className="section-kicker">
                   Resumen de guardado
                 </p>
-                <div className="mt-3 space-y-2 text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>
+                <div className="mt-3 space-y-2 text-[14px]" style={{ color: 'var(--ink-cool-soft)' }}>
                   <p>{textoLibre.trim() ? 'Incluye texto libre complementario.' : 'Sin texto libre adicional.'}</p>
                   <p>
                     {canvasRemoved
@@ -603,7 +603,7 @@ export default function ClinicalNoteEditor({
                 value={template.focus}
                 onChange={(event) => setTemplate((current) => ({ ...current, focus: event.target.value }))}
                 placeholder="Ej. regulacion emocional tras conflicto familiar"
-                className="w-full rounded-[18px] px-4 py-3 text-[13px] focus:outline-none"
+                className="w-full rounded-[18px] px-4 py-3 text-[14px] focus:outline-none"
                 style={{
                   background: 'rgba(255,255,255,0.66)',
                   border: '1px solid rgba(255,255,255,0.46)',
@@ -687,7 +687,7 @@ export default function ClinicalNoteEditor({
           type="button"
           onClick={handleSave}
           disabled={!canSave || saving}
-          className="btn-action inline-flex items-center gap-2 px-5 py-2.5 text-[13px] disabled:opacity-45"
+          className="btn-action inline-flex items-center gap-2 px-5 py-2.5 text-[14px] disabled:opacity-45"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {saving ? 'Guardando...' : 'Guardar nota'}

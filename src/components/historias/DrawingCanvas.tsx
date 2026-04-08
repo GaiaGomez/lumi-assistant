@@ -158,7 +158,7 @@ export default function DrawingCanvas({
                 key={item.id}
                 type="button"
                 onClick={() => handleToolChange(item.id as DrawingTool)}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] whitespace-nowrap shrink-0"
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[14px] whitespace-nowrap shrink-0"
                 style={active ? {
                   background: 'rgba(255,255,255,0.88)',
                   color: 'var(--ink-cool-strong)',

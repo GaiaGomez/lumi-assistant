@@ -120,7 +120,7 @@ export default async function PatientProfilePage({ params }: Props) {
                   boxShadow: '0 10px 24px rgba(124, 108, 128, 0.07)',
                 }}
               >
-                <p className="text-[12px] leading-5" style={{ color: 'var(--ink-cool)' }}>
+                <p className="text-[13px] leading-5" style={{ color: 'var(--ink-cool)' }}>
                   {formatDateTimeFull(apt.fecha_inicio)}
                 </p>
                 <div

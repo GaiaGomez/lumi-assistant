@@ -31,7 +31,7 @@ export default function StatCard({ label, value, hint, href, muted = false }: St
         {label}
       </p>
       <p
-        className="text-[13px] font-medium leading-snug"
+        className="text-[14px] font-medium leading-snug"
         style={{ color: muted ? 'var(--ink-cool-soft)' : 'var(--ink-cool-strong)' }}
       >
         {value}

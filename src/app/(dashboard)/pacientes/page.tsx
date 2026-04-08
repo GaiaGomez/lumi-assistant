@@ -35,7 +35,7 @@ export default async function PacientesPage() {
         </div>
         <Link
           href="/pacientes/nuevo"
-          className="btn-action gap-2 px-4 py-2 text-[13px]"
+          className="btn-action gap-2 px-4 py-2 text-[14px]"
         >
           <UserPlus size={14} />
           Nuevo
@@ -61,7 +61,7 @@ export default async function PacientesPage() {
             <div className="flex items-center gap-3">
               <Avatar nombre={patient.nombre} apellido={patient.apellido} size="lg" />
               <div>
-                <p className="text-[13px] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
+                <p className="text-[14px] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
                   {patient.nombre} {patient.apellido}
                 </p>
                 {patient.whatsapp && (

@@ -363,7 +363,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
               <button
                 key={v}
                 onClick={() => setCurrentView(v)}
-                className="px-3 py-1.5 rounded-full text-[12px] font-medium transition-all"
+                className="px-3 py-1.5 rounded-full text-[13px] font-medium transition-all"
                 style={currentView === v
                   ? { background: 'rgba(255,255,255,0.92)', color: 'var(--ink-cool-strong)', boxShadow: 'var(--shadow-glass)' }
                   : { color: 'var(--ink-cool-faint)', background: 'transparent' }
@@ -373,7 +373,7 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
               </button>
             ))}
           </div>
-          <button onClick={() => navegar('today')} className="btn-subtle px-3 py-1.5 text-[12px]">
+          <button onClick={() => navegar('today')} className="btn-subtle px-3 py-1.5 text-[13px]">
             Hoy
           </button>
           <button

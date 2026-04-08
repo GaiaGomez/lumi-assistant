@@ -73,7 +73,7 @@ export default async function HistoriaPage({ params }: Props) {
           <h1 className="page-title text-[1.6rem] leading-none">
             {clinicalNote.patient.nombre} {clinicalNote.patient.apellido}
           </h1>
-          <p className="text-[12px] mt-1" style={{ color: 'var(--ink-cool-soft)' }}>
+          <p className="text-[13px] mt-1" style={{ color: 'var(--ink-cool-soft)' }}>
             Creada {formatDateTimeFull(clinicalNote.created_at)}
             {clinicalNote.updated_at !== clinicalNote.created_at ? ` · actualizada ${formatDateTimeFull(clinicalNote.updated_at)}` : ''}
           </p>
@@ -82,7 +82,7 @@ export default async function HistoriaPage({ params }: Props) {
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href={`/historias/${clinicalNote.id}/editar`}
-            className="btn-subtle inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px]"
+            className="btn-subtle inline-flex items-center gap-1.5 px-3 py-1.5 text-[14px]"
           >
             <SquarePen size={15} />
             Editar
@@ -166,7 +166,7 @@ export default async function HistoriaPage({ params }: Props) {
                         style={{ background: 'rgba(255,255,255,0.46)', border: '1px solid var(--border-glass-white)' }}
                       >
                         <p className="section-kicker mb-1">{section.title}</p>
-                        <p className="whitespace-pre-wrap text-[13px] leading-6" style={{ color: 'var(--ink-cool-strong)' }}>
+                        <p className="whitespace-pre-wrap text-[14px] leading-6" style={{ color: 'var(--ink-cool-strong)' }}>
                           {section.value}
                         </p>
                       </div>
@@ -178,7 +178,7 @@ export default async function HistoriaPage({ params }: Props) {
 
           {clinicalNote.texto && (
             <SectionCard kicker="Texto libre" title="Observaciones complementarias">
-              <p className="whitespace-pre-wrap text-[13px] leading-6" style={{ color: 'var(--ink-cool-strong)' }}>
+              <p className="whitespace-pre-wrap text-[14px] leading-6" style={{ color: 'var(--ink-cool-strong)' }}>
                 {clinicalNote.texto}
               </p>
             </SectionCard>
@@ -212,7 +212,7 @@ export default async function HistoriaPage({ params }: Props) {
 
           {!clinicalNote.template_data && !clinicalNote.texto && (
             <SectionCard kicker="Nota" title="Sin contenido escrito">
-              <p className="text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>
+              <p className="text-[14px]" style={{ color: 'var(--ink-cool-soft)' }}>
                 Esta nota depende solo del canvas manuscrito.
               </p>
             </SectionCard>

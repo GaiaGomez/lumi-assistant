@@ -70,7 +70,7 @@ function ActionCard({
           <MessageCircle size={13} />
         </span>
         <div className="min-w-0">
-          <p className="text-[13px] font-medium leading-snug" style={{ color: 'var(--ink-cool-strong)' }}>
+          <p className="text-[14px] font-medium leading-snug" style={{ color: 'var(--ink-cool-strong)' }}>
             {label}
           </p>
           <p className="mt-0.5 text-[11px] leading-tight" style={{ color: 'var(--ink-cool-soft)' }}>

@@ -77,14 +77,14 @@ export default function NuevoPacientePage() {
           <label className="block space-y-1.5">
             <span className="section-kicker">Nombre *</span>
             <input name="nombre" value={form.nombre} onChange={handleChange} required
-              className="w-full rounded-[14px] px-4 py-2.5 text-[13px] focus:outline-none"
+              className="w-full rounded-[14px] px-4 py-2.5 text-[14px] focus:outline-none"
               style={fieldStyle}
             />
           </label>
           <label className="block space-y-1.5">
             <span className="section-kicker">Apellido *</span>
             <input name="apellido" value={form.apellido} onChange={handleChange} required
-              className="w-full rounded-[14px] px-4 py-2.5 text-[13px] focus:outline-none"
+              className="w-full rounded-[14px] px-4 py-2.5 text-[14px] focus:outline-none"
               style={fieldStyle}
             />
           </label>
@@ -99,7 +99,7 @@ export default function NuevoPacientePage() {
           </span>
           <input name="whatsapp" value={form.whatsapp} onChange={handleChange}
             placeholder="573001234567"
-            className="w-full rounded-[14px] px-4 py-2.5 text-[13px] focus:outline-none"
+            className="w-full rounded-[14px] px-4 py-2.5 text-[14px] focus:outline-none"
             style={fieldStyle}
           />
         </label>
@@ -107,7 +107,7 @@ export default function NuevoPacientePage() {
         <label className="block space-y-1.5">
           <span className="section-kicker">Teléfono</span>
           <input name="telefono" value={form.telefono} onChange={handleChange}
-            className="w-full rounded-[14px] px-4 py-2.5 text-[13px] focus:outline-none"
+            className="w-full rounded-[14px] px-4 py-2.5 text-[14px] focus:outline-none"
             style={fieldStyle}
           />
         </label>
@@ -115,7 +115,7 @@ export default function NuevoPacientePage() {
         <label className="block space-y-1.5">
           <span className="section-kicker">Email</span>
           <input name="email" type="email" value={form.email} onChange={handleChange}
-            className="w-full rounded-[14px] px-4 py-2.5 text-[13px] focus:outline-none"
+            className="w-full rounded-[14px] px-4 py-2.5 text-[14px] focus:outline-none"
             style={fieldStyle}
           />
         </label>
@@ -124,20 +124,20 @@ export default function NuevoPacientePage() {
           <span className="section-kicker">Notas generales</span>
           <textarea name="notas_generales" value={form.notas_generales} onChange={handleChange}
             rows={3} placeholder="Motivo de consulta, antecedentes..."
-            className="w-full rounded-[14px] px-4 py-2.5 text-[13px] focus:outline-none resize-none"
+            className="w-full rounded-[14px] px-4 py-2.5 text-[14px] focus:outline-none resize-none"
             style={fieldStyle}
           />
         </label>
 
         {saveError && (
-          <p className="text-[12px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
+          <p className="text-[13px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
             {saveError}
           </p>
         )}
 
         <div className="flex justify-end pt-1">
           <button type="submit" disabled={saving}
-            className="btn-action px-5 py-2.5 text-[13px] tracking-[0.06em] uppercase disabled:opacity-50"
+            className="btn-action px-5 py-2.5 text-[14px] tracking-[0.06em] uppercase disabled:opacity-50"
           >
             {saving ? 'Guardando...' : 'Guardar paciente'}
           </button>

@@ -266,7 +266,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                 </span>
               )}
             </div>
-            <p className="text-[12px] mt-0.5 capitalize" style={{ color: 'var(--ink-cool-soft)' }}>
+            <p className="text-[13px] mt-0.5 capitalize" style={{ color: 'var(--ink-cool-soft)' }}>
               {fechaFormateada}
             </p>
           </div>
@@ -339,7 +339,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
 
             {scheduleError && (
               <div
-                className="mt-2 flex items-center gap-2 rounded-[10px] px-3 py-2 text-[12px]"
+                className="mt-2 flex items-center gap-2 rounded-[10px] px-3 py-2 text-[13px]"
                 style={{ background: 'var(--state-cancel-bg)', color: 'var(--state-cancel-text)' }}
               >
                 <AlertTriangle size={13} />
@@ -349,7 +349,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
 
             {conflicto && nuevaInicio && nuevaFin && (
               <div
-                className="mt-2 flex items-center gap-2 rounded-[10px] px-3 py-2 text-[12px]"
+                className="mt-2 flex items-center gap-2 rounded-[10px] px-3 py-2 text-[13px]"
                 style={{ background: 'var(--state-warning-bg)', color: 'var(--state-warning-text)' }}
               >
                 <AlertTriangle size={13} />
@@ -405,7 +405,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                       <button
                         key={preset.value}
                         onClick={() => setColor((current) => current === preset.value ? null : preset.value)}
-                        className="py-2.5 px-3 rounded-[14px] text-[12px] font-medium transition-all flex items-center justify-center gap-1.5"
+                        className="py-2.5 px-3 rounded-[14px] text-[13px] font-medium transition-all flex items-center justify-center gap-1.5"
                         style={isActive ? {
                           background: `${preset.value}22`,
                           color: preset.textColor,
@@ -446,7 +446,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                       <button
                         key={value}
                         onClick={() => setModalidadEdit(value)}
-                        className="py-2.5 px-3 rounded-[14px] text-[13px] font-medium transition-all flex items-center justify-center gap-1.5"
+                        className="py-2.5 px-3 rounded-[14px] text-[14px] font-medium transition-all flex items-center justify-center gap-1.5"
                         style={isActive ? {
                           background: `${color}22`,
                           color: textColor,
@@ -471,7 +471,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                       <button
                         key={value}
                         onClick={() => setEstadoSesion(value as typeof estadoSesion)}
-                        className="py-2.5 px-3 rounded-[14px] text-[13px] font-medium transition-all"
+                        className="py-2.5 px-3 rounded-[14px] text-[14px] font-medium transition-all"
                         style={isActive ? {
                           background: s!.bg,
                           color: s!.color,
@@ -496,7 +496,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                       <button
                         key={value}
                         onClick={() => setEstadoPago(value)}
-                        className="py-2.5 px-3 rounded-[14px] text-[13px] font-medium transition-all"
+                        className="py-2.5 px-3 rounded-[14px] text-[14px] font-medium transition-all"
                         style={isActive ? {
                           background: s!.bg,
                           color: s!.color,
@@ -520,7 +520,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
               onChange={(e) => setNotas(e.target.value)}
               placeholder="Observaciones, contexto…"
               rows={2}
-              className="w-full rounded-[12px] px-3 py-2.5 text-[13px] resize-none"
+              className="w-full rounded-[12px] px-3 py-2.5 text-[14px] resize-none"
               style={{
                 background: 'rgba(255,255,255,0.52)',
                 border: '1px solid var(--border-glass-white)',
@@ -536,7 +536,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
               <Button
                 variant="subtle"
                 onClick={() => router.push(`/pacientes/${appointment.patient_id}`)}
-                className="flex-1 gap-2 py-3 text-[13px]"
+                className="flex-1 gap-2 py-3 text-[14px]"
               >
                 <FileText size={15} />
                 Historia clínica
@@ -548,7 +548,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                 href={linkRecordatorioCita(appointment.patient, appointment)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-action flex-1 gap-2 py-3 text-[13px]"
+                className="btn-action flex-1 gap-2 py-3 text-[14px]"
               >
                 <MessageCircle size={15} />
                 WhatsApp
@@ -557,7 +557,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
           </div>
 
           {saveError && (
-            <p className="text-[12px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
+            <p className="text-[13px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
               {saveError}
             </p>
           )}
@@ -567,7 +567,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
             variant="action"
             onClick={guardarCambios}
             disabled={isSaveBlocked}
-            className="w-full py-2.5 text-[13px]"
+            className="w-full py-2.5 text-[14px]"
           >
             {saving ? 'Guardando…' : conflicto ? 'Corrige el conflicto para guardar' : 'Guardar cambios'}
           </Button>
@@ -576,7 +576,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
           {!confirmDelete ? (
             <button
               onClick={() => setConfirmDelete(true)}
-              className="w-full text-center text-[12px] py-2 transition-all flex items-center justify-center gap-1"
+              className="w-full text-center text-[13px] py-2 transition-all flex items-center justify-center gap-1"
               style={{ color: 'var(--ink-cool-faint)' }}
             >
               <Trash2 size={11} />
@@ -587,13 +587,13 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
               className="rounded-[14px] p-3 space-y-2"
               style={{ background: 'var(--state-cancel-bg)' }}
             >
-              <p className="text-[12px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
+              <p className="text-[13px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
                 ¿Segura? Esta acción no se puede deshacer.
               </p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setConfirmDelete(false)}
-                  className="flex-1 py-2 rounded-[10px] text-[12px] font-medium"
+                  className="flex-1 py-2 rounded-[10px] text-[13px] font-medium"
                   style={{ background: 'rgba(255,255,255,0.6)', color: 'var(--ink-cool)' }}
                 >
                   Cancelar
@@ -601,7 +601,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
                 <button
                   onClick={eliminarCita}
                   disabled={deleting}
-                  className="flex-1 py-2 rounded-[10px] text-[12px] font-medium"
+                  className="flex-1 py-2 rounded-[10px] text-[13px] font-medium"
                   style={{ background: 'var(--state-cancel-text)', color: 'white' }}
                 >
                   {deleting ? 'Eliminando…' : 'Sí, eliminar'}

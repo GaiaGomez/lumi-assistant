@@ -39,7 +39,7 @@ export default function ClinicalNoteSummaryCard({ note }: ClinicalNoteSummaryCar
           <p className="text-[11px] tracking-[0.03em]" style={{ color: 'var(--ink-cool-faint)' }}>
             {formatDateOnly(note.created_at)}
           </p>
-          <p className="mt-0.5 line-clamp-1 text-[13px] font-medium leading-5" style={{ color: 'var(--ink-cool-strong)' }}>
+          <p className="mt-0.5 line-clamp-1 text-[14px] font-medium leading-5" style={{ color: 'var(--ink-cool-strong)' }}>
             {getClinicalNoteHeadline(note)}
           </p>
         </div>
