@@ -137,7 +137,6 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
   const [creatingPatient, setCreatingPatient] = useState(false)
   const [newPatientNombre, setNewPatientNombre] = useState('')
   const [newPatientApellido, setNewPatientApellido] = useState('')
-  const [newPatientWhatsapp, setNewPatientWhatsapp] = useState('')
   const [newPatientTelefono, setNewPatientTelefono] = useState('')
   const [newPatientEmail, setNewPatientEmail] = useState('')
   const [savingNewPatient, setSavingNewPatient] = useState(false)
@@ -171,7 +170,6 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
     setCreatingPatient(false)
     setNewPatientNombre('')
     setNewPatientApellido('')
-    setNewPatientWhatsapp('')
     setNewPatientTelefono('')
     setNewPatientEmail('')
   }
@@ -187,7 +185,6 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
         .insert({
           nombre: newPatientNombre.trim(),
           apellido: newPatientApellido.trim(),
-          whatsapp: newPatientWhatsapp.trim() || null,
           telefono: newPatientTelefono.trim() || null,
           email: newPatientEmail.trim() || null,
           user_id: user.id,
@@ -446,29 +443,22 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <input
-                            value={newPatientWhatsapp}
-                            onChange={e => setNewPatientWhatsapp(e.target.value)}
-                            placeholder="WhatsApp (573001234567)"
-                            className="w-full rounded-[10px] px-3 py-2 text-[13px] focus:outline-none"
-                            style={{ background: 'rgba(255,255,255,0.82)', border: '1px solid rgba(200,196,210,0.5)', color: 'var(--ink-cool-strong)' }}
-                          />
-                          <input
                             value={newPatientTelefono}
                             onChange={e => setNewPatientTelefono(e.target.value)}
                             placeholder="Teléfono"
                             className="w-full rounded-[10px] px-3 py-2 text-[13px] focus:outline-none"
                             style={{ background: 'rgba(255,255,255,0.82)', border: '1px solid rgba(200,196,210,0.5)', color: 'var(--ink-cool-strong)' }}
                           />
+                          <input
+                            value={newPatientEmail}
+                            onChange={e => setNewPatientEmail(e.target.value)}
+                            placeholder="Correo"
+                            type="email"
+                            onKeyDown={e => { if (e.key === 'Enter') handleCreatePatient() }}
+                            className="w-full rounded-[10px] px-3 py-2 text-[13px] focus:outline-none"
+                            style={{ background: 'rgba(255,255,255,0.82)', border: '1px solid rgba(200,196,210,0.5)', color: 'var(--ink-cool-strong)' }}
+                          />
                         </div>
-                        <input
-                          value={newPatientEmail}
-                          onChange={e => setNewPatientEmail(e.target.value)}
-                          placeholder="Email"
-                          type="email"
-                          onKeyDown={e => { if (e.key === 'Enter') handleCreatePatient() }}
-                          className="w-full rounded-[10px] px-3 py-2 text-[13px] focus:outline-none"
-                          style={{ background: 'rgba(255,255,255,0.82)', border: '1px solid rgba(200,196,210,0.5)', color: 'var(--ink-cool-strong)' }}
-                        />
                         <div className="flex gap-2 pt-0.5">
                           <button
                             type="button"
