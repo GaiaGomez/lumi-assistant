@@ -1,14 +1,15 @@
 export const dynamic = 'force-dynamic'
 // ============================================================
-// CONFIGURACIÓN — ajustes personalizables de la app
-// Primera sección: plantillas de mensajes de WhatsApp
+// CONFIGURACIÓN — ajustes y personalización del sistema
+//
+// Server component: verifica sesión y carga settings desde Supabase
+// Pasa datos a ConfiguracionClient para renderizar las secciones interactivas
 // ============================================================
 
 import { createClient } from '@/lib/supabase/server'
 import { fetchSettings } from '@/lib/settings'
 import PageBlobs from '@/components/ui/PageBlobs'
-import TemplateEditor from '@/components/configuracion/TemplateEditor'
-import DoctoraliaSync from '@/components/configuracion/DoctoraliaSync'
+import ConfiguracionClient from '@/components/configuracion/ConfiguracionClient'
 
 export default async function ConfiguracionPage() {
   const supabase = await createClient()
@@ -20,24 +21,18 @@ export default async function ConfiguracionPage() {
     <div className="relative mx-auto max-w-[860px] pb-1">
       <PageBlobs />
 
-      <div className="relative mb-4">
-        <p className="section-kicker mb-1.5">Configuración</p>
-        <h1 className="page-title text-[1.6rem] leading-none">Ajustes</h1>
+      {/* Page header */}
+      <div className="relative mb-5">
+        <p className="section-kicker mb-1.5">Ajustes</p>
+        <h1 className="page-title text-[1.6rem] leading-none">Configuración</h1>
         <p className="page-subtitle mt-1">
-          Personaliza tu agenda, mensajes y conexiones externas.
+          Personaliza cómo trabaja Lumi para tu consultorio.
         </p>
       </div>
 
-      <div className="space-y-4">
-        <section>
-          <p className="section-kicker mb-2">Doctoralia</p>
-          <DoctoraliaSync settings={settings} userId={user!.id} />
-        </section>
-
-        <section>
-          <p className="section-kicker mb-2">Mensajes de WhatsApp</p>
-          <TemplateEditor settings={settings} userId={user!.id} />
-        </section>
+      {/* Client tabs + secciones */}
+      <div className="relative">
+        <ConfiguracionClient settings={settings} userId={user!.id} />
       </div>
     </div>
   )

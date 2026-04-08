@@ -1,13 +1,15 @@
 'use client'
 // ============================================================
-// BOTTOM NAV — navegación inferior estilo iPad/iOS
-// En pantallas grandes (iPad landscape) se convierte en sidebar lateral
-// "use client" porque usa usePathname para saber qué ruta está activa
+// BOTTOM NAV — navegación principal de Lumi
+//
+// En mobile/tablet: barra inferior frosted glass + header superior con acceso de cuenta
+// En desktop (lg+): sidebar lateral con AccountMenu + links de nav
 // ============================================================
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Calendar, Users, MessageCircle, Settings } from 'lucide-react'
+import AccountMenu from './AccountMenu'
 
 const navItems = [
   { href: '/agenda',        label: 'Agenda',     icon: Calendar },
@@ -17,12 +19,46 @@ const navItems = [
 ]
 
 export default function BottomNav() {
-  // usePathname: hook de Next.js que devuelve la ruta actual, ej: "/agenda"
   const pathname = usePathname()
 
   return (
     <>
-      {/* ── BOTTOM NAV — iPad portrait / móvil, estilo frosted glass ── */}
+      {/* ── MOBILE HEADER — solo visible en < lg ──
+          Header superior con identidad de la app + acceso rápido a cuenta */}
+      <header
+        className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4"
+        style={{
+          height: '56px',
+          background: 'rgba(255,255,255,0.82)',
+          backdropFilter: 'blur(24px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(160%)',
+          borderBottom: '1px solid rgba(255,255,255,0.44)',
+          boxShadow: '0 1px 12px rgba(120,110,130,0.07)',
+        }}
+      >
+        {/* Identidad de la app */}
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-8 h-8 rounded-[10px] flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #C4B0C8 0%, #9A9AB8 100%)' }}
+          >
+            <span className="text-white text-[13px] font-light select-none">L</span>
+          </div>
+          <div>
+            <p className="text-[13px] font-medium leading-none" style={{ color: 'var(--ink-cool-strong)' }}>
+              Lumi
+            </p>
+            <p className="text-[10px] tracking-wide leading-tight mt-0.5" style={{ color: 'var(--ink-cool-muted)' }}>
+              Consultorio privado
+            </p>
+          </div>
+        </div>
+
+        {/* Trigger de cuenta (solo avatar en modo compacto) */}
+        <AccountMenu compact />
+      </header>
+
+      {/* ── BOTTOM NAV — mobile/tablet ── */}
       <nav
         className="dashboard-shell-nav fixed bottom-4 left-4 right-4 flex lg:hidden z-50 rounded-2xl overflow-hidden"
         style={{
@@ -44,10 +80,11 @@ export default function BottomNav() {
               className="relative flex-1 flex flex-col items-center justify-center py-3.5 gap-1 transition-all"
               style={{ color: isActive ? 'var(--ink-cool-strong)' : 'var(--ink-cool-muted)' }}
             >
-              {/* Indicador activo — bolita sobre el ícono */}
               {isActive && (
-                <span className="absolute top-2 w-1 h-1 rounded-full"
-                  style={{ background: 'var(--ink-cool-faint)' }} />
+                <span
+                  className="absolute top-2 w-1 h-1 rounded-full"
+                  style={{ background: 'var(--ink-cool-faint)' }}
+                />
               )}
               <Icon size={21} strokeWidth={isActive ? 2.2 : 1.5} />
               <span className="text-[11px] font-medium tracking-wide">{label}</span>
@@ -56,7 +93,7 @@ export default function BottomNav() {
         })}
       </nav>
 
-      {/* ── SIDEBAR — iPad landscape / pantallas grandes ── */}
+      {/* ── SIDEBAR — desktop (lg+) ── */}
       <aside
         className="dashboard-shell-sidebar hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-64 z-50"
         style={{
@@ -66,22 +103,16 @@ export default function BottomNav() {
           boxShadow: '1px 0 24px rgba(120,110,130,0.06)',
         }}
       >
-        {/* Logo */}
-        <div className="p-6">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm"
-              style={{ background: 'linear-gradient(135deg, #C4B0C8 0%, #9A9AB8 100%)' }}>
-              <span className="text-white text-base font-light">L</span>
-            </div>
-            <div>
-              <p className="font-medium text-[14px]" style={{ color: 'var(--ink-cool-strong)' }}>Lu Assistant</p>
-              <p className="text-[11px] tracking-wide" style={{ color: 'var(--ink-cool-muted)' }}>Consultorio privado</p>
-            </div>
-          </div>
+        {/* Account menu completo — avatar + nombre + dropdown */}
+        <div className="p-4 pb-2">
+          <AccountMenu />
         </div>
 
-        {/* Links */}
-        <nav className="flex-1 p-4 space-y-1">
+        {/* Separador sutil */}
+        <div className="mx-5 mb-2" style={{ borderTop: '1px solid var(--border-glass-muted)' }} />
+
+        {/* Links de navegación */}
+        <nav className="flex-1 px-3 py-1 space-y-0.5">
           {navItems.map(({ href, label, icon: Icon }) => {
             const isActive = pathname.startsWith(href)
             return (
@@ -103,7 +134,7 @@ export default function BottomNav() {
           })}
         </nav>
 
-        {/* Footer del sidebar */}
+        {/* Footer */}
         <div className="p-5">
           <p className="text-[11px] text-center tracking-widest" style={{ color: 'var(--ink-cool-muted)' }}>
             Lumi Assistant
