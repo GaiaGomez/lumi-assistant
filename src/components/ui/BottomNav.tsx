@@ -41,7 +41,7 @@ export default function BottomNav() {
             <Link
               key={href}
               href={href}
-              className="flex-1 flex flex-col items-center justify-center py-3.5 gap-1 transition-all"
+              className="relative flex-1 flex flex-col items-center justify-center py-3.5 gap-1 transition-all"
               style={{ color: isActive ? 'var(--ink-cool-strong)' : 'var(--ink-cool-muted)' }}
             >
               {/* Indicador activo — bolita sobre el ícono */}
