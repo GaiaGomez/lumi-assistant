@@ -24,20 +24,19 @@ export default function ModalShell({ onClose, children, maxWidth = 'max-w-md' }:
 
   return (
     <div
-      className="dashboard-modal-shell fixed inset-0 z-[90] flex items-end sm:items-center justify-center px-3 pb-3 pt-10 sm:p-4"
+      className="dashboard-modal-shell fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
       style={{
-        background: 'rgba(52, 34, 35, 0.34)',
-        backdropFilter: 'blur(12px)',
+        background: 'var(--overlay-modal)',
+        backdropFilter: 'blur(8px)',
         overscrollBehavior: 'contain',
       }}
       onClick={onClose}
     >
       <div
-        className={`glass-cool w-full ${maxWidth} rounded-t-[22px] sm:rounded-[22px] overflow-hidden`}
+        className={`glass-cool w-full ${maxWidth} rounded-[24px] overflow-hidden`}
         style={{
-          boxShadow: '0 34px 96px rgba(54, 37, 34, 0.22)',
-          border: '1px solid rgba(255,255,255,0.46)',
-          maxHeight: 'calc(100dvh - var(--dashboard-action-clearance) - 1rem)',
+          boxShadow: 'var(--shadow-float)',
+          maxHeight: 'calc(100vh - var(--dashboard-action-clearance) - 2rem)',
           overflowY: 'auto',
           overscrollBehavior: 'contain',
           WebkitOverflowScrolling: 'touch',

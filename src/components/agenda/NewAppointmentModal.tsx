@@ -338,7 +338,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
 
   return (
     <ModalShell onClose={onClose}>
-      <div className="flex min-h-full flex-col">
+      <div>
         <div className="flex items-start justify-between p-5 pb-4">
           <div>
             <SectionHeader label="Nuevo evento" className="mb-2" />
@@ -351,7 +351,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
           </Button>
         </div>
 
-        <div className="dashboard-safe-bottom px-5 pb-6 space-y-4">
+        <div className="px-5 pb-5 space-y-4">
           <div>
             <SectionHeader label="Paciente (opcional)" className="mb-2" />
             {selectedPatient ? (
@@ -419,7 +419,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
                         ))}
                         {filteredPatients.length === 0 && search && (
                           <p className="px-3.5 py-2.5 text-[13px]" style={{ color: 'var(--ink-cool-muted)' }}>
-                            Sin resultados para &quot;{search}&quot;
+                            Sin resultados para "{search}"
                           </p>
                         )}
                       </div>
@@ -704,9 +704,6 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
             </div>
           )}
 
-        </div>
-
-        <div className="dashboard-modal-footer space-y-2.5">
           {error && (
             <p className="text-[13px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
               {error}
@@ -717,7 +714,7 @@ export default function NewAppointmentModal({ appointments, defaultStart, onClos
             variant="action"
             onClick={handleSave}
             disabled={isSaveBlocked}
-            className="w-full py-3 text-[14px] tracking-[0.06em] uppercase gap-2"
+            className="w-full py-2.5 text-[14px] tracking-[0.06em] uppercase gap-2"
           >
             <Plus size={14} />
             {saving ? 'Guardando…' : `Crear ${recurrenceRule ? 'serie' : 'evento'}`}

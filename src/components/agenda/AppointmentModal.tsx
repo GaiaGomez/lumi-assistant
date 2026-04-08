@@ -231,7 +231,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
 
   return (
     <ModalShell onClose={onClose}>
-      <div className="flex min-h-full flex-col">
+      <div>
 
         {/* ── Header ── */}
         <div className="flex items-start justify-between p-4">
@@ -272,7 +272,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
           </Button>
         </div>
 
-        <div className="dashboard-safe-bottom px-4 pb-6 space-y-3">
+        <div className="px-4 pb-4 space-y-3">
           {/* ── Reagendar ── */}
           <div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -527,16 +527,8 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
             />
           </div>
 
-        </div>
-
-        <div className="dashboard-modal-footer space-y-2.5">
-          {saveError && (
-            <p className="text-[13px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
-              {saveError}
-            </p>
-          )}
-
-          <div className="flex gap-2">
+          {/* ── Acciones secundarias ── */}
+          <div className="flex gap-2 pt-1">
             {appointment.patient_id && appointment.event_type === 'patient' && (
               <Button
                 variant="subtle"
@@ -561,19 +553,27 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
             )}
           </div>
 
+          {saveError && (
+            <p className="text-[13px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
+              {saveError}
+            </p>
+          )}
+
+          {/* ── Guardar ── */}
           <Button
             variant="action"
             onClick={guardarCambios}
             disabled={isSaveBlocked}
-            className="w-full py-3 text-[14px]"
+            className="w-full py-2.5 text-[14px]"
           >
             {saving ? 'Guardando…' : conflicto ? 'Corrige el conflicto para guardar' : 'Guardar cambios'}
           </Button>
 
+          {/* ── Eliminar — dos pasos ── */}
           {!confirmDelete ? (
             <button
               onClick={() => setConfirmDelete(true)}
-              className="w-full text-center text-[13px] py-1.5 transition-all flex items-center justify-center gap-1"
+              className="w-full text-center text-[13px] py-2 transition-all flex items-center justify-center gap-1"
               style={{ color: 'var(--ink-cool-faint)' }}
             >
               <Trash2 size={11} />

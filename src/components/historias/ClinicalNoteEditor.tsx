@@ -695,7 +695,7 @@ export default function ClinicalNoteEditor({
 
       {isCanvasEditorOpen && (
         <div
-          className="dashboard-modal-shell fixed inset-0 z-[90] bg-[rgba(52,34,35,0.28)] backdrop-blur-[12px]"
+          className="dashboard-modal-shell fixed inset-0 z-50 bg-[rgba(52,34,35,0.22)] backdrop-blur-[10px]"
           style={{ overscrollBehavior: 'contain' }}
           onClick={() => setIsCanvasEditorOpen(false)}
         >
