@@ -19,7 +19,7 @@ export default function PatientHeaderCard({
   editSlot,
 }: PatientHeaderCardProps) {
   return (
-    <div className="relative mb-2.5 overflow-hidden rounded-[18px]">
+    <div className="relative mb-2 overflow-hidden rounded-[18px]">
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -31,7 +31,7 @@ export default function PatientHeaderCard({
       <div
         className="relative rounded-[18px]"
         style={{
-          padding: '12px 16px',
+          padding: '10px 14px',
           background: 'linear-gradient(180deg, var(--surface-glass-strong) 0%, var(--surface-glass) 100%)',
           border: '1px solid var(--border-glass-white)',
           boxShadow: 'var(--shadow-glass-soft)',
@@ -39,8 +39,8 @@ export default function PatientHeaderCard({
           WebkitBackdropFilter: 'blur(24px) saturate(145%)',
         }}
       >
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex min-w-0 items-center gap-2.5">
+        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-center gap-2">
             <Link
               href="/pacientes"
               className="btn-subtle flex h-8 w-8 shrink-0 items-center justify-center"
@@ -50,17 +50,17 @@ export default function PatientHeaderCard({
 
             <Avatar nombre={patient.nombre} apellido={patient.apellido} size="md" />
 
-            <div className="min-w-0 pt-1">
-              <h1 className="page-title text-[1.35rem] sm:text-[1.5rem] lg:text-[1.6rem] leading-none break-words">
+            <div className="min-w-0">
+              <h1 className="editorial-panel-title text-[1.18rem] sm:text-[1.28rem] lg:text-[1.36rem] leading-tight break-words">
                 {patient.nombre} {patient.apellido}
               </h1>
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+              <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
                 <PatientInactivityStatus
                   lastAppointmentDate={lastAppointmentDate}
                 />
                 {patient.telefono && (
                   <span
-                    className="flex items-center gap-1 text-[13px]"
+                    className="flex items-center gap-1 text-[12px]"
                     style={{ color: 'var(--ink-cool-soft)' }}
                   >
                     <Phone size={11} />
@@ -71,11 +71,11 @@ export default function PatientHeaderCard({
             </div>
           </div>
 
-          <div className="flex w-full flex-wrap items-center justify-end gap-2 lg:w-auto lg:flex-nowrap lg:shrink-0">
+          <div className="flex w-full flex-wrap items-center justify-end gap-1.5 lg:w-auto lg:flex-nowrap lg:shrink-0">
             {editSlot}
             <Link
               href={newNoteHref}
-              className="btn-action gap-1.5 px-4 py-2 text-[14px]"
+              className="btn-action gap-1.5 px-3.5 py-1.5 text-[13px]"
             >
               <Plus size={12} />
               Nueva nota

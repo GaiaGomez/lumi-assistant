@@ -122,12 +122,12 @@ export default function PatientEditModal({ patient }: Props) {
       </button>
 
       {open && typeof document !== 'undefined' && createPortal(
-        <ModalShell onClose={closeModal} maxWidth="max-w-2xl">
+        <ModalShell onClose={closeModal} maxWidth="max-w-xl">
           {/* Header */}
-          <div className="flex items-start justify-between p-4">
+          <div className="flex items-start justify-between p-3.5 sm:p-4">
             <div>
-              <SectionHeader label="Paciente" className="mb-1" />
-              <h2 className="editorial-panel-title text-[1.05rem]">
+              <SectionHeader label="Paciente" className="mb-0.5" />
+              <h2 className="editorial-panel-title text-[1rem]">
                 {patient.nombre} {patient.apellido}
               </h2>
             </div>
@@ -140,85 +140,85 @@ export default function PatientEditModal({ patient }: Props) {
             </button>
           </div>
 
-          <div className="px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] space-y-3">
+          <div className="space-y-2.5 px-3.5 pb-[calc(env(safe-area-inset-bottom,0px)+0.875rem)] sm:px-4">
             {/* Nombre / Apellido */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <label className="block space-y-1.5">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <label className="block space-y-1">
                 <span className="section-kicker">Nombre *</span>
                 <input
                   value={form.nombre}
                   onChange={e => set('nombre', e.target.value)}
-                  className="w-full rounded-[14px] px-3.5 py-3 text-[14px] focus:outline-none"
+                  className="w-full rounded-[14px] px-3 py-2.5 text-[14px] focus:outline-none"
                   style={fieldStyle}
                 />
               </label>
-              <label className="block space-y-1.5">
+              <label className="block space-y-1">
                 <span className="section-kicker">Apellido *</span>
                 <input
                   value={form.apellido}
                   onChange={e => set('apellido', e.target.value)}
-                  className="w-full rounded-[14px] px-3.5 py-3 text-[14px] focus:outline-none"
+                  className="w-full rounded-[14px] px-3 py-2.5 text-[14px] focus:outline-none"
                   style={fieldStyle}
                 />
               </label>
             </div>
 
             {/* Contacto */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <label className="block space-y-1.5">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <label className="block space-y-1">
                 <span className="section-kicker">WhatsApp</span>
                 <input
                   value={form.whatsapp}
                   onChange={e => set('whatsapp', e.target.value)}
                   placeholder="573001234567"
-                  className="w-full rounded-[14px] px-3.5 py-3 text-[14px] focus:outline-none"
+                  className="w-full rounded-[14px] px-3 py-2.5 text-[14px] focus:outline-none"
                   style={fieldStyle}
                 />
               </label>
-              <label className="block space-y-1.5">
+              <label className="block space-y-1">
                 <span className="section-kicker">Teléfono</span>
                 <input
                   value={form.telefono}
                   onChange={e => set('telefono', e.target.value)}
-                  className="w-full rounded-[14px] px-3.5 py-3 text-[14px] focus:outline-none"
+                  className="w-full rounded-[14px] px-3 py-2.5 text-[14px] focus:outline-none"
                   style={fieldStyle}
                 />
               </label>
             </div>
 
             {/* Email / Fecha inicio */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <label className="block space-y-1.5">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <label className="block space-y-1">
                 <span className="section-kicker">Email</span>
                 <input
                   type="email"
                   value={form.email}
                   onChange={e => set('email', e.target.value)}
-                  className="w-full rounded-[14px] px-3.5 py-3 text-[14px] focus:outline-none"
+                  className="w-full rounded-[14px] px-3 py-2.5 text-[14px] focus:outline-none"
                   style={fieldStyle}
                 />
               </label>
-              <label className="block space-y-1.5">
+              <label className="block space-y-1">
                 <span className="section-kicker">Inicio proceso</span>
                 <input
                   type="date"
                   value={form.fecha_inicio}
                   onChange={e => set('fecha_inicio', e.target.value)}
-                  className="w-full rounded-[14px] px-3.5 py-3 text-[14px] focus:outline-none"
+                  className="w-full rounded-[14px] px-3 py-2.5 text-[14px] focus:outline-none"
                   style={fieldStyle}
                 />
               </label>
             </div>
 
             {/* Notas generales */}
-            <label className="block space-y-1.5">
+            <label className="block space-y-1">
               <span className="section-kicker">Notas generales</span>
               <textarea
                 value={form.notas_generales}
                 onChange={e => set('notas_generales', e.target.value)}
                 rows={3}
                 placeholder="Motivo de consulta, antecedentes, acuerdos..."
-                className="w-full resize-none rounded-[14px] px-3.5 py-3 text-[14px] focus:outline-none"
+                className="w-full resize-none rounded-[14px] px-3 py-2.5 text-[14px] focus:outline-none"
                 style={fieldStyle}
               />
             </label>
@@ -230,7 +230,7 @@ export default function PatientEditModal({ patient }: Props) {
             )}
 
             {/* Footer */}
-            <div className="flex items-center justify-between gap-2 pt-1">
+            <div className="flex items-center justify-between gap-2 pt-0.5">
               <button
                 type="button"
                 onClick={handleDelete}
