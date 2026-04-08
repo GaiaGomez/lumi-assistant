@@ -6,13 +6,50 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export const SETTINGS_KEYS = [
+  // ── Doctoralia ────────────────────────────────────────────
   'doctoralia_url',
-  'doctoralia_token',       // Bearer token de la API interna de Doctoralia
+  'doctoralia_token',
   'doctoralia_last_sync',
-  'doctoralia_sync_error',  // último error de sync, para mostrarlo en UI
+  'doctoralia_sync_error',
+
+  // ── Plantillas WhatsApp ───────────────────────────────────
   'template_cobros',
   'template_sin_proxima',
   'template_retomar',
+
+  // ── Agenda ────────────────────────────────────────────────
+  'agenda_duracion_cita',    // "60" (minutos: 15/30/45/60/90/120)
+  'agenda_hora_inicio',      // "07:00"
+  'agenda_hora_fin',         // "21:00"
+  'agenda_dias_laborales',   // JSON: ["lun","mar","mie","jue","vie"]
+  'agenda_mostrar_festivos', // "true"/"false"
+  'agenda_vista_default',    // "day"/"week"/"month"
+  'agenda_intervalo',        // "15"/"30"/"60" (minutos por celda)
+
+  // ── Recordatorios ─────────────────────────────────────────
+  'recordatorio_activo',     // "true"/"false"
+  'recordatorio_cuando',     // "dia"/"horas"/"ambos"/"ninguno"
+  'recordatorio_firma',      // Texto de firma al final de los mensajes
+
+  // ── Modalidades / Consultorios ────────────────────────────
+  'modalidad_medellin_nombre',
+  'modalidad_medellin_color',
+  'modalidad_medellin_direccion',
+  'modalidad_online_nombre',
+  'modalidad_online_color',
+  'modalidad_online_enlace',
+  'modalidad_retiro_nombre',
+  'modalidad_retiro_color',
+  'modalidad_retiro_instrucciones',
+
+  // ── Pacientes ─────────────────────────────────────────────
+  'pacientes_whatsapp_principal',  // "true"/"false"
+  'pacientes_dias_inactivo',       // "90" (días para marcar inactivo)
+  'pacientes_dias_reactivar',      // "60" (días para mostrar "Reactivar")
+
+  // ── Historial clínico ─────────────────────────────────────
+  'historial_plantilla_base',  // Texto markdown de plantilla por defecto
+  'historial_vista',           // "compacta"/"expandida"
 ] as const
 
 export type SettingsKey = (typeof SETTINGS_KEYS)[number]
@@ -20,28 +57,70 @@ export type SettingsMap = Record<SettingsKey, string>
 
 // Valores por defecto si el usuario aún no ha personalizado
 export const DEFAULT_SETTINGS: SettingsMap = {
-  doctoralia_url: process.env.NEXT_PUBLIC_DOCTORALIA_URL ?? '',
-  doctoralia_token: '',
-  doctoralia_last_sync: '',
+  // Doctoralia
+  doctoralia_url:        process.env.NEXT_PUBLIC_DOCTORALIA_URL ?? '',
+  doctoralia_token:      '',
+  doctoralia_last_sync:  '',
   doctoralia_sync_error: '',
 
+  // Plantillas
   template_cobros:
     'Hola, {first_name}, espero que estés bien. Te escribo para recordarte que sigue pendiente el pago de la última sesión. Cuando puedas, me confirmas por favor.',
-
   template_sin_proxima:
     'Hola, {first_name}. ¿Cuándo nos vemos? Te dejo el enlace a mi agenda para que mires qué horario te queda mejor y agendar una próxima sesión: {booking_url}',
-
   template_retomar:
     'Hola, {first_name}. Hace mucho no nos vemos y quería saber cómo estás.',
+
+  // Agenda
+  agenda_duracion_cita:    '60',
+  agenda_hora_inicio:      '07:00',
+  agenda_hora_fin:         '21:00',
+  agenda_dias_laborales:   '["lun","mar","mie","jue","vie"]',
+  agenda_mostrar_festivos: 'true',
+  agenda_vista_default:    'week',
+  agenda_intervalo:        '30',
+
+  // Recordatorios
+  recordatorio_activo:  'true',
+  recordatorio_cuando:  'ambos',
+  recordatorio_firma:   '',
+
+  // Modalidades
+  modalidad_medellin_nombre:       'Medellín',
+  modalidad_medellin_color:        '#9488B0',
+  modalidad_medellin_direccion:    '',
+  modalidad_online_nombre:         'Online',
+  modalidad_online_color:          '#8FA5BD',
+  modalidad_online_enlace:         '',
+  modalidad_retiro_nombre:         'Retiro',
+  modalidad_retiro_color:          '#7EA88F',
+  modalidad_retiro_instrucciones:  '',
+
+  // Pacientes
+  pacientes_whatsapp_principal: 'true',
+  pacientes_dias_inactivo:      '90',
+  pacientes_dias_reactivar:     '60',
+
+  // Historial
+  historial_plantilla_base: '',
+  historial_vista:          'expandida',
 }
 
 /**
  * Sustituye {variables} en una plantilla con sus valores.
- * Si una variable no existe en `vars`, la deja sin cambiar.
  * Ejemplo: interpolate("Hola, {first_name}", { first_name: "Ana" }) → "Hola, Ana"
  */
 export function interpolate(template: string, vars: Record<string, string>): string {
   return template.replace(/\{(\w+)\}/g, (match, key) => vars[key] ?? match)
+}
+
+/**
+ * Añade la firma al final de un mensaje si está configurada.
+ */
+export function appendFirma(message: string, settings: SettingsMap): string {
+  const firma = settings['recordatorio_firma']?.trim()
+  if (!firma) return message
+  return `${message}\n\n${firma}`
 }
 
 /**
@@ -76,7 +155,7 @@ export async function upsertSettingValue(
     .from('settings')
     .upsert(
       {
-        user_id: userId,
+        user_id:    userId,
         key,
         value,
         updated_at: new Date().toISOString(),

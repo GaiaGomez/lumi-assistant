@@ -11,7 +11,7 @@ import {
   getTodayAppointments,
   getTomorrowPendingAppointments,
 } from '@/lib/appointments'
-import { interpolate, type SettingsMap } from '@/lib/settings'
+import { appendFirma, interpolate, type SettingsMap } from '@/lib/settings'
 import { generarLinkWhatsApp, mensajeRecordatorioCita, resolveWhatsApp } from '@/lib/whatsapp'
 
 type AppointmentWithPatient = Appointment & { patient?: Patient | null }
@@ -98,12 +98,17 @@ export function buildPatientWhatsAppQuickActions(
 
   const actions: PatientWhatsAppQuickAction[] = []
 
-  if (oldestPendingPayment) {
-    const message = interpolate(settings['template_cobros'], {
-      first_name: patient.nombre,
-      session_date: formatDateTimeFull(oldestPendingPayment.fecha_inicio),
-    })
+  // Umbral de reactivación: usa el setting del usuario si está definido
+  const reactivationDays = parseInt(settings['pacientes_dias_reactivar'] ?? String(REACTIVATION_INACTIVITY_DAYS))
 
+  if (oldestPendingPayment) {
+    const message = appendFirma(
+      interpolate(settings['template_cobros'], {
+        first_name:   patient.nombre,
+        session_date: formatDateTimeFull(oldestPendingPayment.fecha_inicio),
+      }),
+      settings
+    )
     const href = generarLinkWhatsApp(whatsapp, message)
     if (href !== '#') {
       actions.push({
@@ -117,11 +122,13 @@ export function buildPatientWhatsAppQuickActions(
   }
 
   if (lastPastAppointment && !nextAppointment) {
-    const message = interpolate(settings['template_sin_proxima'], {
-      first_name: patient.nombre,
-      booking_url: settings['doctoralia_url'],
-    })
-
+    const message = appendFirma(
+      interpolate(settings['template_sin_proxima'], {
+        first_name:  patient.nombre,
+        booking_url: settings['doctoralia_url'],
+      }),
+      settings
+    )
     const href = generarLinkWhatsApp(whatsapp, message)
     if (href !== '#') {
       actions.push({
@@ -134,12 +141,14 @@ export function buildPatientWhatsAppQuickActions(
     }
   }
 
-  if (lastPastAppointment && !nextAppointment && daysInactive !== null && daysInactive > REACTIVATION_INACTIVITY_DAYS) {
-    const message = interpolate(settings['template_retomar'], {
-      first_name: patient.nombre,
-      days_inactive: String(daysInactive),
-    })
-
+  if (lastPastAppointment && !nextAppointment && daysInactive !== null && daysInactive > reactivationDays) {
+    const message = appendFirma(
+      interpolate(settings['template_retomar'], {
+        first_name:    patient.nombre,
+        days_inactive: String(daysInactive),
+      }),
+      settings
+    )
     const href = generarLinkWhatsApp(whatsapp, message)
     if (href !== '#') {
       actions.push({
@@ -164,11 +173,15 @@ export function buildPendingActions(
   const actions: PendingAction[] = []
   const appointmentActions = appointments.filter(hasPatient)
 
+  // Umbral de reactivación configurable por el usuario
+  const reactivationDays = parseInt(settings['pacientes_dias_reactivar'] ?? String(REACTIVATION_INACTIVITY_DAYS))
+
   getTodayAppointments(appointmentActions, now)
     .filter(appointmentNeedsConfirmation)
     .forEach((appointment) => {
       if (!appointment.patient) return
       const patient = appointment.patient
+      const rawMsg = mensajeRecordatorioCita(patient, appointment)
       actions.push({
         id: `confirmar-hoy-${appointment.id}`,
         type: 'confirmar_cita_hoy',
@@ -181,11 +194,11 @@ export function buildPendingActions(
         title: 'Confirmar cita de hoy',
         description: 'La sesión de hoy sigue pendiente de confirmación.',
         context: formatDateTimeFull(appointment.fecha_inicio),
-        preview: previewMessage(mensajeRecordatorioCita(patient, appointment)),
+        preview: previewMessage(appendFirma(rawMsg, settings)),
         internalActions: ['open_patient', 'update_session', 'update_payment'],
         externalAction: buildWhatsAppAction(
           'Abrir WhatsApp',
-          generarLinkWhatsApp(resolveWhatsApp(patient), mensajeRecordatorioCita(patient, appointment))
+          generarLinkWhatsApp(resolveWhatsApp(patient), appendFirma(rawMsg, settings))
         ),
       })
     })
@@ -194,6 +207,7 @@ export function buildPendingActions(
     .forEach((appointment) => {
       if (!appointment.patient) return
       const patient = appointment.patient
+      const rawMsg = mensajeRecordatorioCita(patient, appointment)
       actions.push({
         id: `confirmar-manana-${appointment.id}`,
         type: 'confirmar_cita_manana',
@@ -206,11 +220,11 @@ export function buildPendingActions(
         title: 'Confirmar cita de mañana',
         description: 'La sesión de mañana sigue pendiente de confirmación.',
         context: formatDateTimeFull(appointment.fecha_inicio),
-        preview: previewMessage(mensajeRecordatorioCita(patient, appointment)),
+        preview: previewMessage(appendFirma(rawMsg, settings)),
         internalActions: ['open_patient', 'update_session', 'update_payment'],
         externalAction: buildWhatsAppAction(
           'Abrir WhatsApp',
-          generarLinkWhatsApp(resolveWhatsApp(patient), mensajeRecordatorioCita(patient, appointment))
+          generarLinkWhatsApp(resolveWhatsApp(patient), appendFirma(rawMsg, settings))
         ),
       })
     })
@@ -218,10 +232,13 @@ export function buildPendingActions(
   getPendingPayments(appointmentActions).forEach((appointment) => {
     if (!appointment.patient) return
     const patient = appointment.patient
-    const message = interpolate(settings['template_cobros'], {
-      first_name: patient.nombre,
-      session_date: formatDateTimeFull(appointment.fecha_inicio),
-    })
+    const message = appendFirma(
+      interpolate(settings['template_cobros'], {
+        first_name:   patient.nombre,
+        session_date: formatDateTimeFull(appointment.fecha_inicio),
+      }),
+      settings
+    )
 
     actions.push({
       id: `cobro-${appointment.id}`,
@@ -254,11 +271,14 @@ export function buildPendingActions(
     const daysWithoutSchedule = getDaysInactive(lastPastAppointment, now)
     if (daysWithoutSchedule === null) return
 
-    if (daysWithoutSchedule > REACTIVATION_INACTIVITY_DAYS) {
-      const message = interpolate(settings['template_retomar'], {
-        first_name: patient.nombre,
-        days_inactive: String(daysWithoutSchedule),
-      })
+    if (daysWithoutSchedule > reactivationDays) {
+      const message = appendFirma(
+        interpolate(settings['template_retomar'], {
+          first_name:    patient.nombre,
+          days_inactive: String(daysWithoutSchedule),
+        }),
+        settings
+      )
 
       actions.push({
         id: `reactivar-${patient.id}`,
@@ -280,11 +300,13 @@ export function buildPendingActions(
       return
     }
 
-    const bookingUrl = settings['doctoralia_url']
-    const message = interpolate(settings['template_sin_proxima'], {
-      first_name: patient.nombre,
-      booking_url: bookingUrl,
-    })
+    const message = appendFirma(
+      interpolate(settings['template_sin_proxima'], {
+        first_name:  patient.nombre,
+        booking_url: settings['doctoralia_url'],
+      }),
+      settings
+    )
 
     actions.push({
       id: `sin-proxima-${patient.id}`,

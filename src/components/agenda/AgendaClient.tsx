@@ -22,6 +22,7 @@ import {
   isAppointmentPaid,
   resolveAppointmentCategory,
 } from '@/lib/appointment-ui'
+import { type SettingsMap } from '@/lib/settings'
 import { FESTIVOS_CO } from './festivos'
 
 moment.locale('es')
@@ -180,16 +181,35 @@ function Pill({ dot, text }: { dot: string; text: string }) {
 
 interface AgendaClientProps {
   appointments: Appointment[]
+  settings: SettingsMap
 }
 
 type ModalidadFiltro = 'online' | 'medellin' | 'retiro'
 
-export default function AgendaClient({ appointments }: AgendaClientProps) {
+export default function AgendaClient({ appointments, settings }: AgendaClientProps) {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
   const [newSlotStart, setNewSlotStart] = useState<Date | null>(null)
-  const [currentView, setCurrentView] = useState<View>('week')
+  const [currentView, setCurrentView] = useState<View>((settings['agenda_vista_default'] as View) ?? 'week')
   const [currentDate, setCurrentDate] = useState(new Date())
   const [filtrosActivos, setFiltrosActivos] = useState<Set<ModalidadFiltro>>(new Set())
+
+  // Derivados de settings
+  const calMin = useMemo(() => {
+    const [h, m] = (settings['agenda_hora_inicio'] ?? '07:00').split(':').map(Number)
+    return new Date(0, 0, 0, h, m)
+  }, [settings])
+
+  const calMax = useMemo(() => {
+    const [h, m] = (settings['agenda_hora_fin'] ?? '21:00').split(':').map(Number)
+    return new Date(0, 0, 0, h, m)
+  }, [settings])
+
+  const calStep = useMemo(() => {
+    const v = parseInt(settings['agenda_intervalo'] ?? '30')
+    return [15, 30, 60].includes(v) ? v : 30
+  }, [settings])
+
+  const mostrarFestivos = settings['agenda_mostrar_festivos'] !== 'false'
 
   function toggleFiltro(key: ModalidadFiltro) {
     setFiltrosActivos((prev) => {
@@ -289,12 +309,12 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
   // Fondo de cada día: festivos (tinte muy sutil) + fines de semana (mauve apenas perceptible)
   const dayPropGetter = useCallback((date: Date) => {
     const dow = date.getDay()
-    const isFestivo = FESTIVOS_CO.has(toDateKey(date))
+    const isFestivo = mostrarFestivos && FESTIVOS_CO.has(toDateKey(date))
     const isWeekend = dow === 0 || dow === 6
     if (isFestivo) return { style: { background: 'rgba(185,143,149,0.07)' } }
     if (isWeekend) return { style: { background: 'rgba(175,175,210,0.05)' } }
     return {}
-  }, [])
+  }, [mostrarFestivos])
 
   // Etiqueta del período visible
   const periodoLabel = () => {
@@ -520,8 +540,10 @@ export default function AgendaClient({ appointments }: AgendaClientProps) {
             dayPropGetter={dayPropGetter}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             components={{ event: EventoCalendario, dateHeader: CabechaFecha, header: ColumnaHeader } as any}
-            min={new Date(0, 0, 0, 8, 0)}
-            max={new Date(0, 0, 0, 21, 0)}
+            min={calMin}
+            max={calMax}
+            step={calStep}
+            timeslots={Math.max(1, 60 / calStep)}
             messages={{
               today: 'Hoy',
               previous: '‹',
