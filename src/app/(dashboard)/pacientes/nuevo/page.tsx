@@ -56,7 +56,7 @@ export default function NuevoPacientePage() {
   }
 
   return (
-    <div className="dashboard-safe-bottom">
+    <div>
       <div className="flex items-center gap-3 mb-4">
         <button
           type="button"
@@ -73,7 +73,7 @@ export default function NuevoPacientePage() {
 
       <form onSubmit={handleSubmit} className="glass-cool rounded-[18px] p-4 space-y-3">
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3">
           <label className="block space-y-1.5">
             <span className="section-kicker">Nombre *</span>
             <input name="nombre" value={form.nombre} onChange={handleChange} required

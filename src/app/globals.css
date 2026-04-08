@@ -238,9 +238,7 @@ textarea {
 }
 
 body.canvas-editor-open .dashboard-shell-nav,
-body.canvas-editor-open .dashboard-shell-sidebar,
-body.dashboard-overlay-open .dashboard-shell-nav,
-body.dashboard-overlay-open .dashboard-shell-sidebar {
+body.canvas-editor-open .dashboard-shell-sidebar {
   opacity: 0;
   pointer-events: none;
 }

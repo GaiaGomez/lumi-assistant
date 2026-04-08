@@ -27,6 +27,7 @@ import {
   getAppointmentEnd,
   getAppointmentEndFromDuration,
   getAppointmentScheduleError,
+  isDoctoraliaAppointment,
 } from '@/lib/appointments'
 import { deleteAppointmentById, updateAppointmentById } from '@/lib/appointment-updates'
 import { createClient } from '@/lib/supabase/client'
@@ -114,6 +115,8 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
   const [deudaCount, setDeudaCount] = useState<number | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const isDoctoraliaSource = isDoctoraliaAppointment(appointment)
+
   // Deuda del paciente — sesiones realizadas sin pagar (excluye la cita actual)
   useEffect(() => {
     async function loadDeuda() {
@@ -231,7 +234,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
 
   return (
     <ModalShell onClose={onClose}>
-      <div>
+      <div className="overflow-y-auto max-h-[88vh]">
 
         {/* ── Header ── */}
         <div className="flex items-start justify-between p-4">
@@ -606,6 +609,7 @@ export default function AppointmentModal({ appointment, appointments, onClose }:
               </div>
             </div>
           )}
+
         </div>
       </div>
     </ModalShell>

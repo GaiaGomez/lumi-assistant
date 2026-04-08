@@ -11,7 +11,6 @@
 // ============================================================
 
 import type { ReactNode } from 'react'
-import useBodyScrollLock from '@/components/ui/useBodyScrollLock'
 
 interface ModalShellProps {
   onClose: () => void
@@ -20,16 +19,10 @@ interface ModalShellProps {
 }
 
 export default function ModalShell({ onClose, children, maxWidth = 'max-w-md' }: ModalShellProps) {
-  useBodyScrollLock(true)
-
   return (
     <div
       className="dashboard-modal-shell fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
-      style={{
-        background: 'var(--overlay-modal)',
-        backdropFilter: 'blur(8px)',
-        overscrollBehavior: 'contain',
-      }}
+      style={{ background: 'var(--overlay-modal)', backdropFilter: 'blur(8px)' }}
       onClick={onClose}
     >
       <div
@@ -38,8 +31,6 @@ export default function ModalShell({ onClose, children, maxWidth = 'max-w-md' }:
           boxShadow: 'var(--shadow-float)',
           maxHeight: 'calc(100vh - var(--dashboard-action-clearance) - 2rem)',
           overflowY: 'auto',
-          overscrollBehavior: 'contain',
-          WebkitOverflowScrolling: 'touch',
         }}
         onClick={(e) => e.stopPropagation()}
       >
