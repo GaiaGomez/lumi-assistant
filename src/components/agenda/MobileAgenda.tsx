@@ -441,16 +441,18 @@ export default function MobileAgenda({
     const visibleDays = isTablet ? 4 : 3
 
     // ── Slot height ─────────────────────────────────────────────
-    // Phone: 18→22px  (compact grid, less vertical mass)
-    // Tablet: 52→64px (spacious, close to desktop scale)
+    // Phone: 16→22px  — 16px floor keeps grid (26×16=416px) within iPhone viewport
+    // Tablet: 52→64px — spacious, close to rbc-timeslot-group standard (56px)
     const slotHeight = isTablet
       ? Math.round(interpolate(52, 64, tabletRatio))
-      : Math.round(interpolate(18, 22, phoneRatio))
+      : Math.round(interpolate(16, 22, phoneRatio))
 
     // ── Day header height ────────────────────────────────────────
+    // Phone: 30px floor (proportional to slotHeight reduction; saves 4px vs previous 34px)
+    // Tablet: 64→80px (matches Lumi StatCard minHeight=64px at entry)
     const headerHeight = isTablet
       ? Math.round(interpolate(64, 80, tabletRatio))
-      : Math.round(interpolate(34, 42, phoneRatio))
+      : Math.round(interpolate(30, 42, phoneRatio))
 
     // ── Time gutter ──────────────────────────────────────────────
     const timeGutterWidth = isTablet
@@ -458,11 +460,12 @@ export default function MobileAgenda({
       : Math.round(interpolate(28, 34, phoneRatio))
 
     // ── Typography ───────────────────────────────────────────────
-    // Phone: 9→10px meta, 11→12px title
-    // Tablet: 11→13px meta, 14→16px title (matches Lumi's 14px body standard)
+    // Phone: 10→11px meta (10px = Lumi card-label floor; was 9px which violated system)
+    //        11→12px title (caption scale, correct for dense event cards)
+    // Tablet: 11→13px meta, 14→16px title — aligned with Lumi body (14px) + caption (11px)
     const metaSize = isTablet
       ? Math.round(interpolate(11, 13, tabletRatio))
-      : Math.round(interpolate(9, 10, phoneRatio))
+      : Math.round(interpolate(10, 11, phoneRatio))
     const titleSize = isTablet
       ? Math.round(interpolate(14, 16, tabletRatio))
       : Math.round(interpolate(11, 12, phoneRatio))
@@ -651,7 +654,7 @@ export default function MobileAgenda({
                         <p
                           className="font-semibold"
                           style={{
-                            fontSize: `${layout.titleSize + 4}px`,
+                            fontSize: `${layout.titleSize + 3}px`,
                             color: isToday
                               ? '#9488B0'
                               : isWeekend
