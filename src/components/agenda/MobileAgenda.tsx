@@ -441,30 +441,32 @@ export default function MobileAgenda({
     const visibleDays = isTablet ? 4 : 3
 
     // ── Slot height ─────────────────────────────────────────────
-    // Phone: 16→22px  — 16px floor keeps grid (26×16=416px) within iPhone viewport
-    // Tablet: 52→64px — spacious, close to rbc-timeslot-group standard (56px)
+    // Phone: 16→22px — keeps 3 days visible and avoids an oversized grid on iPhone.
+    //   Grid: 26×16 = 416px at the floor, which fits the viewport much better.
+    // Tablet: 28→36px — grid = 26×28 = 728px (was 52px → 1378px, way too tall).
+    //   Brings tablet grid from 1.6× screen to ~0.9× screen on iPad mini.
     const slotHeight = isTablet
-      ? Math.round(interpolate(52, 64, tabletRatio))
+      ? Math.round(interpolate(28, 36, tabletRatio))
       : Math.round(interpolate(16, 22, phoneRatio))
 
     // ── Day header height ────────────────────────────────────────
-    // Phone: 30px floor (proportional to slotHeight reduction; saves 4px vs previous 34px)
-    // Tablet: 64→80px (matches Lumi StatCard minHeight=64px at entry)
+    // Phone: 30→42px — compact enough for phone, still legible for 3-day view
+    // Tablet: 54→68px — StatCard-level height, legible day number + name
     const headerHeight = isTablet
-      ? Math.round(interpolate(64, 80, tabletRatio))
+      ? Math.round(interpolate(54, 68, tabletRatio))
       : Math.round(interpolate(30, 42, phoneRatio))
 
     // ── Time gutter ──────────────────────────────────────────────
     const timeGutterWidth = isTablet
-      ? Math.round(interpolate(44, 54, tabletRatio))
-      : Math.round(interpolate(28, 34, phoneRatio))
+      ? Math.round(interpolate(40, 50, tabletRatio))
+      : Math.round(interpolate(26, 32, phoneRatio))
 
     // ── Typography ───────────────────────────────────────────────
-    // Phone: 10→11px meta (10px = Lumi card-label floor; was 9px which violated system)
-    //        11→12px title (caption scale, correct for dense event cards)
-    // Tablet: 11→13px meta, 14→16px title — aligned with Lumi body (14px) + caption (11px)
+    // Phone: 10→11px meta, 11→12px title (caption scale ✓)
+    // Tablet: 12→14px meta (bigger hour labels on large canvas),
+    //         14→16px title (matches Lumi body→secondary scale)
     const metaSize = isTablet
-      ? Math.round(interpolate(11, 13, tabletRatio))
+      ? Math.round(interpolate(12, 14, tabletRatio))
       : Math.round(interpolate(10, 11, phoneRatio))
     const titleSize = isTablet
       ? Math.round(interpolate(14, 16, tabletRatio))
