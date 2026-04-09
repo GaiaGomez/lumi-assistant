@@ -70,7 +70,7 @@ const SLOT_MINUTES = 30
 const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60
 const SLOT_COUNT = TOTAL_MINUTES / SLOT_MINUTES
 const OVERLAP_GAP_PX = 3
-const MIN_DAY_WIDTH = 90
+const MIN_DAY_WIDTH = 96
 
 function interpolate(min: number, max: number, ratio: number) {
   return min + (max - min) * ratio
@@ -211,10 +211,10 @@ function EventCard({
   const start = new Date(apt.fecha_inicio)
   const end = getAppointmentEnd(apt)
   const bgColor = apt.event_type === 'general' && apt.color ? apt.color : bg
-  const isTiny = height <= layout.eventMinHeight - 2
-  const isCompact = height <= layout.eventMinHeight + 6
+  const isTiny = height <= layout.eventMinHeight
+  const isCompact = height <= layout.eventMinHeight + 10
   const titleClamp = isTiny ? 1 : isCompact ? 2 : 3
-  const topMetaVisible = !isTiny
+  const topMetaVisible = height > layout.eventMinHeight + 4
   const badgeRowMarginTop = isTiny ? 2 : 4
 
   const widthStyle =
@@ -442,28 +442,27 @@ export default function MobileAgenda({
     const visibleDays = isTablet ? 4 : 3
 
     // ── Slot height ─────────────────────────────────────────────
-    // Phone: 18→24px — enough row height for a 3-day view without feeling inflated.
-    // Tablet: 30→38px — more vertical room so the event card can carry title + icons cleanly.
+    // Phone: 20→24px — enough height to avoid banner-like events while preserving 3 visible days.
+    // Tablet: 38→46px — a clearly larger, more readable weekly grid.
     const slotHeight = isTablet
-      ? Math.round(interpolate(30, 38, tabletRatio))
-      : Math.round(interpolate(18, 24, phoneRatio))
+      ? Math.round(interpolate(38, 46, tabletRatio))
+      : Math.round(interpolate(20, 24, phoneRatio))
 
     // ── Day header height ────────────────────────────────────────
-    // Phone: 30→42px — compact enough for phone, still legible for 3-day view
-    // Tablet: 54→68px — StatCard-level height, legible day number + name
+    // Phone: 36→44px — compact, but no longer visually tiny.
+    // Tablet: 68→82px — closer to the scale of the rest of Lumi on large canvases.
     const headerHeight = isTablet
-      ? Math.round(interpolate(54, 68, tabletRatio))
-      : Math.round(interpolate(30, 42, phoneRatio))
+      ? Math.round(interpolate(68, 82, tabletRatio))
+      : Math.round(interpolate(36, 44, phoneRatio))
 
     // ── Time gutter ──────────────────────────────────────────────
     const timeGutterWidth = isTablet
-      ? Math.round(interpolate(40, 50, tabletRatio))
-      : Math.round(interpolate(26, 32, phoneRatio))
+      ? Math.round(interpolate(46, 56, tabletRatio))
+      : Math.round(interpolate(24, 28, phoneRatio))
 
     // ── Typography ───────────────────────────────────────────────
-    // Phone: 10→11px meta, 11→12px title (caption scale ✓)
-    // Tablet: 12→14px meta (bigger hour labels on large canvas),
-    //         14→16px title (matches Lumi body→secondary scale)
+    // Phone: 10→11px meta, 11→12px title.
+    // Tablet: 12→14px meta and 14→16px title for a clearly larger weekly layout.
     const metaSize = isTablet
       ? Math.round(interpolate(12, 14, tabletRatio))
       : Math.round(interpolate(10, 11, phoneRatio))
@@ -476,34 +475,34 @@ export default function MobileAgenda({
 
     // ── Card dimensions ──────────────────────────────────────────
     const cardPaddingX = isTablet
-      ? Math.round(interpolate(8, 12, tabletRatio))
-      : Math.round(interpolate(4, 6, phoneRatio))
+      ? Math.round(interpolate(10, 14, tabletRatio))
+      : Math.round(interpolate(5, 7, phoneRatio))
     const cardPaddingY = isTablet
-      ? Math.round(interpolate(6, 9, tabletRatio))
-      : Math.round(interpolate(3, 5, phoneRatio))
+      ? Math.round(interpolate(8, 10, tabletRatio))
+      : Math.round(interpolate(4, 6, phoneRatio))
     const badgeSize = isTablet
-      ? Math.round(interpolate(16, 20, tabletRatio))
+      ? Math.round(interpolate(18, 22, tabletRatio))
       : Math.round(interpolate(12, 14, phoneRatio))
     const eventRadius = isTablet
-      ? Math.round(interpolate(10, 14, tabletRatio))
-      : Math.round(interpolate(7, 9, phoneRatio))
+      ? Math.round(interpolate(12, 14, tabletRatio))
+      : Math.round(interpolate(8, 10, phoneRatio))
     const eventMinHeight = isTablet
-      ? Math.round(interpolate(36, 44, tabletRatio))
-      : Math.round(interpolate(24, 28, phoneRatio))
+      ? Math.round(interpolate(48, 58, tabletRatio))
+      : Math.round(interpolate(30, 34, phoneRatio))
 
     // ── Gaps ─────────────────────────────────────────────────────
     const dayGap = isTablet
-      ? Math.round(interpolate(8, 12, tabletRatio))
-      : Math.round(interpolate(3, 5, phoneRatio))
+      ? Math.round(interpolate(8, 10, tabletRatio))
+      : Math.round(interpolate(2, 4, phoneRatio))
     const headerGap = dayGap
     const outerGap = isTablet
-      ? Math.round(interpolate(6, 10, tabletRatio))
+      ? Math.round(interpolate(8, 10, tabletRatio))
       : Math.round(interpolate(3, 5, phoneRatio))
 
     const rawDayWidth = (width - dayGap * (visibleDays - 1)) / visibleDays
     const dayColumnWidth = Math.max(
       MIN_DAY_WIDTH,
-      Math.min(isTablet ? 190 : 148, rawDayWidth)
+      Math.min(isTablet ? 176 : 144, rawDayWidth)
     )
 
     return {
