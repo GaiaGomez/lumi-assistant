@@ -120,7 +120,8 @@ function buildSuggestedSlot(day: Date, now: Date) {
 
 function layoutDayAppointments(
   appointments: Appointment[],
-  slotHeight: number
+  slotHeight: number,
+  eventMinHeight: number
 ): PositionedAppointment[] {
   const normalized = appointments
     .map((apt) => {
@@ -176,7 +177,7 @@ function layoutDayAppointments(
       top: (entry.startMinutes / SLOT_MINUTES) * slotHeight + 2,
       height: Math.max(
         ((entry.endMinutes - entry.startMinutes) / SLOT_MINUTES) * slotHeight - 4,
-        Math.max(slotHeight - 6, 18)
+        eventMinHeight
       ),
       lane,
       laneCount,
@@ -210,8 +211,8 @@ function EventCard({
   const start = new Date(apt.fecha_inicio)
   const end = getAppointmentEnd(apt)
   const bgColor = apt.event_type === 'general' && apt.color ? apt.color : bg
-  const isTiny = height <= layout.eventMinHeight + 2
-  const isCompact = height <= layout.slotHeight + 10
+  const isTiny = height <= layout.eventMinHeight - 2
+  const isCompact = height <= layout.eventMinHeight + 6
   const titleClamp = isTiny ? 1 : isCompact ? 2 : 3
   const topMetaVisible = !isTiny
   const badgeRowMarginTop = isTiny ? 2 : 4
@@ -441,13 +442,11 @@ export default function MobileAgenda({
     const visibleDays = isTablet ? 4 : 3
 
     // ── Slot height ─────────────────────────────────────────────
-    // Phone: 16→22px — keeps 3 days visible and avoids an oversized grid on iPhone.
-    //   Grid: 26×16 = 416px at the floor, which fits the viewport much better.
-    // Tablet: 28→36px — grid = 26×28 = 728px (was 52px → 1378px, way too tall).
-    //   Brings tablet grid from 1.6× screen to ~0.9× screen on iPad mini.
+    // Phone: 18→24px — enough row height for a 3-day view without feeling inflated.
+    // Tablet: 30→38px — more vertical room so the event card can carry title + icons cleanly.
     const slotHeight = isTablet
-      ? Math.round(interpolate(28, 36, tabletRatio))
-      : Math.round(interpolate(16, 22, phoneRatio))
+      ? Math.round(interpolate(30, 38, tabletRatio))
+      : Math.round(interpolate(18, 24, phoneRatio))
 
     // ── Day header height ────────────────────────────────────────
     // Phone: 30→42px — compact enough for phone, still legible for 3-day view
@@ -489,8 +488,8 @@ export default function MobileAgenda({
       ? Math.round(interpolate(10, 14, tabletRatio))
       : Math.round(interpolate(7, 9, phoneRatio))
     const eventMinHeight = isTablet
-      ? Math.round(interpolate(28, 36, tabletRatio))
-      : Math.round(interpolate(16, 20, phoneRatio))
+      ? Math.round(interpolate(36, 44, tabletRatio))
+      : Math.round(interpolate(24, 28, phoneRatio))
 
     // ── Gaps ─────────────────────────────────────────────────────
     const dayGap = isTablet
@@ -699,7 +698,8 @@ export default function MobileAgenda({
                     isToday && currentMinutes >= 0 && currentMinutes <= TOTAL_MINUTES
                   const positionedAppointments = layoutDayAppointments(
                     appointmentsByDay[dayIndex] ?? [],
-                    layout.slotHeight
+                    layout.slotHeight,
+                    layout.eventMinHeight
                   )
 
                   return (
