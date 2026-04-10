@@ -1,8 +1,14 @@
 'use client'
 // ============================================================
-// MOBILE AGENDA — vista semanal optimizada para mobile
-// Mantiene una grilla horaria real con 3 a 5 días visibles y
-// scroll horizontal para recorrer la semana completa.
+// MOBILE AGENDA — vista semanal optimizada para mobile/tablet
+//
+// Patrón Google Calendar mobile:
+//   • Componente de altura fija — no empuja el layout de página
+//   • Cabecera de días fija (no desplaza verticalmente)
+//   • Grilla horaria con scroll vertical interno
+//   • Scroll horizontal para recorrer los 7 días de la semana
+//   • Auto-scroll al momento actual al montar
+//   • Slots más altos para mejor legibilidad y tap targets
 // ============================================================
 
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -52,6 +58,7 @@ interface MobileAgendaLayout {
   timeGutterWidth: number
   headerHeight: number
   gridHeight: number
+  componentHeight: number
   titleSize: number
   metaSize: number
   iconSize: number
@@ -352,20 +359,17 @@ function EventCard({
   )
 }
 
+// Columna de etiquetas horarias — no incluye espaciador de cabecera,
+// se renderiza dentro del contenedor de scroll vertical.
 function HourGutter({
   slotHeight,
-  headerHeight,
   timeGutterWidth,
   metaSize,
   gridHeight,
-}: Pick<
-  MobileAgendaLayout,
-  'slotHeight' | 'headerHeight' | 'timeGutterWidth' | 'metaSize' | 'gridHeight'
->) {
+}: Pick<MobileAgendaLayout, 'slotHeight' | 'timeGutterWidth' | 'metaSize' | 'gridHeight'>) {
   return (
-    <div className="shrink-0" style={{ width: timeGutterWidth }}>
-      <div style={{ height: headerHeight }} />
-      <div className="relative" style={{ height: gridHeight }}>
+    <div className="shrink-0" style={{ width: timeGutterWidth, height: gridHeight }}>
+      <div className="relative h-full">
         {Array.from({ length: SLOT_COUNT }).map((_, index) => {
           const hour = START_HOUR + Math.floor(index / 2)
           const isHourMark = index % 2 === 0
@@ -376,9 +380,7 @@ function HourGutter({
               className="flex items-start justify-end pr-1.5"
               style={{
                 height: slotHeight,
-                color: isHourMark
-                  ? 'var(--ink-cool-muted)'
-                  : 'transparent',
+                color: isHourMark ? 'var(--ink-cool-muted)' : 'transparent',
                 fontSize: `${metaSize}px`,
                 lineHeight: 1,
               }}
@@ -400,9 +402,12 @@ export default function MobileAgenda({
   onSelectAppointment,
   onNewSlot,
 }: MobileAgendaProps) {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const viewportRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)       // scroll horizontal de columnas
+  const headerScrollRef = useRef<HTMLDivElement>(null) // scroll horizontal de cabeceras (sincronizado)
+  const gridScrollRef = useRef<HTMLDivElement>(null)   // scroll vertical de la grilla
+  const viewportRef = useRef<HTMLDivElement>(null)     // medición de ancho disponible
   const lastScrollKeyRef = useRef<string>('')
+  const didScrollToNow = useRef(false)
   const today = useMemo(() => new Date(), [])
   const [viewportWidth, setViewportWidth] = useState(0)
 
@@ -429,40 +434,34 @@ export default function MobileAgenda({
 
   const layout = useMemo<MobileAgendaLayout>(() => {
     const width = Math.max(viewportWidth, 320)
-    // isTablet: viewportWidth ≥ 640 (≈ iPad Mini portrait and up)
     const isTablet = width >= 640
 
-    // Independent ratio curves per device class — phone values don't bleed into tablet
-    // Phone: 0→1 across 320→640px  |  Tablet: 0→1 across 640→1000px
+    // Curvas independientes por clase de dispositivo
     const phoneRatio  = isTablet ? 0 : Math.max(0, Math.min((width - 320) / 320, 1))
     const tabletRatio = isTablet ? Math.max(0, Math.min((width - 640) / 360, 1)) : 0
 
-    // Phone: always 3 days (compact, predictable)
-    // Tablet: 4 days (wider columns, better legibility)
     const visibleDays = isTablet ? 4 : 3
 
-    // ── Slot height ─────────────────────────────────────────────
-    // Phone: 20→24px — enough height to avoid banner-like events while preserving 3 visible days.
-    // Tablet: 38→46px — a clearly larger, more readable weekly grid.
+    // ── Altura de slot ────────────────────────────────────────────
+    // Phone: 34→40px — slots más altos para legibilidad con scroll interno.
+    // Tablet: 42→52px — grilla cómoda en pantalla grande.
     const slotHeight = isTablet
-      ? Math.round(interpolate(38, 46, tabletRatio))
-      : Math.round(interpolate(20, 24, phoneRatio))
+      ? Math.round(interpolate(42, 52, tabletRatio))
+      : Math.round(interpolate(34, 40, phoneRatio))
 
-    // ── Day header height ────────────────────────────────────────
-    // Phone: 36→44px — compact, but no longer visually tiny.
-    // Tablet: 68→82px — closer to the scale of the rest of Lumi on large canvases.
+    // ── Cabecera de día ───────────────────────────────────────────
+    // Phone: 48→56px — tap target cómodo, espacio para día + número.
+    // Tablet: 68→82px — proporcional al tamaño de la grilla.
     const headerHeight = isTablet
       ? Math.round(interpolate(68, 82, tabletRatio))
-      : Math.round(interpolate(36, 44, phoneRatio))
+      : Math.round(interpolate(48, 56, phoneRatio))
 
-    // ── Time gutter ──────────────────────────────────────────────
+    // ── Gutter de horas ───────────────────────────────────────────
     const timeGutterWidth = isTablet
       ? Math.round(interpolate(46, 56, tabletRatio))
-      : Math.round(interpolate(24, 28, phoneRatio))
+      : Math.round(interpolate(28, 34, phoneRatio))
 
-    // ── Typography ───────────────────────────────────────────────
-    // Phone: 10→11px meta, 11→12px title.
-    // Tablet: 12→14px meta and 14→16px title for a clearly larger weekly layout.
+    // ── Tipografía ────────────────────────────────────────────────
     const metaSize = isTablet
       ? Math.round(interpolate(12, 14, tabletRatio))
       : Math.round(interpolate(10, 11, phoneRatio))
@@ -473,13 +472,13 @@ export default function MobileAgenda({
       ? Math.round(interpolate(11, 13, tabletRatio))
       : Math.round(interpolate(9, 10, phoneRatio))
 
-    // ── Card dimensions ──────────────────────────────────────────
+    // ── Dimensiones de tarjeta ────────────────────────────────────
     const cardPaddingX = isTablet
       ? Math.round(interpolate(10, 14, tabletRatio))
-      : Math.round(interpolate(5, 7, phoneRatio))
+      : Math.round(interpolate(6, 8, phoneRatio))
     const cardPaddingY = isTablet
       ? Math.round(interpolate(8, 10, tabletRatio))
-      : Math.round(interpolate(4, 6, phoneRatio))
+      : Math.round(interpolate(5, 7, phoneRatio))
     const badgeSize = isTablet
       ? Math.round(interpolate(18, 22, tabletRatio))
       : Math.round(interpolate(12, 14, phoneRatio))
@@ -488,16 +487,25 @@ export default function MobileAgenda({
       : Math.round(interpolate(8, 10, phoneRatio))
     const eventMinHeight = isTablet
       ? Math.round(interpolate(48, 58, tabletRatio))
-      : Math.round(interpolate(30, 34, phoneRatio))
+      : Math.round(interpolate(38, 44, phoneRatio))
 
-    // ── Gaps ─────────────────────────────────────────────────────
+    // ── Espaciado ─────────────────────────────────────────────────
     const dayGap = isTablet
       ? Math.round(interpolate(8, 10, tabletRatio))
-      : Math.round(interpolate(2, 4, phoneRatio))
-    const headerGap = dayGap
+      : Math.round(interpolate(3, 5, phoneRatio))
+    const headerGap = isTablet
+      ? Math.round(interpolate(6, 8, tabletRatio))
+      : Math.round(interpolate(4, 6, phoneRatio))
     const outerGap = isTablet
       ? Math.round(interpolate(8, 10, tabletRatio))
-      : Math.round(interpolate(3, 5, phoneRatio))
+      : Math.round(interpolate(4, 6, phoneRatio))
+
+    // ── Altura del componente (fija) ──────────────────────────────
+    // Phone: 420px — muestra ~5-6h visible con scroll interno.
+    // Tablet: 560→640px — proporcional a la pantalla más grande.
+    const componentHeight = isTablet
+      ? Math.round(interpolate(560, 640, tabletRatio))
+      : 420
 
     const rawDayWidth = (width - dayGap * (visibleDays - 1)) / visibleDays
     const dayColumnWidth = Math.max(
@@ -513,6 +521,7 @@ export default function MobileAgenda({
       timeGutterWidth,
       headerHeight,
       gridHeight: SLOT_COUNT * slotHeight,
+      componentHeight,
       titleSize,
       metaSize,
       iconSize,
@@ -526,6 +535,7 @@ export default function MobileAgenda({
     }
   }, [viewportWidth])
 
+  // Observar ancho del viewport
   useEffect(() => {
     if (!viewportRef.current) return
 
@@ -540,6 +550,29 @@ export default function MobileAgenda({
     return () => observer.disconnect()
   }, [])
 
+  // Sincronizar scroll horizontal de cabeceras con la grilla
+  useEffect(() => {
+    const grid = scrollRef.current
+    const header = headerScrollRef.current
+    if (!grid || !header) return
+
+    const sync = () => { header.scrollLeft = grid.scrollLeft }
+    grid.addEventListener('scroll', sync, { passive: true })
+    return () => grid.removeEventListener('scroll', sync)
+  }, [])
+
+  // Scroll al momento actual al montar (una sola vez)
+  useEffect(() => {
+    if (didScrollToNow.current || !gridScrollRef.current || layout.slotHeight === 0) return
+    const now = new Date()
+    const minutes = minutesFromGridStart(now)
+    if (minutes <= 0) return
+    const scrollTop = Math.max(0, (clampMinutes(minutes) / SLOT_MINUTES) * layout.slotHeight - 100)
+    gridScrollRef.current.scrollTop = scrollTop
+    didScrollToNow.current = true
+  }, [layout.slotHeight])
+
+  // Scroll horizontal al día activo
   useEffect(() => {
     if (!scrollRef.current) return
 
@@ -570,200 +603,227 @@ export default function MobileAgenda({
     onNewSlot(buildDefaultSlot(day, slotIndex * SLOT_MINUTES))
   }
 
+  const p = Math.max(layout.outerGap, 4)
+
   const scrollContentStyle: CSSProperties = {
-    width:
-      weekDays.length * layout.dayColumnWidth +
-      layout.dayGap * (weekDays.length - 1),
+    width: weekDays.length * layout.dayColumnWidth + layout.dayGap * (weekDays.length - 1),
   }
 
   return (
     <div
       className="glass-cool rounded-[18px] md:rounded-[22px]"
-      style={{
-        padding: `${Math.max(layout.outerGap, 4)}px ${Math.max(layout.outerGap, 4)}px ${Math.max(layout.outerGap + 1, 5)}px`,
-      }}
+      style={{ height: layout.componentHeight, padding: p }}
     >
-      <div className="flex items-start" style={{ gap: `${layout.outerGap}px` }}>
-        <HourGutter
-          slotHeight={layout.slotHeight}
-          headerHeight={layout.headerHeight}
-          timeGutterWidth={layout.timeGutterWidth}
-          metaSize={layout.metaSize}
-          gridHeight={layout.gridHeight}
-        />
+      <div className="flex flex-col h-full" style={{ gap: layout.headerGap }}>
 
-        <div ref={viewportRef} className="min-w-0 flex-1 overflow-hidden">
-          <div
-            ref={scrollRef}
-            className="overflow-x-auto"
-            style={{
-              scrollSnapType: 'x proximity',
-              scrollBehavior: 'smooth',
-              WebkitOverflowScrolling: 'touch',
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-              overscrollBehaviorX: 'contain',
-            }}
-          >
-            <div style={scrollContentStyle}>
-              <div
-                className="grid"
-                style={{
-                  gridTemplateColumns: `repeat(7, ${layout.dayColumnWidth}px)`,
-                  columnGap: `${layout.dayGap}px`,
-                }}
-              >
-                {weekDays.map((day) => {
-                  const isToday = moment(day).isSame(moment(today), 'day')
-                  const isFestivo = FESTIVOS_CO.has(toDateKey(day))
-                  const isWeekend = day.getDay() === 0 || day.getDay() === 6
+        {/* ── Cabecera de días — fija, no desplaza verticalmente ── */}
+        <div className="shrink-0 flex items-start" style={{ gap: layout.outerGap }}>
+          {/* Espaciador alineado con el gutter de horas */}
+          <div style={{ width: layout.timeGutterWidth, flexShrink: 0 }} />
+          {/* Botones de día — scroll horizontal sincronizado con la grilla */}
+          <div ref={viewportRef} className="min-w-0 flex-1 overflow-hidden">
+            <div
+              ref={headerScrollRef}
+              style={{ overflowX: 'hidden', scrollbarWidth: 'none' }}
+            >
+              <div style={scrollContentStyle}>
+                <div
+                  className="grid"
+                  style={{
+                    gridTemplateColumns: `repeat(7, ${layout.dayColumnWidth}px)`,
+                    columnGap: `${layout.dayGap}px`,
+                  }}
+                >
+                  {weekDays.map((day) => {
+                    const isToday = moment(day).isSame(moment(today), 'day')
+                    const isFestivo = FESTIVOS_CO.has(toDateKey(day))
+                    const isWeekend = day.getDay() === 0 || day.getDay() === 6
 
-                  return (
-                    <button
-                      key={`header-${day.toISOString()}`}
-                      type="button"
-                      onClick={() => onNewSlot(buildSuggestedSlot(day, today))}
-                      className="text-center"
-                      style={{
-                        scrollSnapAlign: 'start',
-                        height: layout.headerHeight,
-                        borderRadius: `${Math.max(layout.eventRadius + 1, 9)}px`,
-                        padding: `${Math.max(layout.cardPaddingY - 1, 3)}px ${Math.max(layout.cardPaddingX, 5)}px`,
-                        background: isToday
-                          ? 'rgba(148,136,176,0.18)'
-                          : isFestivo
-                            ? 'rgba(185,143,149,0.12)'
-                            : 'rgba(255,255,255,0.32)',
-                        border: isToday
-                          ? '1px solid rgba(148,136,176,0.3)'
-                          : '1px solid rgba(255,255,255,0.34)',
-                      }}
-                      >
-                        <p
-                        className="font-semibold uppercase"
+                    return (
+                      <button
+                        key={`header-${day.toISOString()}`}
+                        type="button"
+                        onClick={() => onNewSlot(buildSuggestedSlot(day, today))}
+                        className="text-center"
                         style={{
-                          fontSize: `${layout.metaSize}px`,
-                          color: 'var(--ink-cool-faint)',
-                          letterSpacing: '0.08em',
-                          marginBottom: '1px',
+                          scrollSnapAlign: 'start',
+                          height: layout.headerHeight,
+                          borderRadius: `${Math.max(layout.eventRadius + 1, 9)}px`,
+                          padding: `${Math.max(layout.cardPaddingY - 1, 3)}px ${Math.max(layout.cardPaddingX, 5)}px`,
+                          background: isToday
+                            ? 'rgba(148,136,176,0.18)'
+                            : isFestivo
+                              ? 'rgba(185,143,149,0.12)'
+                              : 'rgba(255,255,255,0.32)',
+                          border: isToday
+                            ? '1px solid rgba(148,136,176,0.3)'
+                            : '1px solid rgba(255,255,255,0.34)',
                         }}
                       >
-                        {moment(day).format('ddd').replace('.', '')}
-                      </p>
-                      <div className="flex items-center justify-center gap-1">
                         <p
-                          className="font-semibold"
+                          className="font-semibold uppercase"
                           style={{
-                            fontSize: `${layout.titleSize + 3}px`,
-                            color: isToday
-                              ? '#9488B0'
-                              : isWeekend
-                                ? 'var(--ink-cool-soft)'
-                                : 'var(--ink-cool-strong)',
-                            lineHeight: 1,
+                            fontSize: `${layout.metaSize}px`,
+                            color: 'var(--ink-cool-faint)',
+                            letterSpacing: '0.08em',
+                            marginBottom: '1px',
                           }}
                         >
-                          {moment(day).format('D')}
+                          {moment(day).format('ddd').replace('.', '')}
                         </p>
-                        {isFestivo && (
-                          <span
-                            className="font-medium uppercase"
+                        <div className="flex items-center justify-center gap-1">
+                          <p
+                            className="font-semibold"
                             style={{
-                              fontSize: `${layout.metaSize}px`,
-                              color: 'var(--ink-cool-faint)',
+                              fontSize: `${layout.titleSize + 3}px`,
+                              color: isToday
+                                ? '#9488B0'
+                                : isWeekend
+                                  ? 'var(--ink-cool-soft)'
+                                  : 'var(--ink-cool-strong)',
+                              lineHeight: 1,
                             }}
                           >
-                            Fest
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-
-              <div
-                className="grid"
-                style={{
-                  marginTop: `${layout.headerGap}px`,
-                  gridTemplateColumns: `repeat(7, ${layout.dayColumnWidth}px)`,
-                  columnGap: `${layout.dayGap}px`,
-                }}
-              >
-                {weekDays.map((day, dayIndex) => {
-                  const isToday = moment(day).isSame(moment(today), 'day')
-                  const currentMinutes = minutesFromGridStart(today)
-                  const currentTimeVisible =
-                    isToday && currentMinutes >= 0 && currentMinutes <= TOTAL_MINUTES
-                  const positionedAppointments = layoutDayAppointments(
-                    appointmentsByDay[dayIndex] ?? [],
-                    layout.slotHeight,
-                    layout.eventMinHeight
-                  )
-
-                  return (
-                    <div
-                      key={day.toISOString()}
-                      className="relative overflow-hidden"
-                      style={{
-                        scrollSnapAlign: 'start',
-                        borderRadius: `${Math.max(layout.eventRadius + 1, 9)}px`,
-                        height: layout.gridHeight,
-                        background: 'rgba(255,255,255,0.26)',
-                        border: '1px solid rgba(255,255,255,0.34)',
-                      }}
-                      onClick={(event) => handleGridClick(day, event)}
-                    >
-                      <div className="absolute inset-0 pointer-events-none">
-                        {Array.from({ length: SLOT_COUNT }).map((_, index) => (
-                          <div
-                            key={`slot-${day.toISOString()}-${index}`}
-                            style={{
-                              height: layout.slotHeight,
-                              borderTop:
-                                index % 2 === 0
-                                  ? '1px solid rgba(185,174,189,0.18)'
-                                  : '1px dashed rgba(185,174,189,0.1)',
-                              background:
-                                index % 2 === 0
-                                  ? 'rgba(255,255,255,0.05)'
-                                  : 'transparent',
-                            }}
-                          />
-                        ))}
-                      </div>
-
-                      {currentTimeVisible && (
-                        <div
-                          className="absolute left-0 right-0 pointer-events-none"
-                          style={{
-                            top:
-                              (clampMinutes(currentMinutes) / SLOT_MINUTES) *
-                                layout.slotHeight -
-                              1,
-                            borderTop: '2px solid #9488B0',
-                            opacity: 0.6,
-                          }}
-                        />
-                      )}
-
-                      {positionedAppointments.map((positioned) => (
-                        <EventCard
-                          key={positioned.apt.id}
-                          {...positioned}
-                          layout={layout}
-                          settings={settings}
-                          consultorios={consultorios}
-                          onClick={() => onSelectAppointment(positioned.apt)}
-                        />
-                      ))}
-                    </div>
-                  )
-                })}
+                            {moment(day).format('D')}
+                          </p>
+                          {isFestivo && (
+                            <span
+                              className="font-medium uppercase"
+                              style={{
+                                fontSize: `${layout.metaSize}px`,
+                                color: 'var(--ink-cool-faint)',
+                              }}
+                            >
+                              Fest
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* ── Grilla horaria — scroll vertical + horizontal ── */}
+        <div
+          ref={gridScrollRef}
+          className="flex-1 overflow-y-auto overflow-x-hidden"
+          style={{ scrollbarWidth: 'none' }}
+        >
+          <div
+            className="flex items-start"
+            style={{ height: layout.gridHeight, gap: layout.outerGap }}
+          >
+            {/* Etiquetas de hora — desplazan con la grilla verticalmente */}
+            <HourGutter
+              slotHeight={layout.slotHeight}
+              timeGutterWidth={layout.timeGutterWidth}
+              metaSize={layout.metaSize}
+              gridHeight={layout.gridHeight}
+            />
+
+            {/* Columnas de días — scroll horizontal */}
+            <div className="min-w-0 flex-1 overflow-hidden" style={{ height: layout.gridHeight }}>
+              <div
+                ref={scrollRef}
+                style={{
+                  overflowX: 'auto',
+                  overflowY: 'hidden',
+                  height: layout.gridHeight,
+                  scrollSnapType: 'x proximity',
+                  WebkitOverflowScrolling: 'touch',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                  overscrollBehaviorX: 'contain',
+                }}
+              >
+                <div style={{ ...scrollContentStyle, height: layout.gridHeight }}>
+                  <div
+                    className="grid h-full"
+                    style={{
+                      gridTemplateColumns: `repeat(7, ${layout.dayColumnWidth}px)`,
+                      columnGap: `${layout.dayGap}px`,
+                    }}
+                  >
+                    {weekDays.map((day, dayIndex) => {
+                      const isToday = moment(day).isSame(moment(today), 'day')
+                      const currentMinutes = minutesFromGridStart(today)
+                      const currentTimeVisible =
+                        isToday && currentMinutes >= 0 && currentMinutes <= TOTAL_MINUTES
+                      const positionedAppointments = layoutDayAppointments(
+                        appointmentsByDay[dayIndex] ?? [],
+                        layout.slotHeight,
+                        layout.eventMinHeight
+                      )
+
+                      return (
+                        <div
+                          key={day.toISOString()}
+                          className="relative overflow-hidden"
+                          style={{
+                            scrollSnapAlign: 'start',
+                            borderRadius: `${Math.max(layout.eventRadius + 1, 9)}px`,
+                            height: layout.gridHeight,
+                            background: 'rgba(255,255,255,0.26)',
+                            border: '1px solid rgba(255,255,255,0.34)',
+                          }}
+                          onClick={(event) => handleGridClick(day, event)}
+                        >
+                          <div className="absolute inset-0 pointer-events-none">
+                            {Array.from({ length: SLOT_COUNT }).map((_, index) => (
+                              <div
+                                key={`slot-${day.toISOString()}-${index}`}
+                                style={{
+                                  height: layout.slotHeight,
+                                  borderTop:
+                                    index % 2 === 0
+                                      ? '1px solid rgba(185,174,189,0.18)'
+                                      : '1px dashed rgba(185,174,189,0.1)',
+                                  background:
+                                    index % 2 === 0
+                                      ? 'rgba(255,255,255,0.05)'
+                                      : 'transparent',
+                                }}
+                              />
+                            ))}
+                          </div>
+
+                          {currentTimeVisible && (
+                            <div
+                              className="absolute left-0 right-0 pointer-events-none"
+                              style={{
+                                top:
+                                  (clampMinutes(currentMinutes) / SLOT_MINUTES) *
+                                    layout.slotHeight - 1,
+                                borderTop: '2px solid #9488B0',
+                                opacity: 0.6,
+                              }}
+                            />
+                          )}
+
+                          {positionedAppointments.map((positioned) => (
+                            <EventCard
+                              key={positioned.apt.id}
+                              {...positioned}
+                              layout={layout}
+                              settings={settings}
+                              consultorios={consultorios}
+                              onClick={() => onSelectAppointment(positioned.apt)}
+                            />
+                          ))}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   )
