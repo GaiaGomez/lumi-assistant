@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
+  DoctoraliaNetworkError,
   DoctoraliaRequestError,
   DoctoraliaSessionExpiredError,
   fetchDoctoraliaDayAppointments,
@@ -43,9 +44,16 @@ const MAX_CONCURRENT_DAY_REQUESTS = 5
 
 function buildDoctoraliaErrorMessage(error: unknown): string {
   if (error instanceof DoctoraliaSessionExpiredError) return error.message
+  if (error instanceof DoctoraliaNetworkError) return error.message
   if (error instanceof DoctoraliaRequestError) return error.message
   if (error instanceof Error && error.message) return error.message
   return 'No se pudo completar la operación con Doctoralia.'
+}
+
+// Network errors are transient — the session is still valid.
+// We keep the previous connection_status so the user is not forced to reconnect.
+function isTransientError(error: unknown): boolean {
+  return error instanceof DoctoraliaNetworkError
 }
 
 async function fetchDoctoraliaAppointmentsBatched(
@@ -477,15 +485,25 @@ export async function syncDoctoraliaConnectionForUser(
     }
   } catch (error) {
     const message = buildDoctoraliaErrorMessage(error)
-    const outcome = error instanceof DoctoraliaSessionExpiredError ? 'expired' : 'error'
+    const isAuth = error instanceof DoctoraliaSessionExpiredError
+    const isNetwork = isTransientError(error)
 
+    // Network errors are transient — preserve the existing connection_status
+    // so the user is not forced to reconnect after a momentary outage.
+    const outcome = isAuth ? 'expired' : 'error'
     await saveDoctoraliaConnection(supabase, userId, {
-      connection_status: outcome === 'expired' ? 'expired' : 'error',
+      connection_status: isAuth
+        ? 'expired'
+        : isNetwork
+          ? connection.connectionStatus  // preserve: session still valid
+          : 'error',
       last_error: message,
-      failed_count: connection.failedCount + 1,
+      failed_count: isNetwork ? connection.failedCount : connection.failedCount + 1,
     })
 
-    console.warn(`[Doctoralia sync] user=${userId} outcome=${outcome} message=${message}`)
+    console.warn(
+      `[Doctoralia sync] user=${userId} outcome=${outcome} isNetwork=${isNetwork} message=${message}`
+    )
 
     return {
       connection: await fetchDoctoraliaConnectionSummary(supabase, userId),

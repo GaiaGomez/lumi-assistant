@@ -77,6 +77,7 @@ export interface DoctoraliaExternalAppointment {
   end: string
   attendance: number
   scheduledBy?: number
+  noShowIsReported?: boolean | null
   patient?: {
     firstName?: string | null
     lastName?: string | null
