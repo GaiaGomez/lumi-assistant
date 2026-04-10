@@ -450,16 +450,16 @@ export default function MobileAgenda({
       : Math.round(interpolate(22, 26, phoneRatio))
 
     // ── Cabecera de día ───────────────────────────────────────────
-    // Phone: 48→56px — tap target cómodo, espacio para día + número.
+    // Phone: 38→44px — compacto como GCal mobile.
     // Tablet: 68→82px — proporcional al tamaño de la grilla.
     const headerHeight = isTablet
       ? Math.round(interpolate(68, 82, tabletRatio))
-      : Math.round(interpolate(48, 56, phoneRatio))
+      : Math.round(interpolate(38, 44, phoneRatio))
 
     // ── Gutter de horas ───────────────────────────────────────────
     const timeGutterWidth = isTablet
       ? Math.round(interpolate(46, 56, tabletRatio))
-      : Math.round(interpolate(28, 34, phoneRatio))
+      : Math.round(interpolate(22, 28, phoneRatio))
 
     // ── Tipografía ────────────────────────────────────────────────
     const metaSize = isTablet
@@ -467,15 +467,15 @@ export default function MobileAgenda({
       : Math.round(interpolate(10, 11, phoneRatio))
     const titleSize = isTablet
       ? Math.round(interpolate(14, 16, tabletRatio))
-      : Math.round(interpolate(11, 12, phoneRatio))
+      : Math.round(interpolate(10, 11, phoneRatio))
     const iconSize = isTablet
       ? Math.round(interpolate(11, 13, tabletRatio))
-      : Math.round(interpolate(9, 10, phoneRatio))
+      : Math.round(interpolate(8, 9, phoneRatio))
 
     // ── Dimensiones de tarjeta ────────────────────────────────────
     const cardPaddingX = isTablet
       ? Math.round(interpolate(10, 14, tabletRatio))
-      : Math.round(interpolate(6, 8, phoneRatio))
+      : Math.round(interpolate(4, 6, phoneRatio))
     const cardPaddingY = isTablet
       ? Math.round(interpolate(8, 10, tabletRatio))
       : Math.round(interpolate(3, 4, phoneRatio))
