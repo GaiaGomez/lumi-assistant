@@ -21,7 +21,6 @@ import { mapConsultorioRow } from '@/lib/supabase/mappers'
 import { upsertSettingValue, type SettingsKey, type SettingsMap } from '@/lib/settings'
 import type { Consultorio, ConsultorioPrimaryType } from '@/types'
 import TemplateEditor from './TemplateEditor'
-import DoctoraliaSync from './DoctoraliaSync'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -358,14 +357,6 @@ function AgendaSection({ settings, userId }: Pick<Props, 'settings' | 'userId'>)
         </SettingRow>
 
         <SaveButton state={state} onClick={handleSave} />
-      </SettingsCard>
-
-      <SettingsCard>
-        <p className="section-kicker mb-0.5">Integraciones</p>
-        <p className="text-[13px] mb-3" style={{ color: 'var(--ink-cool-faint)' }}>
-          Conecta plataformas externas para importar citas automáticamente.
-        </p>
-        <DoctoraliaSync settings={settings} userId={userId} />
       </SettingsCard>
     </div>
   )

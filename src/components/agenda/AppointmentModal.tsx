@@ -191,7 +191,6 @@ export default function AppointmentModal({
     try {
       const { error } = await updateAppointmentById(supabase, appointment.id, {
         estado_sesion: estadoSesion,
-        estado_sesion_override: null,
         estado_pago:   estadoPago,
         consultorio_id: consultorioIdEdit,
         modalidad:     consultorioIdEdit ? null : appointment.modalidad,
@@ -216,24 +215,6 @@ export default function AppointmentModal({
   async function eliminarCita() {
     setDeleting(true)
     try {
-      if (appointment.doctoralia_uid) {
-        const { error: importError } = await supabase
-          .from('doctoralia_imports')
-          .upsert({
-            user_id: appointment.user_id,
-            doctoralia_uid: appointment.doctoralia_uid,
-            appointment_id: null,
-            external_patient_name: appointment.doctoralia_paciente_nombre,
-            last_seen_at: appointment.doctoralia_last_seen_at,
-            deleted_in_lumi_at: new Date().toISOString(),
-          }, {
-            onConflict: 'user_id,doctoralia_uid',
-            ignoreDuplicates: false,
-          })
-
-        if (importError) throw importError
-      }
-
       const { error } = await deleteAppointmentById(supabase, appointment.id)
       if (error) throw error
       router.refresh()

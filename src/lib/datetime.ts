@@ -1,6 +1,6 @@
 export const LUMI_TIME_ZONE = 'America/Bogota'
 
-const DOCTORALIA_OFFSET_HOURS = 5
+const BOGOTA_UTC_OFFSET_HOURS = 5
 const ISO_WITH_TIME_ZONE_RE = /(Z|[+-]\d{2}:\d{2})$/i
 const LOCAL_DATE_TIME_RE =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/
@@ -29,36 +29,8 @@ function buildBogotaUtcDate(
   second: number
 ): Date {
   return new Date(
-    Date.UTC(year, month - 1, day, hour + DOCTORALIA_OFFSET_HOURS, minute, second)
+    Date.UTC(year, month - 1, day, hour + BOGOTA_UTC_OFFSET_HOURS, minute, second)
   )
-}
-
-export function parseDoctoraliaDateTime(value: string): Date {
-  if (ISO_WITH_TIME_ZONE_RE.test(value)) {
-    return ensureValidDate(new Date(value), value)
-  }
-
-  const match = value.match(LOCAL_DATE_TIME_RE)
-  if (!match) {
-    throw new Error(`Formato de fecha Doctoralia no soportado: ${value}`)
-  }
-
-  const [, year, month, day, hour, minute, second = '00'] = match
-  return ensureValidDate(
-    buildBogotaUtcDate(
-      Number(year),
-      Number(month),
-      Number(day),
-      Number(hour),
-      Number(minute),
-      Number(second)
-    ),
-    value
-  )
-}
-
-export function normalizeDoctoraliaDateTime(value: string): string {
-  return parseDoctoraliaDateTime(value).toISOString()
 }
 
 export function normalizeDateTimeAssumingUtc(value: string): string {

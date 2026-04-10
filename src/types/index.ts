@@ -19,7 +19,6 @@ export interface Patient {
 export type AppointmentModalidad = 'online' | 'medellin' | 'retiro'
 export type ConsultorioPrimaryType = 'direccion' | 'enlace' | 'nota'
 export type AppointmentEventType = 'patient' | 'general'
-export type AppointmentSourceSystem = 'manual' | 'doctoralia'
 export type AppointmentRecurrencePreset =
   | 'none'
   | 'daily'
@@ -84,20 +83,12 @@ export interface Appointment {
   patient_id: string | null
   consultorio_id: string | null
   user_id: string
-  source_system: AppointmentSourceSystem
   event_type: AppointmentEventType
   title: string | null
   category: string | null
   color: string | null
   recurrence_group_id: string | null
   recurrence_rule: AppointmentRecurrenceRule | null
-  doctoralia_uid: string | null  // ID único del evento en la API REST de Doctoralia, evita duplicados
-  doctoralia_estado_sesion: 'pendiente' | 'confirmada' | 'realizada' | 'cancelo' | null
-  estado_sesion_override: 'pendiente' | 'confirmada' | 'realizada' | 'cancelo' | null
-  doctoralia_paciente_nombre: string | null
-  doctoralia_last_synced_at: string | null
-  doctoralia_last_seen_at: string | null
-  doctoralia_removed_at: string | null
   fecha_inicio: string           // ISO datetime
   fecha_fin: string | null
   // Estado de la sesión: si el paciente asistió, canceló, etc.

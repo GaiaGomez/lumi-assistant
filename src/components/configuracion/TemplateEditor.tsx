@@ -20,7 +20,7 @@ interface Props {
 }
 
 interface TemplateConfig {
-  key: Exclude<SettingsKey, 'doctoralia_url'>
+  key: Exclude<SettingsKey, 'booking_url'>
   label: string
   description: string
   variables: { name: string; hint: string }[]
@@ -46,7 +46,7 @@ const TEMPLATES: TemplateConfig[] = [
       { name: 'first_name', hint: 'Nombre del paciente' },
       { name: 'booking_url', hint: 'URL de tu agenda (se toma del campo "Link de agenda" de arriba)' },
     ],
-    previewVars: { first_name: 'Valentina', booking_url: 'tu-enlace-doctoralia' },
+    previewVars: { first_name: 'Valentina', booking_url: 'tu-enlace-de-agenda' },
   },
   {
     key: 'template_retomar',
@@ -65,7 +65,7 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 export default function TemplateEditor({ settings, userId }: Props) {
   const supabase = createClient()
 
-  const [doctoraliaUrl, setDoctoraliaUrl] = useState(settings['doctoralia_url'] ?? '')
+  const [bookingUrl, setBookingUrl] = useState(settings['booking_url'] ?? '')
   const [values, setValues] = useState<Record<string, string>>({
     template_cobros:      settings['template_cobros'] ?? '',
     template_sin_proxima: settings['template_sin_proxima'] ?? '',
@@ -99,23 +99,23 @@ export default function TemplateEditor({ settings, userId }: Props) {
               Se usa como <VarChip name="booking_url" /> en las plantillas.
             </p>
           </div>
-          <FieldStatus state={saveStates['doctoralia_url'] ?? 'idle'} />
+          <FieldStatus state={saveStates['booking_url'] ?? 'idle'} />
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="sm:flex-1">
             <Input
               type="url"
-              value={doctoraliaUrl}
-              onChange={e => setDoctoraliaUrl(e.target.value)}
-              placeholder="https://www.doctoralia.co/tu-perfil"
+              value={bookingUrl}
+              onChange={e => setBookingUrl(e.target.value)}
+              placeholder="https://tuagenda.com/tu-perfil"
               className="py-2.5"
             />
           </div>
 
           <FieldActions
-            state={saveStates['doctoralia_url'] ?? 'idle'}
-            onSave={() => saveField('doctoralia_url', doctoraliaUrl)}
+            state={saveStates['booking_url'] ?? 'idle'}
+            onSave={() => saveField('booking_url', bookingUrl)}
             className="sm:shrink-0"
           />
         </div>
@@ -126,7 +126,7 @@ export default function TemplateEditor({ settings, userId }: Props) {
         const currentValue = values[tpl.key] ?? ''
         const previewVars: Record<string, string> = {
           ...tpl.previewVars,
-          booking_url: doctoraliaUrl || tpl.previewVars['booking_url'] || 'tu-enlace',
+          booking_url: bookingUrl || tpl.previewVars['booking_url'] || 'tu-enlace',
         }
 
         return (

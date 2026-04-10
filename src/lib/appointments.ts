@@ -16,13 +16,6 @@ export const REACTIVATION_INACTIVITY_DAYS = 30
 
 const BASE_APPOINTMENT_DURATION_OPTIONS = [30, 45, 60, 90, 120, 150, 180]
 
-export function isDoctoraliaAppointment(
-  appointment: Pick<Appointment, 'source_system' | 'doctoralia_uid'>
-): boolean {
-  return appointment.source_system === 'doctoralia' || !!appointment.doctoralia_uid
-}
-
-
 export function isCancelledAppointment(
   appointment: Pick<Appointment, 'estado_sesion'>
 ): boolean {

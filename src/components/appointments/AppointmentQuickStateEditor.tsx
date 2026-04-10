@@ -144,7 +144,7 @@ export default function AppointmentQuickStateEditor({
     }
 
     const payload = field === 'estado_sesion'
-      ? { estado_sesion: value as Appointment['estado_sesion'], estado_sesion_override: null }
+      ? { estado_sesion: value as Appointment['estado_sesion'] }
       : { estado_pago: value as Appointment['estado_pago'] }
 
     const { error: updateError } = await updateAppointmentById(supabase, appointmentId, payload)

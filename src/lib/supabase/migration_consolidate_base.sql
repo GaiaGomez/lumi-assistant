@@ -4,7 +4,6 @@
 -- Objetivos:
 -- 1) Formalizar settings como parte real del producto
 -- 2) Endurecer appointments con updated_at
--- 3) Cambiar doctoralia_uid a unicidad por usuario
 -- ============================================================
 
 -- ── settings ────────────────────────────────────────────────
@@ -37,15 +36,6 @@ ALTER TABLE appointments
 UPDATE appointments
 SET updated_at = COALESCE(updated_at, created_at, now())
 WHERE updated_at IS NULL;
-
-ALTER TABLE appointments
-  DROP CONSTRAINT IF EXISTS appointments_doctoralia_uid_key;
-
-DROP INDEX IF EXISTS appointments_user_doctoralia_uid_key;
-
-CREATE UNIQUE INDEX appointments_user_doctoralia_uid_key
-  ON appointments(user_id, doctoralia_uid)
-  WHERE doctoralia_uid IS NOT NULL;
 
 -- ── trigger genérico updated_at ─────────────────────────────
 CREATE OR REPLACE FUNCTION update_updated_at_column()

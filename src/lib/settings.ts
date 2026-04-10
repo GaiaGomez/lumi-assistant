@@ -7,11 +7,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { DEFAULT_APPOINTMENT_DURATION_MINUTES } from '@/lib/appointments'
 
 export const SETTINGS_KEYS = [
-  // ── Doctoralia ────────────────────────────────────────────
-  'doctoralia_url',
-  'doctoralia_token',
-  'doctoralia_last_sync',
-  'doctoralia_sync_error',
+  // ── Agenda pública ────────────────────────────────────────
+  'booking_url',
 
   // ── Plantillas WhatsApp ───────────────────────────────────
   'template_cobros',
@@ -64,11 +61,8 @@ export type SettingsRow = {
 
 // Valores por defecto si el usuario aún no ha personalizado
 export const DEFAULT_SETTINGS: SettingsMap = {
-  // Doctoralia
-  doctoralia_url:        process.env.NEXT_PUBLIC_DOCTORALIA_URL ?? '',
-  doctoralia_token:      '',
-  doctoralia_last_sync:  '',
-  doctoralia_sync_error: '',
+  // Agenda pública
+  booking_url: process.env.NEXT_PUBLIC_BOOKING_URL ?? '',
 
   // Plantillas
   template_cobros:

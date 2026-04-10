@@ -23,7 +23,7 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 CRON_SECRET=
-NEXT_PUBLIC_DOCTORALIA_URL=
+NEXT_PUBLIC_BOOKING_URL=
 ```
 
 Qué hace cada una:
@@ -31,7 +31,7 @@ Qué hace cada una:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: clave pública usada por SSR y client components
 - `SUPABASE_SERVICE_ROLE_KEY`: usada por el cron server-side
 - `CRON_SECRET`: token esperado por `src/app/api/cron/recordatorio/route.ts`
-- `NEXT_PUBLIC_DOCTORALIA_URL`: valor por defecto para `doctoralia_url` en settings
+- `NEXT_PUBLIC_BOOKING_URL`: valor por defecto para `booking_url` en settings
 
 ## 3. Crear el proyecto en Supabase
 
@@ -59,12 +59,14 @@ Si tu base ya existía de antes, revisa estas migraciones del repo:
 - `src/lib/supabase/migration_add_confirmada.sql`
 - `src/lib/supabase/migration_consolidate_base.sql`
 - `src/lib/supabase/migration_fix_canvas_notes_privacy.sql`
+- `src/lib/supabase/migration_cleanup_legacy_sync.sql`
 
 Cuándo aplicarlas:
 - `migration_add_modalidad.sql`: si tu tabla `appointments` todavía no tiene `modalidad`
 - `migration_add_confirmada.sql`: si tu entorno todavía no quedó alineado con el modelo nuevo de estados
-- `migration_consolidate_base.sql`: si el entorno no tiene la tabla `settings`, `updated_at` o la unicidad nueva de `doctoralia_uid`
+- `migration_consolidate_base.sql`: si el entorno no tiene la tabla `settings` o `updated_at`
 - `migration_fix_canvas_notes_privacy.sql`: si necesitas alinear storage de notas clínicas con el modelo actual de privacidad
+- `migration_cleanup_legacy_sync.sql`: si tu base todavía conserva columnas, settings o tablas del sync viejo
 
 Si estás levantando un proyecto completamente nuevo y `schema.sql` ya refleja el estado actual, las migraciones sirven sobre todo como referencia histórica o para entornos viejos.
 
@@ -113,12 +115,10 @@ Si necesitas datos demo para probar agenda y paciente:
 - `/agenda`: calendario, creación y edición de citas
 - `/whatsapp`: bandeja de pendientes reales del sistema
 - `/pacientes`: listado y perfil de pacientes
-- `/configuracion`: plantillas de WhatsApp y sesión
+- `/configuracion`: plantillas de WhatsApp, agenda y consultorios
 - `/historias`: hoy redirige a pacientes; las notas se crean desde el perfil del paciente
 
 ## 10. Cosas que esta guía no asume
 
 No estoy documentando como ya implementado:
-- sync automático de Doctoralia/iCal
 - envíos automáticos reales por cron
-- variables de entorno para iCal que no aparecen usadas hoy en el código

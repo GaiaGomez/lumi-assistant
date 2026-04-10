@@ -125,7 +125,7 @@ export function buildPatientWhatsAppQuickActions(
     const message = appendFirma(
       interpolate(settings['template_sin_proxima'], {
         first_name:  patient.nombre,
-        booking_url: settings['doctoralia_url'],
+        booking_url: settings['booking_url'],
       }),
       settings
     )
@@ -303,7 +303,7 @@ export function buildPendingActions(
     const message = appendFirma(
       interpolate(settings['template_sin_proxima'], {
         first_name:  patient.nombre,
-        booking_url: settings['doctoralia_url'],
+        booking_url: settings['booking_url'],
       }),
       settings
     )

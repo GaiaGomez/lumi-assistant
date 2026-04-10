@@ -58,9 +58,6 @@ export async function GET() {
     )
   }
 
-  const safeSettings = Object.fromEntries(
-    Object.entries(settings).filter(([key]) => key !== 'doctoralia_token')
-  )
   const generatedAt = new Date()
 
   const payload = {
@@ -81,10 +78,9 @@ export async function GET() {
     notes: [
       'La exportación incluye los datos estructurados de Lumi en formato JSON.',
       'Los archivos binarios del canvas no se embeben; las notas conservan la referencia guardada en canvas_url.',
-      'Por seguridad, el token de Doctoralia no se incluye en esta descarga.',
     ],
     data: {
-      settings: safeSettings,
+      settings,
       consultorios: consultoriosResult.data ?? [],
       patients: patientsResult.data ?? [],
       appointments: appointmentsResult.data ?? [],

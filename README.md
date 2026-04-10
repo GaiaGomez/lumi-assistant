@@ -2,24 +2,25 @@
 
 Suite clínica privada para gestionar agenda, pacientes, notas clínicas, pagos pendientes y seguimiento por WhatsApp.
 
-Hoy el proyecto ya cubre estos flujos reales:
-- agenda con calendario y modal de cita
-- creación, edición, reagendado y eliminación de citas
-- pantalla de pendientes con acciones operativas reales
-- perfil de paciente con historial, notas y actualización rápida de estados
-- configuración de plantillas de WhatsApp y link de agenda
-- notas clínicas con texto y canvas
+Flujos operativos actuales:
+- Agenda con calendario (día/semana/mes), colores por modalidad y festivos colombianos
+- Creación, edición, reagendado y eliminación de citas con validación de conflictos
+- Pantalla de pendientes con acciones operativas reales
+- Perfil de paciente con historial, notas y actualización rápida de estados
+- Historias clínicas con texto y canvas (Apple Pencil)
+- Configuración de plantillas de WhatsApp y link de agenda
+- Perfil de usuaria (ajustes personales)
 
-## Stack actual
+## Stack
 
-- Next.js 16.2.1
-- React 19
+- Next.js 16.2.1 (App Router)
+- React 19.2.4
 - TypeScript
 - Tailwind CSS 4
 - Supabase SSR + Supabase JS
 - react-big-calendar
 - react-sketch-canvas
-- ical.js
+- moment
 
 ## Scripts
 
@@ -36,9 +37,10 @@ npm run lint
 src/app
   (dashboard)/agenda
   (dashboard)/pacientes
+  (dashboard)/historias
   (dashboard)/whatsapp
   (dashboard)/configuracion
-  (dashboard)/historias
+  (dashboard)/profile
   login
 
 src/components
@@ -47,14 +49,22 @@ src/components
   pacientes
   historias
   configuracion
+  profile
   ui
 
 src/lib
   appointments.ts
+  appointment-recurrence.ts
   appointment-status.ts
   appointment-ui.ts
   appointment-updates.ts
+  clinical-notes.ts
+  clinical-note-template.ts
+  consultorios.ts
+  datetime.ts
+  format.ts
   pending-actions.ts
+  profile.ts
   settings.ts
   whatsapp.ts
   supabase/
@@ -68,58 +78,70 @@ Copia `.env.example` a `.env.local` y completa los valores reales:
 cp .env.example .env.local
 ```
 
-Variables usadas hoy por el código:
+Variables requeridas:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `CRON_SECRET`
-- `NEXT_PUBLIC_DOCTORALIA_URL`
+- `NEXT_PUBLIC_BOOKING_URL`
 
 ## Cómo corre la app
 
 - `src/proxy.ts` protege todas las rutas privadas y redirige a `/login` si no hay sesión.
 - Las páginas del dashboard usan Supabase server-side para leer datos.
 - Las mutaciones rápidas viven en client components y persisten en Supabase.
-- La navegación visible del producto hoy es:
+- Navegación del producto:
   - `/agenda`
   - `/pacientes`
+  - `/historias` (redirige a `/pacientes`; no es bandeja independiente)
   - `/whatsapp` (UI: Pendientes)
   - `/configuracion`
+  - `/profile`
 
 ## Base de datos y SQL
 
-Los archivos relevantes están en [`src/lib/supabase`](/Users/gaiagomez/Documents/Claude/Projects/Dev/lu-assistant/src/lib/supabase):
+Los archivos están en [`src/lib/supabase/`](src/lib/supabase/):
 
-- `schema.sql`
-- `migration_add_modalidad.sql`
-- `migration_add_confirmada.sql`
-- `migration_consolidate_base.sql`
-- `migration_fix_canvas_notes_privacy.sql`
-- `seed_demo.sql`
-- `cleanup_old_data.sql`
+- `schema.sql` — base esperada para instalación nueva
+- `seed_demo.sql` — datos de ejemplo
+- `cleanup_old_data.sql` — limpieza de datos viejos
 
-`schema.sql` representa la base esperada para una instalación nueva.  
-Si tu proyecto Supabase ya existía antes de las últimas fases, revisa también las migraciones manuales para dejarlo alineado.
+Migraciones manuales (aplicar en orden si el proyecto ya existía):
+
+```
+migration_add_modalidad.sql
+migration_add_confirmada.sql
+migration_add_consultorios.sql
+migration_add_reminder_dispatches.sql
+migration_remove_reminder_dispatches.sql
+migration_consolidate_base.sql
+migration_enhance_clinical_notes.sql
+migration_expand_appointments_to_events.sql
+migration_fix_canvas_notes_privacy.sql
+migration_fix_canvas_notes_update_policy.sql
+migration_cleanup_legacy_sync.sql
+```
 
 ## Estado actual del producto
 
-Lo que está operativo hoy:
-- agenda con filtros, cards visuales y estados
-- modal de cita con reagendado y validación de conflicto
-- pendientes como lista de acciones reales
-- perfil del paciente con quick actions sobre citas/pagos
-- ajustes de mensajes de WhatsApp
+Operativo:
+- Agenda completa con filtros, cards visuales y estados
+- Modal de cita con reagendado y validación de conflicto
+- Recurrencia de citas
+- Pendientes como lista de acciones reales
+- Perfil del paciente con quick actions sobre citas/pagos
+- Historias clínicas con canvas y texto enriquecido
+- Ajustes de mensajes de WhatsApp
 
-Lo que todavía no está cerrado como integración completa:
-- sincronización automática con Doctoralia / iCal
-- automatización real de envíos desde cron
+Pendiente por cerrar:
+- El cron en `src/app/api/cron/recordatorio/route.ts` lista citas para debug; no hace envíos automáticos
 
 ## Notas útiles
 
+- El middleware se llama `proxy.ts`, no `middleware.ts` — esto es un breaking change de Next.js 16.
 - `src/app/(dashboard)/historias/page.tsx` redirige a pacientes; no es una bandeja independiente.
-- El cron actual en `src/app/api/cron/recordatorio/route.ts` lista citas para debug y verificación; no hace envíos automáticos.
-- El proyecto usa `next/font` con Geist en `src/app/layout.tsx`. En entornos sin salida a internet, el build puede fallar al descargar la fuente.
+- El proyecto usa `next/font` con Geist en `src/app/layout.tsx`. En entornos sin salida a internet el build puede fallar al descargar la fuente.
 
-## Siguiente paso recomendado
+## Levantar desde cero
 
-Si vas a levantar el proyecto desde cero, sigue [`SETUP.md`](/Users/gaiagomez/Documents/Claude/Projects/Dev/lu-assistant/SETUP.md).
+Sigue [`SETUP.md`](SETUP.md).

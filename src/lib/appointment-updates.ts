@@ -5,7 +5,6 @@ import { serializeAppointmentRecurrenceRule } from '@/lib/appointment-recurrence
 export type AppointmentUpdateInput = Partial<Pick<
   Appointment,
   | 'estado_sesion'
-  | 'estado_sesion_override'
   | 'estado_pago'
   | 'consultorio_id'
   | 'modalidad'
@@ -31,7 +30,6 @@ export interface CreateAppointmentInput {
   fecha_fin: string
   modalidad: Appointment['modalidad']
   notas: Appointment['notas']
-  doctoralia_uid?: Appointment['doctoralia_uid']
 }
 
 function normalizeText(value: string | null | undefined) {
@@ -70,14 +68,12 @@ function buildAppointmentPayload(input: CreateAppointmentInput) {
     color: normalizeText(input.color),
     recurrence_group_id: input.recurrence_group_id ?? null,
     recurrence_rule: serializeAppointmentRecurrenceRule(input.recurrence_rule),
-    source_system: 'manual' as const,
     fecha_inicio: input.fecha_inicio,
     fecha_fin: input.fecha_fin,
     modalidad: input.modalidad,
     estado_sesion: input.event_type === 'general' ? 'confirmada' : 'pendiente',
     estado_pago: input.event_type === 'general' ? 'pagado' : 'pendiente',
     notas: normalizeText(input.notas),
-    doctoralia_uid: input.doctoralia_uid ?? null,
   }
 }
 

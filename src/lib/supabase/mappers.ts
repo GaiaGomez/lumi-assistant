@@ -5,7 +5,7 @@ import {
 } from '@/lib/clinical-note-template'
 import { normalizeAppointmentRecurrenceRule } from '@/lib/appointment-recurrence'
 
-export const APPOINTMENT_SELECT = 'id, patient_id, consultorio_id, user_id, source_system, event_type, title, category, color, recurrence_group_id, recurrence_rule, doctoralia_uid, doctoralia_estado_sesion, estado_sesion_override, doctoralia_paciente_nombre, doctoralia_last_synced_at, doctoralia_last_seen_at, doctoralia_removed_at, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at, patient:patients(*), consultorio:consultorios(*)'
+export const APPOINTMENT_SELECT = 'id, patient_id, consultorio_id, user_id, event_type, title, category, color, recurrence_group_id, recurrence_rule, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at, patient:patients(*), consultorio:consultorios(*)'
 
 type SupabaseRow = Record<string, unknown>
 
@@ -90,18 +90,6 @@ export function mapPatientRows(rows: unknown): Patient[] {
 
 export function mapAppointmentRow(row: unknown): Appointment {
   const record = expectRecord(row, 'appointment')
-  const doctoraliaUid = optionalString(record.doctoralia_uid)
-  const sourceSystem = record.source_system === 'doctoralia'
-    ? 'doctoralia'
-    : doctoraliaUid
-      ? 'doctoralia'
-      : 'manual'
-  const doctoraliaEstadoSesion = (
-    optionalString(record.doctoralia_estado_sesion) as Appointment['estado_sesion'] | null
-  ) ?? null
-  const estadoSesionOverride = (
-    optionalString(record.estado_sesion_override) as Appointment['estado_sesion'] | null
-  ) ?? null
   const estadoSesion = record.estado_sesion as Appointment['estado_sesion']
 
   return {
@@ -109,20 +97,12 @@ export function mapAppointmentRow(row: unknown): Appointment {
     patient_id: optionalString(record.patient_id),
     consultorio_id: optionalString(record.consultorio_id),
     user_id: expectString(record.user_id, 'appointment.user_id'),
-    source_system: sourceSystem,
     event_type: record.event_type === 'general' ? 'general' : 'patient',
     title: optionalString(record.title),
     category: optionalString(record.category),
     color: optionalString(record.color),
     recurrence_group_id: optionalString(record.recurrence_group_id),
     recurrence_rule: normalizeAppointmentRecurrenceRule(record.recurrence_rule),
-    doctoralia_uid: doctoraliaUid,
-    doctoralia_estado_sesion: doctoraliaEstadoSesion,
-    estado_sesion_override: estadoSesionOverride,
-    doctoralia_paciente_nombre: optionalString(record.doctoralia_paciente_nombre),
-    doctoralia_last_synced_at: optionalString(record.doctoralia_last_synced_at),
-    doctoralia_last_seen_at: optionalString(record.doctoralia_last_seen_at),
-    doctoralia_removed_at: optionalString(record.doctoralia_removed_at),
     fecha_inicio: expectString(record.fecha_inicio, 'appointment.fecha_inicio'),
     fecha_fin: optionalString(record.fecha_fin),
     estado_sesion: estadoSesion,
