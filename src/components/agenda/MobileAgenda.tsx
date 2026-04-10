@@ -78,7 +78,7 @@ interface MobileAgendaLayout {
 const LAYOUT_DEBUG = true
 
 const START_HOUR = 8
-const END_HOUR = 21
+const END_HOUR = 22
 const SLOT_MINUTES = 30
 const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60
 const SLOT_COUNT = TOTAL_MINUTES / SLOT_MINUTES
