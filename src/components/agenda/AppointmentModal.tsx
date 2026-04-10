@@ -206,7 +206,7 @@ export default function AppointmentModal({
       router.refresh()
       onClose()
     } catch {
-      setSaveError('No se pudo guardar. Intenta de nuevo.')
+      setSaveError('Error al guardar. Intenta otra vez.')
     } finally {
       setSaving(false)
     }
@@ -236,7 +236,7 @@ export default function AppointmentModal({
         {/* ── Header ── */}
         <div className="flex items-start justify-between p-4">
           <div>
-            <SectionHeader label="Detalle de cita" className="mb-1" />
+            <SectionHeader label="Cita" className="mb-1" />
             <div className="flex items-center gap-2 flex-wrap">
               {appointment.patient_id ? (
                 <button
@@ -259,7 +259,7 @@ export default function AppointmentModal({
                   className="text-[11px] font-medium px-2 py-0.5 rounded-full"
                   style={{ background: 'var(--state-warning-bg)', color: 'var(--state-warning-text)' }}
                 >
-                  {deudaCount} sesión{deudaCount > 1 ? 'es' : ''} sin pagar
+                  {deudaCount} cita{deudaCount > 1 ? 's' : ''} sin cobrar
                 </span>
               )}
             </div>
@@ -482,7 +482,7 @@ export default function AppointmentModal({
               </div>
 
               <div>
-                <SectionHeader label="Estado de la sesión" className="mb-2.5" />
+                <SectionHeader label="Estado" className="mb-2.5" />
                 <div className="grid grid-cols-2 gap-1.5">
                   {APPOINTMENT_SESSION_STATES.map((value) => {
                     const isActive = estadoSesion === value
@@ -511,7 +511,7 @@ export default function AppointmentModal({
                   {(['pendiente', 'pagado'] as const).map((value) => {
                     const isActive = estadoPago === value
                     const s = isActive ? ACTIVE_PAYMENT_STYLES[value] : null
-                    const label = value === 'pagado' ? '✓ Pagado' : '⏳ Pendiente'
+                    const label = value === 'pagado' ? '✓ Cobrada' : '⏳ Sin cobrar'
                     return (
                       <button
                         key={value}
@@ -589,7 +589,7 @@ export default function AppointmentModal({
             disabled={isSaveBlocked}
             className="w-full py-2.5 text-[14px]"
           >
-            {saving ? 'Guardando…' : conflicto ? 'Corrige el conflicto para guardar' : 'Guardar cambios'}
+            {saving ? 'Guardando…' : conflicto ? 'Corrige el conflicto para guardar' : 'Guardar'}
           </Button>
 
           {/* ── Eliminar — dos pasos ── */}
@@ -608,7 +608,7 @@ export default function AppointmentModal({
               style={{ background: 'var(--state-cancel-bg)' }}
             >
               <p className="text-[13px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
-                ¿Segura? Esta acción no se puede deshacer.
+                ¿Eliminar? No se puede deshacer.
               </p>
               <div className="flex gap-2">
                 <button

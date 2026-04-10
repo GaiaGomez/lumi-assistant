@@ -364,7 +364,7 @@ export default function NewAppointmentModal({
 
     const { error: insertError } = await createAppointments(supabase, payload)
     if (insertError) {
-      setError('No se pudo guardar. Intenta de nuevo.')
+      setError('Error al guardar. Intenta otra vez.')
       setSaving(false)
       return
     }
@@ -378,9 +378,9 @@ export default function NewAppointmentModal({
       <div>
         <div className="flex items-start justify-between p-4">
           <div>
-            <SectionHeader label="Nuevo evento" className="mb-2" />
+            <SectionHeader label="Nueva cita" className="mb-2" />
             <h2 className="editorial-panel-title text-[1.05rem]">
-              Crear en agenda
+              Crear cita
             </h2>
           </div>
           <Button variant="subtle" onClick={onClose} aria-label="Cerrar" className="p-2.5">

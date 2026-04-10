@@ -152,7 +152,7 @@ export default function AccountMenu({ compact = false, identity }: AccountMenuPr
             style={{ color: 'var(--state-cancel-text)' }}
           >
             <LogOut size={15} strokeWidth={1.8} style={{ flexShrink: 0 }} />
-            <span className="text-[14px]">Cerrar sesión</span>
+            <span className="text-[14px]">Salir</span>
           </button>
         </div>
       )}

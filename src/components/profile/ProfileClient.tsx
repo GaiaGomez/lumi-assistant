@@ -304,7 +304,7 @@ export default function ProfileClient({ userId, identity }: ProfileClientProps) 
               className="px-4 py-2 text-[13px] inline-flex items-center gap-2"
             >
               <Save size={14} />
-              {saveState === 'saving' ? 'Guardando…' : 'Guardar cambios'}
+              {saveState === 'saving' ? 'Guardando…' : 'Guardar'}
             </Button>
           </div>
         </div>

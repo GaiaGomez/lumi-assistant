@@ -16,7 +16,7 @@ const navItems = [
   { href: '/agenda',        label: 'Agenda',     icon: Calendar },
   { href: '/pacientes',     label: 'Pacientes',  icon: Users },
   { href: '/whatsapp',      label: 'Pendientes', icon: MessageCircle },
-  { href: '/configuracion', label: 'Ajustes',    icon: Settings },
+  { href: '/configuracion', label: 'Configuración', icon: Settings },
 ]
 
 export default function BottomNav({ identity }: { identity: ProfileIdentity }) {

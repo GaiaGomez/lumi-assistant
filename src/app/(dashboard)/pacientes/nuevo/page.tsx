@@ -42,7 +42,7 @@ export default function NuevoPacientePage() {
       router.push('/pacientes')
       router.refresh()
     } catch {
-      setSaveError('No se pudo guardar el paciente. Intenta de nuevo.')
+      setSaveError('Error al guardar. Intenta otra vez.')
     } finally {
       setSaving(false)
     }

@@ -54,11 +54,11 @@ export const PENDING_ACTION_SECTION_ORDER: PendingActionType[] = [
 ]
 
 export const PENDING_ACTION_SECTION_LABEL: Record<PendingActionType, string> = {
-  confirmar_cita_hoy: 'Hoy por confirmar',
-  confirmar_cita_manana: 'Mañana por confirmar',
-  cobrar_sesion_realizada: 'Cobros pendientes',
-  paciente_sin_proxima: 'Sin próxima sesión',
-  reactivar_paciente: 'Reactivar seguimiento',
+  confirmar_cita_hoy: 'Por confirmar hoy',
+  confirmar_cita_manana: 'Por confirmar mañana',
+  cobrar_sesion_realizada: 'Sin cobrar',
+  paciente_sin_proxima: 'Sin próxima cita',
+  reactivar_paciente: 'Reactivar',
 }
 
 export interface PatientWhatsAppQuickAction {
@@ -113,8 +113,8 @@ export function buildPatientWhatsAppQuickActions(
     if (href !== '#') {
       actions.push({
         key: 'payment',
-        label: 'Cobro pendiente',
-        hint: 'Cobro pendiente',
+        label: 'Sin cobrar',
+        hint: 'Sin cobrar',
         href,
         accent: 'soft',
       })
@@ -133,8 +133,8 @@ export function buildPatientWhatsAppQuickActions(
     if (href !== '#') {
       actions.push({
         key: 'no-next',
-        label: 'Sin próxima sesión',
-        hint: 'Última sesión asistida sin una nueva cita agendada.',
+        label: 'Sin próxima cita',
+        hint: 'Última cita asistida sin una nueva cita agendada.',
         href,
         accent: 'glass',
       })
@@ -153,8 +153,8 @@ export function buildPatientWhatsAppQuickActions(
     if (href !== '#') {
       actions.push({
         key: 'resume',
-        label: 'Retomar proceso',
-        hint: `${daysInactive} días sin una nueva cita agendada.`,
+        label: 'Reactivar',
+        hint: `${daysInactive} días sin cita nueva.`,
         href,
         accent: 'glass',
       })
@@ -191,8 +191,8 @@ export function buildPendingActions(
         patientId: patient.id,
         appointment,
         appointmentId: appointment.id,
-        title: 'Confirmar cita de hoy',
-        description: 'La sesión de hoy sigue pendiente de confirmación.',
+        title: 'Confirmar hoy',
+        description: 'Hoy sin confirmar',
         context: formatDateTimeFull(appointment.fecha_inicio),
         preview: previewMessage(appendFirma(rawMsg, settings)),
         internalActions: ['open_patient', 'update_session', 'update_payment'],
@@ -217,8 +217,8 @@ export function buildPendingActions(
         patientId: patient.id,
         appointment,
         appointmentId: appointment.id,
-        title: 'Confirmar cita de mañana',
-        description: 'La sesión de mañana sigue pendiente de confirmación.',
+        title: 'Confirmar mañana',
+        description: 'Mañana sin confirmar',
         context: formatDateTimeFull(appointment.fecha_inicio),
         preview: previewMessage(appendFirma(rawMsg, settings)),
         internalActions: ['open_patient', 'update_session', 'update_payment'],
@@ -249,9 +249,9 @@ export function buildPendingActions(
       patientId: patient.id,
       appointment,
       appointmentId: appointment.id,
-      title: 'Cobrar sesión realizada',
-      description: 'La sesión ya fue realizada y el pago sigue pendiente.',
-      context: `Sesión del ${formatDateTimeFull(appointment.fecha_inicio)}`,
+      title: 'Cobrar',
+      description: 'Realizada · sin cobrar',
+      context: `Cita del ${formatDateTimeFull(appointment.fecha_inicio)}`,
       preview: previewMessage(message),
       internalActions: ['open_patient', 'update_session', 'update_payment'],
       externalAction: buildWhatsAppAction(
@@ -287,9 +287,9 @@ export function buildPendingActions(
         source: 'patient',
         patient,
         patientId: patient.id,
-        title: 'Reactivar paciente',
-        description: `Han pasado ${daysWithoutSchedule} días sin una nueva cita agendada.`,
-        context: `Última sesión ${formatDateTimeFull(lastPastAppointment.fecha_inicio)}`,
+        title: 'Reactivar',
+        description: `${daysWithoutSchedule} días sin cita nueva.`,
+        context: `Última cita ${formatDateTimeFull(lastPastAppointment.fecha_inicio)}`,
         preview: previewMessage(message),
         internalActions: ['open_patient'],
         externalAction: buildWhatsAppAction(
@@ -315,8 +315,8 @@ export function buildPendingActions(
       source: 'patient',
       patient,
       patientId: patient.id,
-      title: 'Paciente sin próxima sesión',
-      description: 'No tiene una próxima cita agendada después de su última sesión.',
+      title: 'Sin próxima cita',
+      description: 'No tiene una próxima cita agendada después de su última cita.',
       context: `Última sesión ${formatDateTimeFull(lastPastAppointment.fecha_inicio)}`,
       preview: previewMessage(message),
       internalActions: ['open_patient'],

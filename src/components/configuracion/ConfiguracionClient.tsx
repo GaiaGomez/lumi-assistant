@@ -505,7 +505,7 @@ function ConsultorioCard({
       setTimeout(() => setState('idle'), 2500)
     } catch {
       setState('error')
-      setError('No se pudo guardar. Intenta de nuevo.')
+      setError('Error al guardar. Intenta otra vez.')
     }
   }
 
@@ -573,7 +573,7 @@ function ConsultorioCard({
             placeholder="Nombre del consultorio"
           />
           <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-cool-muted)' }}>
-            Nombre visible en agenda y citas
+            Nombre visible
           </p>
         </div>
 

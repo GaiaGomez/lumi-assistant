@@ -30,17 +30,17 @@ interface TemplateConfig {
 const TEMPLATES: TemplateConfig[] = [
   {
     key: 'template_cobros',
-    label: 'Cobro pendiente',
-    description: 'Para sesiones realizadas pendientes de pago.',
+    label: 'Sin cobrar',
+    description: 'Para citas realizadas sin cobrar.',
     variables: [
       { name: 'first_name', hint: 'Nombre del paciente' },
-      { name: 'session_date', hint: 'Fecha y hora de la sesión (ej: Lunes 24/03/26 · 10:00 a. m.)' },
+      { name: 'session_date', hint: 'Fecha y hora de la cita (ej: Lunes 24/03/26 · 10:00 a. m.)' },
     ],
     previewVars: { first_name: 'Valentina', session_date: 'Lunes 24/03/26 · 10:00 a. m.' },
   },
   {
     key: 'template_sin_proxima',
-    label: 'Sin próxima sesión',
+    label: 'Sin próxima cita',
     description: 'Para pacientes sin una nueva cita agendada.',
     variables: [
       { name: 'first_name', hint: 'Nombre del paciente' },
@@ -50,11 +50,11 @@ const TEMPLATES: TemplateConfig[] = [
   },
   {
     key: 'template_retomar',
-    label: 'Retomar proceso',
+    label: 'Reactivar',
     description: 'Para pacientes con más de 20 días sin agendar.',
     variables: [
       { name: 'first_name', hint: 'Nombre del paciente' },
-      { name: 'days_inactive', hint: 'Días desde la última sesión (ej: 28)' },
+      { name: 'days_inactive', hint: 'Días desde la última cita (ej: 28)' },
     ],
     previewVars: { first_name: 'Valentina', days_inactive: '28' },
   },

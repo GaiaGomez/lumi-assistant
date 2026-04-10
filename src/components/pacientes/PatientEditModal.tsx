@@ -86,7 +86,7 @@ export default function PatientEditModal({ patient }: Props) {
       router.refresh()
       closeModal()
     } catch {
-      setError('No se pudo guardar. Intenta de nuevo.')
+      setError('Error al guardar. Intenta otra vez.')
     } finally {
       setSaving(false)
     }
@@ -249,7 +249,7 @@ export default function PatientEditModal({ patient }: Props) {
                 className="btn-action inline-flex items-center gap-1.5 px-4 py-2 text-[14px] disabled:opacity-45"
               >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                {saving ? 'Guardando...' : 'Guardar cambios'}
+                {saving ? 'Guardando...' : 'Guardar'}
               </button>
             </div>
           </div>

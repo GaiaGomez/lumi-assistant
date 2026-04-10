@@ -23,8 +23,8 @@ export const APPOINTMENT_PAYMENT_STATES: AppointmentPaymentState[] = [
 ]
 
 export const APPOINTMENT_PAYMENT_LABEL: Record<AppointmentPaymentState, string> = {
-  pendiente: 'Pendiente',
-  pagado: 'Pagado',
+  pendiente: 'Sin cobrar',
+  pagado: 'Cobrada',
 }
 
 export function getAppointmentSessionBadgeStatus(

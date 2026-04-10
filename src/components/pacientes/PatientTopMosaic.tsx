@@ -137,14 +137,14 @@ export default function PatientTopMosaic({
           muted={!nextAppointmentText}
         />
         <StatCard
-          label="Última sesión"
-          value={lastPastAppointmentText ? lastPastAppointmentText.primary : 'Sin sesiones'}
+          label="Última cita"
+          value={lastPastAppointmentText ? lastPastAppointmentText.primary : 'Sin citas'}
           hint={lastPastAppointmentText ? lastPastAppointmentText.secondary : undefined}
           muted={!lastPastAppointmentText}
         />
         <StatCard
-          label="Pagos pendientes"
-          value={pendingPaymentsCount === 0 ? 'Todo al día' : `${pendingPaymentsCount} pendiente${pendingPaymentsCount === 1 ? '' : 's'}`}
+          label="Sin cobrar"
+          value={pendingPaymentsCount === 0 ? 'Todo al día' : `${pendingPaymentsCount} sin cobrar`}
           hint={pendingPaymentsCount === 0 ? undefined : 'Sin pago confirmado'}
           muted={pendingPaymentsCount === 0}
         />

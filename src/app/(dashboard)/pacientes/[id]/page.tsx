@@ -106,10 +106,10 @@ export default async function PatientProfilePage({ params }: Props) {
         {/* ── Historial de citas ── */}
         <section className="glass-cool relative rounded-[18px] p-3">
           <h2 className="editorial-panel-title mb-1.5 text-[1.05rem]">
-            Historial de citas
+            Historial
           </h2>
           <div className="space-y-1.5">
-            {patientAppointments.length === 0 && <EmptyState message="Sin citas registradas" />}
+            {patientAppointments.length === 0 && <EmptyState message="Sin citas" />}
             {patientAppointments.map((apt) => (
               <div
                 key={apt.id}
