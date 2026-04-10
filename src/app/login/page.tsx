@@ -107,7 +107,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-[11px] mt-6" style={{ color: 'var(--ink-cool-faint)' }}>
-          Acceso privado · Lu Assistant
+          Acceso privado · Lumi
         </p>
       </div>
     </div>

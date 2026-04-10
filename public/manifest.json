@@ -1,6 +1,6 @@
 {
-  "name": "Lu Assistant",
-  "short_name": "Lu",
+  "name": "Lumi Assistant",
+  "short_name": "Lumi",
   "description": "Asistente clínico para psicólogos",
   "start_url": "/agenda",
   "display": "standalone",

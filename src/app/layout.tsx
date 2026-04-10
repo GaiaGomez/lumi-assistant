@@ -11,13 +11,13 @@ const geist = Geist({ subsets: ['latin'] })
 
 // metadata: lo que ve el navegador (tab title, descripción, PWA config)
 export const metadata: Metadata = {
-  title: 'Lu Assistant',
-  description: 'Tu asistente clínico personal',
+  title: 'Lumi',
+  description: 'Lumi · Tu asistente clínico personal',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Lu Assistant',
+    title: 'Lumi',
   },
 }
 
