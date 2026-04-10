@@ -74,8 +74,7 @@ interface MobileAgendaLayout {
   isTablet: boolean
 }
 
-// ── Debug overlay — set true para medir en dispositivo real, false para producción
-const LAYOUT_DEBUG = true
+const LAYOUT_DEBUG = false
 
 const START_HOUR = 8
 const END_HOUR = 22
