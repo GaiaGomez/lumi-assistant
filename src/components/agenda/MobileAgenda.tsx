@@ -528,7 +528,7 @@ export default function MobileAgenda({
     //   Mantiene offset 200px sin cambios.
     const componentHeight = screenH > 0
       ? isTablet
-        ? Math.round(Math.min(1400, Math.max(560, screenH - 200)))
+        ? Math.round(Math.min(1400, Math.max(560, screenH - 80)))
         : Math.min(700, Math.max(400, screenH - 200))
       : isTablet ? 640 : 420
 
