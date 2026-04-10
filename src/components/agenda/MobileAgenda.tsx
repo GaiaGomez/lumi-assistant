@@ -410,6 +410,7 @@ export default function MobileAgenda({
   const didScrollToNow = useRef(false)
   const today = useMemo(() => new Date(), [])
   const [viewportWidth, setViewportWidth] = useState(0)
+  const [windowHeight, setWindowHeight] = useState(0)
 
   const weekDays = useMemo(() => {
     const start = moment(currentDate).startOf('week')
@@ -434,6 +435,7 @@ export default function MobileAgenda({
 
   const layout = useMemo<MobileAgendaLayout>(() => {
     const width = Math.max(viewportWidth, 320)
+    const screenH = windowHeight > 0 ? windowHeight : 0
     const isTablet = width >= 640
 
     // Curvas independientes por clase de dispositivo
@@ -443,11 +445,11 @@ export default function MobileAgenda({
     const visibleDays = isTablet ? 4 : 3
 
     // ── Altura de slot ────────────────────────────────────────────
-    // Phone: 22→26px — compacto como GCal mobile (~7-8h visibles con scroll interno).
+    // Phone: 16→20px — mismo rango que GCal mobile (~14h visibles).
     // Tablet: 42→52px — grilla cómoda en pantalla grande.
     const slotHeight = isTablet
       ? Math.round(interpolate(42, 52, tabletRatio))
-      : Math.round(interpolate(22, 26, phoneRatio))
+      : Math.round(interpolate(16, 20, phoneRatio))
 
     // ── Cabecera de día ───────────────────────────────────────────
     // Phone: 38→44px — compacto como GCal mobile.
@@ -487,7 +489,7 @@ export default function MobileAgenda({
       : Math.round(interpolate(8, 10, phoneRatio))
     const eventMinHeight = isTablet
       ? Math.round(interpolate(48, 58, tabletRatio))
-      : Math.round(interpolate(26, 30, phoneRatio))
+      : Math.round(interpolate(20, 24, phoneRatio))
 
     // ── Espaciado ─────────────────────────────────────────────────
     const dayGap = isTablet
@@ -500,12 +502,16 @@ export default function MobileAgenda({
       ? Math.round(interpolate(8, 10, tabletRatio))
       : Math.round(interpolate(4, 6, phoneRatio))
 
-    // ── Altura del componente (fija) ──────────────────────────────
-    // Phone: 420px — muestra ~5-6h visible con scroll interno.
-    // Tablet: 560→640px — proporcional a la pantalla más grande.
+    // ── Altura del componente ─────────────────────────────────────
+    // Phone: relativo a window.innerHeight para usar la pantalla disponible.
+    //   screenH - 280px cubre: chrome de la app (~220px) + bottom nav (~60px).
+    //   Mínimo 420px (fallback si aún no hay medición) y máximo 640px.
+    // Tablet: 560→640px — proporcional.
     const componentHeight = isTablet
       ? Math.round(interpolate(560, 640, tabletRatio))
-      : 420
+      : screenH > 0
+        ? Math.min(640, Math.max(420, screenH - 280))
+        : 420
 
     const rawDayWidth = (width - dayGap * (visibleDays - 1)) / visibleDays
     const dayColumnWidth = Math.max(
@@ -533,7 +539,7 @@ export default function MobileAgenda({
       headerGap,
       outerGap,
     }
-  }, [viewportWidth])
+  }, [viewportWidth, windowHeight])
 
   // Observar ancho del viewport
   useEffect(() => {
@@ -548,6 +554,14 @@ export default function MobileAgenda({
     observer.observe(node)
 
     return () => observer.disconnect()
+  }, [])
+
+  // Observar altura de la ventana para componentHeight relativo
+  useEffect(() => {
+    const update = () => setWindowHeight(window.innerHeight)
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
   }, [])
 
   // Sincronizar scroll horizontal de cabeceras con la grilla
