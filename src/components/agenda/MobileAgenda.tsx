@@ -505,18 +505,19 @@ export default function MobileAgenda({
     // ── Altura del componente ─────────────────────────────────────
     // Ambos casos usan window.innerHeight para ocupar la pantalla real.
     //
-    // Phone (~12cm alto, ~667–844px CSS):
-    //   Chrome de la app: header 2 filas ~80px + filtros ~36px + nav bottom ~60px
-    //   + spacing ~44px ≈ 220px. Mínimo 400px, máximo 640px.
+    // Tablet (~22cm alto físico, ~900–1024px viewport CSS):
+    //   Objetivo: calendario ≈ 16cm de 22cm = ratio 16/22 del viewport.
+    //   Derivado directamente de las medidas físicas del dispositivo.
+    //   Clamp [560, 860] para extremos.
     //
-    // Tablet (~22cm alto, ~900–1024px CSS):
-    //   Chrome menor (nav lateral en lg queda fuera, bottom nav ~60px + header ~100px)
-    //   ≈ 180px. Mínimo 560px, máximo 860px.
+    // Phone (~12cm alto físico, ~667–844px viewport CSS):
+    //   Ocupa lo disponible menos el chrome de la app (~200px).
+    //   Clamp [400, 700] — el máximo 700 permite crecer en phones largos.
     const componentHeight = screenH > 0
       ? isTablet
-        ? Math.min(860, Math.max(560, screenH - 180))
-        : Math.min(640, Math.max(400, screenH - 220))
-      : isTablet ? 600 : 420
+        ? Math.round(Math.min(860, Math.max(560, screenH * (16 / 22))))
+        : Math.min(700, Math.max(400, screenH - 200))
+      : isTablet ? 620 : 420
 
     const rawDayWidth = (width - dayGap * (visibleDays - 1)) / visibleDays
     const dayColumnWidth = Math.max(
