@@ -443,11 +443,11 @@ export default function MobileAgenda({
     const visibleDays = isTablet ? 4 : 3
 
     // ── Altura de slot ────────────────────────────────────────────
-    // Phone: 34→40px — slots más altos para legibilidad con scroll interno.
+    // Phone: 22→26px — compacto como GCal mobile (~7-8h visibles con scroll interno).
     // Tablet: 42→52px — grilla cómoda en pantalla grande.
     const slotHeight = isTablet
       ? Math.round(interpolate(42, 52, tabletRatio))
-      : Math.round(interpolate(34, 40, phoneRatio))
+      : Math.round(interpolate(22, 26, phoneRatio))
 
     // ── Cabecera de día ───────────────────────────────────────────
     // Phone: 48→56px — tap target cómodo, espacio para día + número.
@@ -478,7 +478,7 @@ export default function MobileAgenda({
       : Math.round(interpolate(6, 8, phoneRatio))
     const cardPaddingY = isTablet
       ? Math.round(interpolate(8, 10, tabletRatio))
-      : Math.round(interpolate(5, 7, phoneRatio))
+      : Math.round(interpolate(3, 4, phoneRatio))
     const badgeSize = isTablet
       ? Math.round(interpolate(18, 22, tabletRatio))
       : Math.round(interpolate(12, 14, phoneRatio))
@@ -487,7 +487,7 @@ export default function MobileAgenda({
       : Math.round(interpolate(8, 10, phoneRatio))
     const eventMinHeight = isTablet
       ? Math.round(interpolate(48, 58, tabletRatio))
-      : Math.round(interpolate(38, 44, phoneRatio))
+      : Math.round(interpolate(26, 30, phoneRatio))
 
     // ── Espaciado ─────────────────────────────────────────────────
     const dayGap = isTablet
