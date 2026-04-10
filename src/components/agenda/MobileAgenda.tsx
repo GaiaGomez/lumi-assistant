@@ -69,6 +69,9 @@ interface MobileAgendaLayout {
   eventMinHeight: number
   headerGap: number
   outerGap: number
+  // debug
+  shortSide: number
+  isTablet: boolean
 }
 
 // ── Debug overlay — set true para medir en dispositivo real, false para producción
@@ -413,6 +416,10 @@ export default function MobileAgenda({
   const didScrollToNow = useRef(false)
   const today = useMemo(() => new Date(), [])
   const [viewportWidth, setViewportWidth] = useState(0)
+  // window.innerWidth/Height — usados para clasificar phone vs tablet.
+  // Separados de viewportWidth (medición del div interno) que sirve solo
+  // para calcular anchos de columnas disponibles.
+  const [windowWidth, setWindowWidth] = useState(0)
   const [windowHeight, setWindowHeight] = useState(0)
 
   const weekDays = useMemo(() => {
@@ -439,7 +446,16 @@ export default function MobileAgenda({
   const layout = useMemo<MobileAgendaLayout>(() => {
     const width = Math.max(viewportWidth, 320)
     const screenH = windowHeight > 0 ? windowHeight : 0
-    const isTablet = width >= 640
+
+    // ── Clasificación phone vs tablet ─────────────────────────────
+    // Usamos el lado CORTO del dispositivo (min de ancho/alto de la ventana).
+    // Esto evita que iPhone 11 en landscape (896px de ancho) sea clasificado
+    // como tablet — su lado corto es 414px, bien bajo el umbral.
+    // Umbral 600px: dimensión corta de la tablet más pequeña relevante (7").
+    const shortSide = windowWidth > 0
+      ? Math.min(windowWidth, windowHeight > 0 ? windowHeight : windowWidth)
+      : Math.min(width, screenH > 0 ? screenH : width)
+    const isTablet = shortSide >= 600
 
     // Curvas independientes por clase de dispositivo
     const phoneRatio  = isTablet ? 0 : Math.max(0, Math.min((width - 320) / 320, 1))
@@ -547,8 +563,10 @@ export default function MobileAgenda({
       eventMinHeight,
       headerGap,
       outerGap,
+      shortSide,
+      isTablet,
     }
-  }, [viewportWidth, windowHeight])
+  }, [viewportWidth, windowWidth, windowHeight])
 
   // Observar ancho del viewport
   useEffect(() => {
@@ -565,9 +583,12 @@ export default function MobileAgenda({
     return () => observer.disconnect()
   }, [])
 
-  // Observar altura de la ventana para componentHeight relativo
+  // Observar dimensiones de ventana para clasificación phone/tablet
   useEffect(() => {
-    const update = () => setWindowHeight(window.innerHeight)
+    const update = () => {
+      setWindowWidth(window.innerWidth)
+      setWindowHeight(window.innerHeight)
+    }
     update()
     window.addEventListener('resize', update)
     return () => window.removeEventListener('resize', update)
@@ -644,8 +665,9 @@ export default function MobileAgenda({
           padding: '4px 7px', borderRadius: 6, lineHeight: 1.6,
           pointerEvents: 'none', fontFamily: 'monospace',
         }}>
-          win {windowHeight}×{viewportWidth}<br/>
+          win {windowHeight}×{windowWidth}<br/>
           vvp {typeof window !== 'undefined' ? `${window.visualViewport?.height ?? '?'}×${window.visualViewport?.width ?? '?'}` : 'ssr'}<br/>
+          short={layout.shortSide} tab={layout.isTablet ? 'Y' : 'N'}<br/>
           compH={layout.componentHeight} slot={layout.slotHeight}<br/>
           days={layout.visibleDays} colW={layout.dayColumnWidth}<br/>
           gutter={layout.timeGutterWidth} hdrH={layout.headerHeight}
