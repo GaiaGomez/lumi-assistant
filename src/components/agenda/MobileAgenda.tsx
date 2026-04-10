@@ -461,7 +461,7 @@ export default function MobileAgenda({
     const phoneRatio  = isTablet ? 0 : Math.max(0, Math.min((width - 320) / 320, 1))
     const tabletRatio = isTablet ? Math.max(0, Math.min((width - 640) / 360, 1)) : 0
 
-    const visibleDays = isTablet ? 4 : 3
+    const visibleDays = 4
 
     // ── Cabecera de día ───────────────────────────────────────────
     const headerHeight = isTablet
@@ -523,19 +523,19 @@ export default function MobileAgenda({
       : isTablet ? 640 : 420
 
     // ── Altura de slot ────────────────────────────────────────────
-    // Tablet: derivado de componentHeight para que las 26 franjas (8-21h)
-    //   quepan exactamente en la grilla visible sin scroll.
-    //   availableGrid = compH - headerHeight - headerGap - 2×innerPad
-    // Phone: interpolación fija en el rango GCal mobile (~14h visibles).
+    // Ambos modos usan slots fijos y altos para que las cards de citas
+    // tengan espacio suficiente para mostrar nombre + hora + iconos.
+    // La grilla es más alta que el componente → scroll vertical interno.
+    //
+    // Phone: 32→36px — cita de 1h ocupa 64-72px (nombre + iconos caben).
+    // Tablet: 44→52px — cita de 1h ocupa 88-104px, lectura cómoda.
     const slotHeight = isTablet
-      ? Math.max(18, Math.floor(
-          (componentHeight - headerHeight - headerGap - innerPad * 2) / SLOT_COUNT
-        ))
-      : Math.round(interpolate(16, 20, phoneRatio))
+      ? Math.round(interpolate(44, 52, tabletRatio))
+      : Math.round(interpolate(32, 36, phoneRatio))
 
     const eventMinHeight = isTablet
-      ? Math.round(slotHeight * 1.8)
-      : Math.round(interpolate(20, 24, phoneRatio))
+      ? Math.round(interpolate(56, 68, tabletRatio))
+      : Math.round(interpolate(40, 46, phoneRatio))
 
     // ── Ancho de columnas ─────────────────────────────────────────
     // Phone: usa windowWidth (window.innerWidth real) para derivar el
