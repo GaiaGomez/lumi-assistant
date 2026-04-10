@@ -58,7 +58,6 @@ Si tu base ya existía de antes, revisa estas migraciones del repo:
 - `src/lib/supabase/migration_add_modalidad.sql`
 - `src/lib/supabase/migration_add_confirmada.sql`
 - `src/lib/supabase/migration_consolidate_base.sql`
-- `src/lib/supabase/migration_add_doctoralia_connection_foundation.sql`
 - `src/lib/supabase/migration_fix_canvas_notes_privacy.sql`
 - `src/lib/supabase/migration_cleanup_legacy_sync.sql`
 
@@ -66,7 +65,6 @@ Cuándo aplicarlas:
 - `migration_add_modalidad.sql`: si tu tabla `appointments` todavía no tiene `modalidad`
 - `migration_add_confirmada.sql`: si tu entorno todavía no quedó alineado con el modelo nuevo de estados
 - `migration_consolidate_base.sql`: si el entorno no tiene la tabla `settings` o `updated_at`
-- `migration_add_doctoralia_connection_foundation.sql`: si necesitas crear la nueva base de conexión y deduplicación de Doctoralia
 - `migration_fix_canvas_notes_privacy.sql`: si necesitas alinear storage de notas clínicas con el modelo actual de privacidad
 - `migration_cleanup_legacy_sync.sql`: si tu base todavía conserva columnas, settings o tablas del sync viejo
 

@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import AgendaClient from '@/components/agenda/AgendaClient'
 import { fetchConsultorios } from '@/lib/consultorios'
-import { fetchDoctoraliaAgendaConnectionState } from '@/lib/doctoralia/persistence'
 import { APPOINTMENT_SELECT, mapAppointmentRows } from '@/lib/supabase/mappers'
 import { fetchSettings } from '@/lib/settings'
 
@@ -13,7 +12,7 @@ export default async function AgendaPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [appointmentsResult, settings, consultorios, doctoraliaState] = await Promise.all([
+  const [appointmentsResult, settings, consultorios] = await Promise.all([
     supabase
       .from('appointments')
       .select(APPOINTMENT_SELECT)
@@ -21,7 +20,6 @@ export default async function AgendaPage() {
       .order('fecha_inicio', { ascending: true }),
     fetchSettings(supabase, user.id),
     fetchConsultorios(supabase, user.id),
-    fetchDoctoraliaAgendaConnectionState(supabase, user.id),
   ])
 
   if (appointmentsResult.error) throw new Error(`Error cargando citas: ${appointmentsResult.error.message}`)
@@ -37,8 +35,6 @@ export default async function AgendaPage() {
         appointments={allAppointments}
         consultorios={consultorios}
         settings={settings}
-        doctoraliaConnection={doctoraliaState.connection}
-        doctoraliaAutoSync={doctoraliaState.autoSync}
       />
     </div>
   )

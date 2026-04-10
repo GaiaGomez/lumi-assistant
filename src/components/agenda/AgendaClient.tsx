@@ -10,9 +10,7 @@ import moment from 'moment-timezone'
 import 'moment/locale/es'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { Appointment, CalendarEvent, Consultorio } from '@/types'
-import type { DoctoraliaAutoSyncState, DoctoraliaConnectionSummary } from '@/lib/doctoralia/types'
 import AppointmentModal from './AppointmentModal'
-import DoctoraliaConnectionCard from './DoctoraliaConnectionCard'
 import NewAppointmentModal from './NewAppointmentModal'
 import MobileAgenda from './MobileAgenda'
 import { AlertTriangle, Briefcase, Check, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, HandCoins, Plus } from 'lucide-react'
@@ -196,16 +194,12 @@ interface AgendaClientProps {
   appointments: Appointment[]
   consultorios: Consultorio[]
   settings: SettingsMap
-  doctoraliaConnection: DoctoraliaConnectionSummary
-  doctoraliaAutoSync: DoctoraliaAutoSyncState
 }
 
 export default function AgendaClient({
   appointments,
   consultorios,
   settings,
-  doctoraliaConnection,
-  doctoraliaAutoSync,
 }: AgendaClientProps) {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
   const [newSlotStart, setNewSlotStart] = useState<Date | null>(null)
@@ -380,11 +374,6 @@ export default function AgendaClient({
 
   return (
     <div className="space-y-2 sm:space-y-2.5 md:space-y-3 pb-6 lg:pb-0">
-      <DoctoraliaConnectionCard
-        connection={doctoraliaConnection}
-        autoSync={doctoraliaAutoSync}
-      />
-
       {/* ── Barra superior — desktop ── */}
       <div className="hidden lg:flex glass-cool rounded-[18px] px-4 py-2.5 items-center gap-3 flex-wrap">
 

@@ -62,7 +62,6 @@ src/lib
   clinical-note-template.ts
   consultorios.ts
   datetime.ts
-  doctoralia/
   format.ts
   pending-actions.ts
   profile.ts
@@ -116,7 +115,6 @@ migration_add_consultorios.sql
 migration_add_reminder_dispatches.sql
 migration_remove_reminder_dispatches.sql
 migration_consolidate_base.sql
-migration_add_doctoralia_connection_foundation.sql
 migration_enhance_clinical_notes.sql
 migration_expand_appointments_to_events.sql
 migration_fix_canvas_notes_privacy.sql
@@ -134,7 +132,6 @@ Operativo:
 - Perfil del paciente con quick actions sobre citas/pagos
 - Historias clínicas con canvas y texto enriquecido
 - Ajustes de mensajes de WhatsApp
-- Base de conexión y sincronización manual de Doctoralia desde Agenda
 
 Pendiente por cerrar:
 - El cron en `src/app/api/cron/recordatorio/route.ts` lista citas para debug; no hace envíos automáticos
