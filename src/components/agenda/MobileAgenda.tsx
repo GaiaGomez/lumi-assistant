@@ -71,6 +71,9 @@ interface MobileAgendaLayout {
   outerGap: number
 }
 
+// ── Debug overlay — set true para medir en dispositivo real, false para producción
+const LAYOUT_DEBUG = true
+
 const START_HOUR = 8
 const END_HOUR = 21
 const SLOT_MINUTES = 30
@@ -634,6 +637,20 @@ export default function MobileAgenda({
       className="glass-cool rounded-[18px] md:rounded-[22px]"
       style={{ height: layout.componentHeight, padding: p }}
     >
+      {LAYOUT_DEBUG && (
+        <div style={{
+          position: 'absolute', top: 4, left: 4, zIndex: 9999,
+          background: 'rgba(0,0,0,0.82)', color: '#0ff', fontSize: 10,
+          padding: '4px 7px', borderRadius: 6, lineHeight: 1.6,
+          pointerEvents: 'none', fontFamily: 'monospace',
+        }}>
+          win {windowHeight}×{viewportWidth}<br/>
+          vvp {typeof window !== 'undefined' ? `${window.visualViewport?.height ?? '?'}×${window.visualViewport?.width ?? '?'}` : 'ssr'}<br/>
+          compH={layout.componentHeight} slot={layout.slotHeight}<br/>
+          days={layout.visibleDays} colW={layout.dayColumnWidth}<br/>
+          gutter={layout.timeGutterWidth} hdrH={layout.headerHeight}
+        </div>
+      )}
       <div className="flex flex-col h-full" style={{ gap: layout.headerGap }}>
 
         {/* ── Cabecera de días — fija, no desplaza verticalmente ── */}
