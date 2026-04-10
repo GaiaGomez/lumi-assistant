@@ -355,10 +355,6 @@ export default function AgendaClient({
     return moment(currentDate).format('dddd D MMM YYYY')
   }
 
-  const periodoLabelMobile = () => {
-    return periodoLabel()
-  }
-
   function navegar(dir: 'prev' | 'next' | 'today') {
     const unit = currentView === 'month' ? 'month' : currentView === 'week' ? 'week' : 'day'
     if (dir === 'today')     setCurrentDate(new Date())
@@ -366,14 +362,8 @@ export default function AgendaClient({
     else                     setCurrentDate((d) => moment(d).add(1, unit).toDate())
   }
 
-  function navegarMobile(dir: 'prev' | 'next' | 'today') {
-    if (dir === 'today')     setCurrentDate(new Date())
-    else if (dir === 'prev') setCurrentDate((d) => moment(d).subtract(1, currentView === 'month' ? 'month' : currentView === 'day' ? 'day' : 'week').toDate())
-    else                     setCurrentDate((d) => moment(d).add(1, currentView === 'month' ? 'month' : currentView === 'day' ? 'day' : 'week').toDate())
-  }
-
   return (
-    <div className="space-y-2 sm:space-y-2.5 md:space-y-3 pb-6 lg:pb-0">
+    <div className="space-y-2 sm:space-y-2.5 md:space-y-3">
       {/* ── Barra superior — desktop ── */}
       <div className="hidden lg:flex glass-cool rounded-[18px] px-4 py-2.5 items-center gap-3 flex-wrap">
 
@@ -422,27 +412,46 @@ export default function AgendaClient({
         </div>
       </div>
 
-      {/* ── Barra superior — phone ── */}
-      <div className="flex md:hidden glass-cool rounded-[18px] px-2.5 py-1.5 flex-col gap-1.5">
-        <div className="flex items-center gap-1.5 md:gap-2.5 min-w-0">
-          <button onClick={() => navegarMobile('prev')} aria-label="Semana anterior" className="btn-subtle p-1 shrink-0">
+      {/* ── Barra superior — mobile + tablet ── */}
+      <div className="flex lg:hidden glass-cool rounded-[18px] px-3 py-2 sm:px-4 sm:py-2.5 flex-col gap-2 sm:gap-2.5">
+        {/* Fila 1: nav + período + pills sm+ */}
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <button onClick={() => navegar('prev')} aria-label="Período anterior" className="btn-subtle p-1.5 sm:p-2 shrink-0">
             <ChevronLeft size={13} />
           </button>
-          <button onClick={() => navegarMobile('next')} aria-label="Semana siguiente" className="btn-subtle p-1 shrink-0">
+          <button onClick={() => navegar('next')} aria-label="Período siguiente" className="btn-subtle p-1.5 sm:p-2 shrink-0">
             <ChevronRight size={13} />
           </button>
-          <h2 className="editorial-panel-title flex-1 truncate capitalize text-[0.92rem]">
-            {periodoLabelMobile()}
+          <h2 className="editorial-panel-title ml-0.5 sm:ml-1 flex-1 truncate capitalize text-[0.92rem] sm:text-[1.05rem]">
+            {periodoLabel()}
           </h2>
+          {todayCount > 0 && (
+            <span
+              className="hidden sm:flex items-center gap-1 rounded-full px-2 py-0.5 shrink-0 text-[12px] font-medium whitespace-nowrap"
+              style={{ background: 'rgba(255,255,255,0.46)', border: '1px solid var(--border-glass-white)', color: 'var(--ink-cool-soft)' }}
+            >
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#9488B0', display: 'inline-block', flexShrink: 0 }} />
+              {todayCount} hoy
+            </span>
+          )}
+          {pendingCount > 0 && (
+            <span
+              className="hidden sm:flex items-center gap-1 rounded-full px-2 py-0.5 shrink-0 text-[12px] font-medium whitespace-nowrap"
+              style={{ background: 'rgba(255,255,255,0.46)', border: '1px solid var(--border-glass-white)', color: 'var(--ink-cool-soft)' }}
+            >
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#B79B96', display: 'inline-block', flexShrink: 0 }} />
+              {pendingCount} por confirmar
+            </span>
+          )}
         </div>
-
-        <div className="flex items-center gap-1 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
-          <div className="flex gap-0.5 p-0.5 rounded-full shrink-0" style={{ background: 'var(--surface-glass)', border: '1px solid var(--border-glass-white)' }}>
+        {/* Fila 2: tabs de vista + pills-xs + Hoy + nueva cita */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex gap-0.5 p-0.5 sm:p-1 rounded-full shrink-0" style={{ background: 'var(--surface-glass)', border: '1px solid var(--border-glass-white)' }}>
             {(['day', 'week', 'month'] as View[]).map((v) => (
               <button
                 key={v}
                 onClick={() => setCurrentView(v)}
-                className="px-2 py-0.5 rounded-full text-[11px] font-medium transition-all shrink-0"
+                className="px-2 sm:px-3 py-0.5 sm:py-1.5 rounded-full text-[11px] sm:text-[13px] font-medium transition-all shrink-0"
                 style={currentView === v
                   ? { background: 'rgba(255,255,255,0.92)', color: 'var(--ink-cool-strong)', boxShadow: 'var(--shadow-glass)' }
                   : { color: 'var(--ink-cool-faint)', background: 'transparent' }
@@ -453,78 +462,26 @@ export default function AgendaClient({
             ))}
           </div>
           {todayCount > 0 && (
-            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0" style={{ background: 'rgba(148,136,176,0.16)', color: 'var(--ink-cool-soft)' }}>
+            <span className="sm:hidden text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0" style={{ background: 'rgba(148,136,176,0.16)', color: 'var(--ink-cool-soft)' }}>
               {todayCount} hoy
             </span>
           )}
           {pendingCount > 0 && (
-            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0" style={{ background: 'rgba(185,143,149,0.14)', color: 'var(--ink-cool-soft)' }}>
+            <span className="sm:hidden text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0" style={{ background: 'rgba(185,143,149,0.14)', color: 'var(--ink-cool-soft)' }}>
               {pendingCount} por confirmar
             </span>
           )}
-          <button onClick={() => navegarMobile('today')} className="btn-subtle px-2 py-1 text-[11px] shrink-0">
+          <div className="flex-1" />
+          <button onClick={() => navegar('today')} className="btn-subtle px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-[13px] shrink-0">
             Hoy
           </button>
           <button
             onClick={() => setNewSlotStart(new Date())}
             aria-label="Nueva cita"
-            className="btn-action p-1.5 shrink-0"
+            className="btn-action p-1.5 sm:p-2 shrink-0"
           >
             <Plus size={13} />
           </button>
-        </div>
-      </div>
-
-      {/* ── Barra superior — tablet ── */}
-      <div className="hidden md:flex lg:hidden glass-cool rounded-[22px] px-4 py-3.5 flex-col gap-3">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <button onClick={() => navegarMobile('prev')} aria-label="Semana anterior" className="btn-subtle p-2 shrink-0">
-            <ChevronLeft size={15} />
-          </button>
-          <button onClick={() => navegarMobile('next')} aria-label="Semana siguiente" className="btn-subtle p-2 shrink-0">
-            <ChevronRight size={15} />
-          </button>
-          <h2 className="editorial-panel-title flex-1 truncate capitalize text-[1.18rem]">
-            {periodoLabelMobile()}
-          </h2>
-          <button onClick={() => navegarMobile('today')} className="btn-subtle px-3.5 py-2 text-[13px] shrink-0">
-            Hoy
-          </button>
-          <button
-            onClick={() => setNewSlotStart(new Date())}
-            aria-label="Nueva cita"
-            className="btn-action p-2.5 shrink-0"
-          >
-            <Plus size={15} />
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
-          <div className="flex gap-0.5 p-1 rounded-full shrink-0" style={{ background: 'var(--surface-glass)', border: '1px solid var(--border-glass-white)' }}>
-            {(['day', 'week', 'month'] as View[]).map((v) => (
-              <button
-                key={v}
-                onClick={() => setCurrentView(v)}
-                className="px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all shrink-0"
-                style={currentView === v
-                  ? { background: 'rgba(255,255,255,0.92)', color: 'var(--ink-cool-strong)', boxShadow: 'var(--shadow-glass)' }
-                  : { color: 'var(--ink-cool-faint)', background: 'transparent' }
-                }
-              >
-                {v === 'day' ? 'Día' : v === 'week' ? 'Semana' : 'Mes'}
-              </button>
-            ))}
-          </div>
-          {todayCount > 0 && (
-            <span className="text-[13px] font-medium px-2.5 py-1 rounded-full shrink-0" style={{ background: 'rgba(148,136,176,0.16)', color: 'var(--ink-cool-soft)' }}>
-              {todayCount} hoy
-            </span>
-          )}
-          {pendingCount > 0 && (
-            <span className="text-[13px] font-medium px-2.5 py-1 rounded-full shrink-0" style={{ background: 'rgba(185,143,149,0.14)', color: 'var(--ink-cool-soft)' }}>
-              {pendingCount} por confirmar
-            </span>
-          )}
         </div>
       </div>
 
@@ -565,8 +522,8 @@ export default function AgendaClient({
         )}
       </div>
 
-      {/* ── Filtros de consultorio — phone ── */}
-      <div className="flex md:hidden items-center gap-1.5 px-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+      {/* ── Filtros de consultorio — mobile + tablet ── */}
+      <div className="flex lg:hidden items-center gap-1.5 sm:gap-2 px-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         {consultorioFilterOptions.map((option) => {
           const Icon = option.Icon
           const activo = filtrosActivos.has(option.key)
@@ -574,18 +531,19 @@ export default function AgendaClient({
             <button
               key={option.key}
               onClick={() => toggleFiltro(option.key)}
-              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-all shrink-0"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1.5 rounded-full text-[11px] sm:text-[12px] font-medium transition-all shrink-0"
               style={activo ? {
                 background: option.bg,
                 color: 'white',
                 border: `1px solid ${option.bg}`,
+                boxShadow: `0 2px 8px ${option.bg}44`,
               } : {
                 background: 'rgba(255,255,255,0.38)',
                 color: 'var(--ink-cool-muted)',
                 border: '1px solid transparent',
               }}
             >
-              {Icon && <Icon size={11} style={{ color: activo ? 'white' : option.bg }} />}
+              {Icon && <Icon size={10} style={{ color: activo ? 'white' : option.bg }} />}
               {option.label}
             </button>
           )
@@ -593,43 +551,7 @@ export default function AgendaClient({
         {filtrosActivos.size > 0 && (
           <button
             onClick={() => setFiltrosActivos(new Set())}
-            className="text-[11px] px-2 py-0.5 rounded-full shrink-0"
-            style={{ color: 'var(--ink-cool-faint)', background: 'transparent' }}
-          >
-            Ver todas
-          </button>
-        )}
-      </div>
-
-      {/* ── Filtros de consultorio — tablet ── */}
-      <div className="hidden md:flex lg:hidden items-center gap-2.5 px-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-        {consultorioFilterOptions.map((option) => {
-          const Icon = option.Icon
-          const activo = filtrosActivos.has(option.key)
-          return (
-            <button
-              key={option.key}
-              onClick={() => toggleFiltro(option.key)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium transition-all shrink-0"
-              style={activo ? {
-                background: option.bg,
-                color: 'white',
-                border: `1px solid ${option.bg}`,
-              } : {
-                background: 'rgba(255,255,255,0.38)',
-                color: 'var(--ink-cool-muted)',
-                border: '1px solid transparent',
-              }}
-            >
-              {Icon && <Icon size={12} style={{ color: activo ? 'white' : option.bg }} />}
-              {option.label}
-            </button>
-          )
-        })}
-        {filtrosActivos.size > 0 && (
-          <button
-            onClick={() => setFiltrosActivos(new Set())}
-            className="text-[13px] px-2.5 py-1.5 rounded-full shrink-0"
+            className="text-[11px] sm:text-[12px] px-2 py-0.5 sm:py-1 rounded-full shrink-0"
             style={{ color: 'var(--ink-cool-faint)', background: 'transparent' }}
           >
             Ver todas
@@ -638,7 +560,7 @@ export default function AgendaClient({
       </div>
 
       {/* ── Calendario desktop ── */}
-      <div className="hidden lg:block glass-cool rounded-[24px] overflow-hidden">
+      <div className="hidden lg:block glass-cool rounded-[22px] overflow-hidden">
         <div className="p-4" style={{ height: '720px' }}>
           <Calendar
             localizer={localizer}
@@ -687,7 +609,7 @@ export default function AgendaClient({
             onNewSlot={setNewSlotStart}
           />
         ) : (
-          <div className="glass-cool rounded-[20px] md:rounded-[22px] overflow-hidden">
+          <div className="glass-cool rounded-[18px] md:rounded-[22px] overflow-hidden">
             <div
               className={`p-3 sm:p-4 md:p-5 ${currentView === 'month' ? 'h-[620px] md:h-[680px]' : 'h-[720px] md:h-[780px]'}`}
             >
