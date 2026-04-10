@@ -27,10 +27,7 @@ export default async function AgendaPage() {
   const allAppointments = mapAppointmentRows(appointmentsResult.data)
 
   return (
-    // -mb-28 lg:mb-0: cancela el pb-28 del shell en mobile/tablet para que
-    // el calendario llene el espacio sin dejar franja vacía al final de la página.
-    // En desktop (lg) el shell usa py-6 sin pb-28, así que no se necesita.
-    <div className="-mb-28 lg:mb-0">
+    <div>
       <div className="mb-4">
         <h1 className="page-title text-[1.6rem] leading-none">Agenda</h1>
       </div>
