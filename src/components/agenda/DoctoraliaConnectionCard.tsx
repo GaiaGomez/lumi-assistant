@@ -28,6 +28,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import SectionHeader from '@/components/ui/SectionHeader'
 import DoctoraliaConnectModal from './DoctoraliaConnectModal'
+import DoctoraliaLoginModal from './DoctoraliaLoginModal'
 
 interface DoctoraliaConnectionCardProps {
   connection: DoctoraliaConnectionSummary
@@ -202,6 +203,7 @@ export default function DoctoraliaConnectionCard({
   const autoSyncRequestedRef = useRef(false)
   const [currentConnection, setCurrentConnection] = useState(connection)
   const [currentAutoSync, setCurrentAutoSync] = useState(autoSync)
+  const [showLoginModal, setShowLoginModal] = useState(false)
   const [showConnectModal, setShowConnectModal] = useState(false)
   const [inlineError, setInlineError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<SyncFeedback | null>(null)
@@ -221,7 +223,7 @@ export default function DoctoraliaConnectionCard({
     const previousConnection = currentConnection
 
     if (isManual && currentConnection.connectionStatus !== 'connected') {
-      setShowConnectModal(true)
+      setShowLoginModal(true)
       return
     }
 
@@ -308,7 +310,7 @@ export default function DoctoraliaConnectionCard({
 
   function handleSyncNow() {
     if (currentConnection.connectionStatus !== 'connected') {
-      setShowConnectModal(true)
+      setShowLoginModal(true)
       return
     }
 
@@ -324,6 +326,7 @@ export default function DoctoraliaConnectionCard({
     setFeedback(null)
 
     if (shouldClose) {
+      setShowLoginModal(false)
       setShowConnectModal(false)
       startTransition(() => {
         router.refresh()
@@ -331,7 +334,11 @@ export default function DoctoraliaConnectionCard({
     }
   }
 
-  const openModalMode = currentConnection.connectionStatus === 'connected'
+  const loginModalMode = currentConnection.connectionStatus === 'disconnected'
+    ? 'connect'
+    : 'reconnect'
+
+  const pasteModalMode = currentConnection.connectionStatus === 'connected'
     ? 'refresh'
     : currentConnection.connectionStatus === 'disconnected'
       ? 'connect'
@@ -449,14 +456,22 @@ export default function DoctoraliaConnectionCard({
             disabled={isSyncing}
             className="px-4 py-2 text-[11px] tracking-[0.06em] uppercase"
           >
-            {currentConnection.connectionStatus === 'connected' ? 'Actualizar sesión' : 'Abrir conexión'}
+            Credencial manual
           </Button>
         </div>
       </Card>
 
+      {showLoginModal && (
+        <DoctoraliaLoginModal
+          mode={loginModalMode}
+          onClose={() => setShowLoginModal(false)}
+          onResolved={handleConnectionResolved}
+        />
+      )}
+
       {showConnectModal && (
         <DoctoraliaConnectModal
-          mode={openModalMode}
+          mode={pasteModalMode}
           onClose={() => setShowConnectModal(false)}
           onResolved={handleConnectionResolved}
         />
