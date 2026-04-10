@@ -33,6 +33,34 @@ function buildBogotaUtcDate(
   )
 }
 
+export function parseDateTimeInBogota(value: string): Date {
+  if (ISO_WITH_TIME_ZONE_RE.test(value)) {
+    return ensureValidDate(new Date(value), value)
+  }
+
+  const match = value.match(LOCAL_DATE_TIME_RE)
+  if (!match) {
+    throw new Error(`Formato de fecha en Bogotá no soportado: ${value}`)
+  }
+
+  const [, year, month, day, hour, minute, second = '00'] = match
+  return ensureValidDate(
+    buildBogotaUtcDate(
+      Number(year),
+      Number(month),
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second)
+    ),
+    value
+  )
+}
+
+export function normalizeDateTimeInBogota(value: string): string {
+  return parseDateTimeInBogota(value).toISOString()
+}
+
 export function normalizeDateTimeAssumingUtc(value: string): string {
   if (ISO_WITH_TIME_ZONE_RE.test(value)) {
     return ensureValidDate(new Date(value), value).toISOString()
