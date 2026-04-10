@@ -463,16 +463,7 @@ export default function MobileAgenda({
 
     const visibleDays = isTablet ? 4 : 3
 
-    // ── Altura de slot ────────────────────────────────────────────
-    // Phone: 16→20px — mismo rango que GCal mobile (~14h visibles).
-    // Tablet: 42→52px — grilla cómoda en pantalla grande.
-    const slotHeight = isTablet
-      ? Math.round(interpolate(42, 52, tabletRatio))
-      : Math.round(interpolate(16, 20, phoneRatio))
-
     // ── Cabecera de día ───────────────────────────────────────────
-    // Phone: 38→44px — compacto como GCal mobile.
-    // Tablet: 68→82px — proporcional al tamaño de la grilla.
     const headerHeight = isTablet
       ? Math.round(interpolate(68, 82, tabletRatio))
       : Math.round(interpolate(38, 44, phoneRatio))
@@ -506,9 +497,6 @@ export default function MobileAgenda({
     const eventRadius = isTablet
       ? Math.round(interpolate(12, 14, tabletRatio))
       : Math.round(interpolate(8, 10, phoneRatio))
-    const eventMinHeight = isTablet
-      ? Math.round(interpolate(48, 58, tabletRatio))
-      : Math.round(interpolate(20, 24, phoneRatio))
 
     // ── Espaciado ─────────────────────────────────────────────────
     const dayGap = isTablet
@@ -521,28 +509,44 @@ export default function MobileAgenda({
       ? Math.round(interpolate(8, 10, tabletRatio))
       : Math.round(interpolate(4, 6, phoneRatio))
 
+    // innerPad replica el cálculo de `p` en el render: Math.max(outerGap, 4)
+    const innerPad = Math.max(outerGap, 4)
+
     // ── Altura del componente ─────────────────────────────────────
-    // Ambos casos usan window.innerHeight para ocupar la pantalla real.
-    //
-    // Tablet (~22cm alto físico, ~900–1024px viewport CSS):
-    //   Objetivo: calendario ≈ 16cm de 22cm = ratio 16/22 del viewport.
-    //   Derivado directamente de las medidas físicas del dispositivo.
-    //   Clamp [560, 860] para extremos.
-    //
-    // Phone (~12cm alto físico, ~667–844px viewport CSS):
-    //   Ocupa lo disponible menos el chrome de la app (~200px).
-    //   Clamp [400, 700] — el máximo 700 permite crecer en phones largos.
+    // Usa window.innerHeight para ocupar el espacio real de pantalla.
+    // Tablet: ratio 16/22 (objetivo 16cm visibles de 22cm físicos).
+    // Phone: pantalla menos el chrome de la app (~200px medido).
     const componentHeight = screenH > 0
       ? isTablet
-        ? Math.round(Math.min(860, Math.max(560, screenH * (16 / 22))))
+        ? Math.round(Math.min(960, Math.max(560, screenH * (16 / 22))))
         : Math.min(700, Math.max(400, screenH - 200))
-      : isTablet ? 620 : 420
+      : isTablet ? 640 : 420
 
-    const rawDayWidth = (width - dayGap * (visibleDays - 1)) / visibleDays
-    const dayColumnWidth = Math.max(
-      MIN_DAY_WIDTH,
-      Math.min(isTablet ? 176 : 144, rawDayWidth)
-    )
+    // ── Altura de slot ────────────────────────────────────────────
+    // Tablet: derivado de componentHeight para que las 26 franjas (8-21h)
+    //   quepan exactamente en la grilla visible sin scroll.
+    //   availableGrid = compH - headerHeight - headerGap - 2×innerPad
+    // Phone: interpolación fija en el rango GCal mobile (~14h visibles).
+    const slotHeight = isTablet
+      ? Math.max(18, Math.floor(
+          (componentHeight - headerHeight - headerGap - innerPad * 2) / SLOT_COUNT
+        ))
+      : Math.round(interpolate(16, 20, phoneRatio))
+
+    const eventMinHeight = isTablet
+      ? Math.round(slotHeight * 1.8)
+      : Math.round(interpolate(20, 24, phoneRatio))
+
+    // ── Ancho de columnas ─────────────────────────────────────────
+    // Phone: usa windowWidth (window.innerWidth real) para derivar el
+    //   ancho disponible. El div interno (viewportRef) puede medir más que
+    //   el viewport real debido a overflow, dando colW inflado artificialmente.
+    // Tablet: usa viewportWidth del div (fiable en pantallas grandes).
+    const availableColsW = !isTablet && windowWidth > 0
+      ? windowWidth - 2 * innerPad - timeGutterWidth - outerGap
+      : viewportWidth
+    const rawDayWidth = (availableColsW - dayGap * (visibleDays - 1)) / visibleDays
+    const dayColumnWidth = Math.max(MIN_DAY_WIDTH, Math.round(rawDayWidth))
 
     return {
       visibleDays,
