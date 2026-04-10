@@ -513,12 +513,22 @@ export default function MobileAgenda({
     const innerPad = Math.max(outerGap, 4)
 
     // ── Altura del componente ─────────────────────────────────────
-    // Usa window.innerHeight para ocupar el espacio real de pantalla.
-    // Tablet: ratio 16/22 (objetivo 16cm visibles de 22cm físicos).
-    // Phone: pantalla menos el chrome de la app (~200px medido).
+    // Usa window.innerHeight (y windowWidth para detectar landscape)
+    // para ocupar el espacio útil real de pantalla.
+    //
+    // Tablet — chrome de la app sobre el calendario:
+    //   Portrait: barra superior + header 2 filas + filtros + spacing ≈ 230px
+    //   Landscape: la barra de status + header 1 fila + filtros + spacing ≈ 160px
+    //   Usamos screenH directamente con ese offset.
+    //   En landscape screenH es el lado corto (ej. 800px) → screenH - 160 = 640px
+    //   En portrait screenH es el lado largo (ej. 1200px) → screenH - 230 = 970px (cap 960)
+    //
+    // Phone — chrome ≈ 200px (overlay confirmado: win=750, compH=550 → offset≈200).
+    const screenW = windowWidth > 0 ? windowWidth : width
+    const isLandscape = screenW > (screenH > 0 ? screenH : screenW)
     const componentHeight = screenH > 0
       ? isTablet
-        ? Math.round(Math.min(960, Math.max(560, screenH * (16 / 22))))
+        ? Math.round(Math.min(960, Math.max(560, screenH - (isLandscape ? 160 : 230))))
         : Math.min(700, Math.max(400, screenH - 200))
       : isTablet ? 640 : 420
 
