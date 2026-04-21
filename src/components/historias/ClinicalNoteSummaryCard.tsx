@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { FilePenLine, PencilLine } from 'lucide-react'
+import { Bookmark, FilePenLine, PencilLine } from 'lucide-react'
 import type { ClinicalNote } from '@/types'
 import { formatDateOnly } from '@/lib/format'
 import {
@@ -36,9 +36,20 @@ export default function ClinicalNoteSummaryCard({ note }: ClinicalNoteSummaryCar
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[11px] tracking-[0.03em]" style={{ color: 'var(--ink-cool-faint)' }}>
-            {formatDateOnly(note.created_at)}
-          </p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-[11px] tracking-[0.03em]" style={{ color: 'var(--ink-cool-faint)' }}>
+              {formatDateOnly(note.created_at)}
+            </p>
+            {note.is_draft && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px]"
+                style={{ background: 'var(--state-pending-bg)', color: 'var(--state-pending-text)' }}
+              >
+                <Bookmark size={9} />
+                Borrador
+              </span>
+            )}
+          </div>
           <p className="mt-0.5 line-clamp-1 text-[14px] font-medium leading-5" style={{ color: 'var(--ink-cool-strong)' }}>
             {getClinicalNoteHeadline(note)}
           </p>
