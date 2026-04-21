@@ -5,7 +5,7 @@ import {
 } from '@/lib/clinical-note-template'
 import { normalizeAppointmentRecurrenceRule } from '@/lib/appointment-recurrence'
 
-export const APPOINTMENT_SELECT = 'id, patient_id, consultorio_id, user_id, event_type, title, category, color, recurrence_group_id, recurrence_rule, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at, source_system, doctoralia_uid, doctoralia_estado_sesion, doctoralia_paciente_nombre, doctoralia_last_synced_at, doctoralia_last_seen_at, doctoralia_removed_at, patient:patients(*), consultorio:consultorios(*)'
+export const APPOINTMENT_SELECT = 'id, patient_id, consultorio_id, user_id, event_type, title, category, color, recurrence_group_id, recurrence_rule, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at, patient:patients(*), consultorio:consultorios(*)'
 
 type SupabaseRow = Record<string, unknown>
 
@@ -116,14 +116,6 @@ export function mapAppointmentRow(row: unknown): Appointment {
     modalidad: (record.modalidad as Appointment['modalidad']) ?? null,
     created_at: expectString(record.created_at, 'appointment.created_at'),
     updated_at: optionalString(record.updated_at) ?? undefined,
-    // Campos de integración Doctoralia — null para citas de Lumi
-    source_system: (optionalString(record.source_system) as Appointment['source_system']) ?? null,
-    doctoralia_uid: optionalString(record.doctoralia_uid),
-    doctoralia_estado_sesion: (optionalString(record.doctoralia_estado_sesion) as Appointment['doctoralia_estado_sesion']) ?? null,
-    doctoralia_paciente_nombre: optionalString(record.doctoralia_paciente_nombre),
-    doctoralia_last_synced_at: optionalString(record.doctoralia_last_synced_at),
-    doctoralia_last_seen_at: optionalString(record.doctoralia_last_seen_at),
-    doctoralia_removed_at: optionalString(record.doctoralia_removed_at),
     patient: optionalPatient(record.patient),
     consultorio: optionalConsultorio(record.consultorio),
   }

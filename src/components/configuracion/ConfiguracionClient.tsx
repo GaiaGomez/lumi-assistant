@@ -9,7 +9,7 @@
 import { useState, useCallback } from 'react'
 import {
   Building2, Calendar, MessageCircle, MapPin, Plus, Trash2,
-  Check, AlertCircle, ChevronDown, Loader2, RefreshCw,
+  Check, AlertCircle, ChevronDown, Loader2,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -21,7 +21,6 @@ import { mapConsultorioRow } from '@/lib/supabase/mappers'
 import { upsertSettingValue, type SettingsKey, type SettingsMap } from '@/lib/settings'
 import type { Consultorio, ConsultorioPrimaryType } from '@/types'
 import TemplateEditor from './TemplateEditor'
-import DoctoraliaSync from './DoctoraliaSync'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -36,10 +35,9 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 // ── Tabs ───────────────────────────────────────────────────────────────────
 
 const TABS = [
-  { id: 'agenda',        label: 'Agenda',        icon: Calendar },
-  { id: 'recordatorios', label: 'WhatsApp',      icon: MessageCircle },
-  { id: 'consultorios',  label: 'Consultorios',  icon: MapPin },
-  { id: 'doctoralia',    label: 'Doctoralia',    icon: RefreshCw },
+  { id: 'agenda',        label: 'Agenda',       icon: Calendar },
+  { id: 'recordatorios', label: 'WhatsApp',     icon: MessageCircle },
+  { id: 'consultorios',  label: 'Consultorios', icon: MapPin },
 ] as const
 
 type TabId = (typeof TABS)[number]['id']
@@ -831,7 +829,6 @@ export default function ConfiguracionClient({ settings, consultorios, userId }: 
       case 'agenda':        return <AgendaSection        settings={settings} userId={userId} />
       case 'recordatorios': return <RecordatoriosSection settings={settings} userId={userId} />
       case 'consultorios':  return <ConsultoriosSection consultorios={consultorios} userId={userId} />
-      case 'doctoralia':    return <DoctoraliaSync userId={userId} />
     }
   })()
 

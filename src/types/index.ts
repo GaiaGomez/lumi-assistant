@@ -79,9 +79,6 @@ export interface Consultorio {
   updated_at: string
 }
 
-export type AppointmentSourceSystem = 'lumi' | 'doctoralia'
-export type DoctoraliaEstadoSesion = 'pendiente' | 'confirmada' | 'realizada' | 'cancelo'
-
 export interface Appointment {
   id: string
   patient_id: string | null
@@ -105,15 +102,6 @@ export interface Appointment {
   modalidad: AppointmentModalidad | null
   created_at: string
   updated_at?: string
-  // ── Campos de integración con Doctoralia ──────────────────
-  // NULL en todos = cita creada directamente en Lumi
-  source_system: AppointmentSourceSystem | null
-  doctoralia_uid: string | null              // ID numérico de Doctoralia como string
-  doctoralia_estado_sesion: DoctoraliaEstadoSesion | null
-  doctoralia_paciente_nombre: string | null  // nombre exacto como llegó de Doctoralia
-  doctoralia_last_synced_at: string | null   // última vez que se procesó en sync
-  doctoralia_last_seen_at: string | null     // última vez que Doctoralia reportó esta cita
-  doctoralia_removed_at: string | null       // si Doctoralia dejó de devolverla
   // Relación expandida — viene del JOIN con patients
   patient?: Patient
   consultorio?: Consultorio
