@@ -231,10 +231,18 @@ export default async function HistoriaPage({ params }: Props) {
           )}
 
           {!clinicalNote.template_data && !clinicalNote.texto && (
-            <SectionCard kicker="Nota" title="Sin contenido escrito">
-              <p className="text-[14px]" style={{ color: 'var(--ink-cool-soft)' }}>
-                Esta nota depende solo del canvas manuscrito.
+            <SectionCard kicker="Historia clínica" title="Solo manuscrito">
+              <p className="text-[14px] leading-6" style={{ color: 'var(--ink-cool-soft)' }}>
+                Esta nota aún no tiene texto estructurado. Podés agregar una nota DAP
+                para convertirla en historia clínica escrita.
               </p>
+              <Link
+                href={`/historias/${clinicalNote.id}/editar`}
+                className="btn-action mt-4 inline-flex items-center gap-1.5 px-4 py-2 text-[13px]"
+              >
+                <FilePenLine size={14} />
+                Agregar nota DAP
+              </Link>
             </SectionCard>
           )}
         </div>

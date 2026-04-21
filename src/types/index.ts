@@ -54,6 +54,7 @@ export interface ClinicalNoteTemplateData {
 export interface ClinicalCanvasPoint {
   x: number
   y: number
+  pressure?: number  // 0–1; present on Apple Pencil strokes
 }
 
 export interface ClinicalCanvasPath {
@@ -78,6 +79,9 @@ export interface Consultorio {
   updated_at: string
 }
 
+export type AppointmentSourceSystem = 'lumi' | 'doctoralia'
+export type DoctoraliaEstadoSesion = 'pendiente' | 'confirmada' | 'realizada' | 'cancelo'
+
 export interface Appointment {
   id: string
   patient_id: string | null
@@ -101,10 +105,21 @@ export interface Appointment {
   modalidad: AppointmentModalidad | null
   created_at: string
   updated_at?: string
+  // ── Campos de integración con Doctoralia ──────────────────
+  // NULL en todos = cita creada directamente en Lumi
+  source_system: AppointmentSourceSystem | null
+  doctoralia_uid: string | null              // ID numérico de Doctoralia como string
+  doctoralia_estado_sesion: DoctoraliaEstadoSesion | null
+  doctoralia_paciente_nombre: string | null  // nombre exacto como llegó de Doctoralia
+  doctoralia_last_synced_at: string | null   // última vez que se procesó en sync
+  doctoralia_last_seen_at: string | null     // última vez que Doctoralia reportó esta cita
+  doctoralia_removed_at: string | null       // si Doctoralia dejó de devolverla
   // Relación expandida — viene del JOIN con patients
   patient?: Patient
   consultorio?: Consultorio
 }
+
+export type ClinicalNoteAiStatus = 'processing' | 'done' | 'error'
 
 export interface ClinicalNote {
   id: string
@@ -117,6 +132,17 @@ export interface ClinicalNote {
   template_kind: ClinicalNoteTemplateKind | null
   template_data: ClinicalNoteTemplateData | null
   is_draft: boolean              // true = borrador editable; false = historia clínica publicada
+  // ── Transcripción IA ─────────────────────────────────────
+  // null = sin acción iniciada; 'done' = disponible en transcription_text
+  transcription_status: ClinicalNoteAiStatus | null
+  transcription_text: string | null
+  transcription_error: string | null
+  transcribed_at: string | null
+  // ── Nota DAP generada por IA ──────────────────────────────
+  // Sugerencia que pre-llena el formulario; nunca escribe template_data automáticamente
+  structured_note_status: ClinicalNoteAiStatus | null
+  structured_note_json: ClinicalNoteTemplateData | null
+  structured_note_generated_at: string | null
   created_at: string
   updated_at: string
   // Relaciones expandidas

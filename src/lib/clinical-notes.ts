@@ -129,3 +129,59 @@ export async function deleteClinicalNoteById(
 ) {
   return supabase.from('clinical_notes').delete().eq('id', noteId)
 }
+
+export async function saveTranscriptionResult(
+  supabase: SupabaseClient,
+  noteId: string,
+  result:
+    | { status: 'done'; text: string }
+    | { status: 'error'; error: string }
+) {
+  const now = new Date().toISOString()
+  if (result.status === 'done') {
+    return supabase
+      .from('clinical_notes')
+      .update({
+        transcription_status: 'done',
+        transcription_text: result.text,
+        transcription_error: null,
+        transcribed_at: now,
+      })
+      .eq('id', noteId)
+  }
+  return supabase
+    .from('clinical_notes')
+    .update({
+      transcription_status: 'error',
+      transcription_error: result.error,
+      transcribed_at: now,
+    })
+    .eq('id', noteId)
+}
+
+export async function saveStructuredNoteResult(
+  supabase: SupabaseClient,
+  noteId: string,
+  result:
+    | { status: 'done'; json: ClinicalNoteTemplateData }
+    | { status: 'error'; error: string }
+) {
+  const now = new Date().toISOString()
+  if (result.status === 'done') {
+    return supabase
+      .from('clinical_notes')
+      .update({
+        structured_note_status: 'done',
+        structured_note_json: result.json,
+        structured_note_generated_at: now,
+      })
+      .eq('id', noteId)
+  }
+  return supabase
+    .from('clinical_notes')
+    .update({
+      structured_note_status: 'error',
+      structured_note_generated_at: now,
+    })
+    .eq('id', noteId)
+}

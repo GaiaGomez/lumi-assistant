@@ -1,8 +1,7 @@
 'use client'
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type RefObject } from 'react'
-import type { CanvasPath } from 'react-sketch-canvas'
-import { ReactSketchCanvas, ReactSketchCanvasRef } from 'react-sketch-canvas'
+import { getStroke } from 'perfect-freehand'
 import {
   Eraser,
   Highlighter,
@@ -23,6 +22,10 @@ interface DrawingCanvasProps {
   scrollContainerRef?: RefObject<HTMLElement | null>
 }
 
+export interface DrawingCanvasHandle {
+  flushPng: () => Promise<void>
+}
+
 const COLOR_OPTIONS = [
   { label: 'Cafe', value: '#3D2E22' },
   { label: 'Taupe', value: '#7B685F' },
@@ -35,9 +38,15 @@ const CANVAS_GROW_STEP = 520
 const CANVAS_GROW_OFFSET = 280
 const PNG_EXPORT_DEBOUNCE_MS = 500
 const PEN_DETECTED_KEY = 'lumi-canvas-pen-mode'
+const CANVAS_BG = '#FAF7F4'
 
-function castPaths(paths: CanvasPath[]): ClinicalCanvasPath[] {
-  return paths as ClinicalCanvasPath[]
+// Internal stroke representation — richer than ClinicalCanvasPath for rendering
+interface InternalStroke {
+  id: string
+  points: Array<[number, number, number]>   // [x, y, pressure]
+  color: string
+  width: number
+  tool: DrawingTool
 }
 
 function readPenDetected(): boolean {
@@ -45,10 +54,8 @@ function readPenDetected(): boolean {
   return localStorage.getItem(PEN_DETECTED_KEY) === '1'
 }
 
-// Returns true when the primary device is touch-based (tablet/phone) AND a fine pointer
-// (stylus) is also available — i.e., iPad with Apple Pencil capability. In that case we
-// start in pen-only mode from the very first stroke, preventing palm smudges before any
-// stylus event has been observed.
+// Returns true on stylus-capable tablets (iPad + Apple Pencil) so we start in
+// pen-only mode before any stylus event has been observed.
 function isStylusTabletEnvironment(): boolean {
   if (typeof window === 'undefined') return false
   return (
@@ -57,10 +64,110 @@ function isStylusTabletEnvironment(): boolean {
   )
 }
 
-export interface DrawingCanvasHandle {
-  /** Forces the pending PNG export to fire immediately. Call before unmounting the canvas
-   *  to ensure canvasDataUrl is up-to-date in the parent (e.g., when closing the modal). */
-  flushPng: () => Promise<void>
+// Convert the outline polygon from perfect-freehand to an SVG path string.
+function svgPathFromOutline(points: number[][]): string {
+  if (!points.length) return ''
+  const d: (string | number)[] = ['M', points[0][0], points[0][1]]
+  for (let i = 1; i < points.length - 1; i++) {
+    const [x0, y0] = points[i]
+    const [x1, y1] = points[i + 1]
+    d.push('Q', x0, y0, (x0 + x1) / 2, (y0 + y1) / 2)
+  }
+  if (points.length > 1) {
+    const last = points[points.length - 1]
+    d.push('L', last[0], last[1])
+  }
+  d.push('Z')
+  return d.join(' ')
+}
+
+function computeStrokePath(stroke: InternalStroke, isActive = false): string {
+  // perfect-freehand size is the maximum stroke diameter in px.
+  // We scale up from the UI width values (which were SVG stroke-width values)
+  // to get visually equivalent results.
+  const baseSize =
+    stroke.tool === 'highlighter'
+      ? (stroke.width + 2.5) * 3.5
+      : stroke.tool === 'eraser'
+        ? stroke.width * 9
+        : stroke.width * 3.5
+
+  const outline = getStroke(stroke.points, {
+    size: baseSize,
+    thinning: stroke.tool === 'highlighter' ? 0 : 0.55,
+    smoothing: 0.5,
+    streamline: 0.4,
+    simulatePressure: false,
+    last: !isActive,
+  })
+
+  return svgPathFromOutline(outline)
+}
+
+function loadedPathsToStrokes(paths: ClinicalCanvasPath[]): InternalStroke[] {
+  return paths.map((p, i) => ({
+    id: `loaded-${i}`,
+    // Legacy paths have no pressure — use 0.5 (neutral) for uniform appearance
+    points: p.paths.map(pt => [pt.x, pt.y, pt.pressure ?? 0.5] as [number, number, number]),
+    // Eraser strokes were stored with drawMode=false
+    color: p.drawMode ? p.strokeColor : CANVAS_BG,
+    width: p.strokeWidth,
+    tool: p.drawMode ? 'pen' : 'eraser',
+  }))
+}
+
+function strokesToClinicalPaths(strokes: InternalStroke[]): ClinicalCanvasPath[] {
+  return strokes.map(s => ({
+    drawMode: s.tool !== 'eraser',
+    strokeColor: s.color,
+    strokeWidth: s.width,
+    paths: s.points.map(([x, y, pressure]) => ({ x, y, pressure })),
+  }))
+}
+
+async function exportSvgToPng(
+  svgEl: SVGSVGElement,
+  width: number,
+  height: number,
+  backgroundImage: string | null,
+): Promise<string> {
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')!
+
+  ctx.fillStyle = CANVAS_BG
+  ctx.fillRect(0, 0, width, height)
+
+  if (backgroundImage) {
+    await new Promise<void>((resolve) => {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, width, height)
+        resolve()
+      }
+      img.onerror = () => resolve()
+      img.src = backgroundImage
+    })
+  }
+
+  const svgData = new XMLSerializer().serializeToString(svgEl)
+  const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+
+  await new Promise<void>((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0)
+      URL.revokeObjectURL(url)
+      resolve()
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); reject() }
+    img.src = url
+  })
+
+  return canvas.toDataURL('image/png')
 }
 
 const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(function DrawingCanvas({
@@ -70,11 +177,8 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
   initialHeight = 640,
   scrollContainerRef,
 }, ref) {
-  const canvasRef = useRef<ReactSketchCanvasRef>(null)
+  const svgRef = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const initialPathsRef = useRef(initialPaths)
-  // Keep a stable ref to onChange so imperative handle and cleanup can call the latest version
-  // without re-running effects.
   const onChangeRef = useRef(onChange)
   useEffect(() => { onChangeRef.current = onChange }, [onChange])
 
@@ -82,154 +186,192 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
   const [strokeWidth, setStrokeWidth] = useState(2.5)
   const [strokeColor, setStrokeColor] = useState(COLOR_OPTIONS[0].value)
   const [canvasHeight, setCanvasHeight] = useState(initialHeight)
-  const [strokeCount, setStrokeCount] = useState<number | null>(null)
 
-  // Palm rejection — start in pen-only mode when:
-  // (a) user has previously drawn with a stylus on this device (localStorage), OR
-  // (b) environment looks like a stylus-capable tablet (pointer:coarse + any-pointer:fine)
-  // In both cases mouse users on desktop are unaffected (pointer:fine → isStylusTabletEnvironment=false).
+  const [completedStrokes, setCompletedStrokes] = useState<InternalStroke[]>(
+    () => initialPaths ? loadedPathsToStrokes(initialPaths) : []
+  )
+  const [activeStroke, setActiveStroke] = useState<InternalStroke | null>(null)
+  const redoStackRef = useRef<InternalStroke[]>([])
+  // Keep a stable ref for use inside event handlers
+  const completedStrokesRef = useRef<InternalStroke[]>(completedStrokes)
+  useEffect(() => { completedStrokesRef.current = completedStrokes }, [completedStrokes])
+
   const [penMode, setPenMode] = useState<boolean>(false)
   useEffect(() => {
     setPenMode(readPenDetected() || isStylusTabletEnvironment())
   }, [])
 
-  // defer PNG export to avoid blocking stroke rendering
   const lastDataUrlRef = useRef<string>('')
   const pngDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Expose flushPng so the parent can force an immediate PNG export before unmounting
-  // (e.g., when the modal closes within 500ms of the last stroke).
-  useImperativeHandle(ref, () => ({
-    async flushPng() {
-      if (pngDebounceRef.current) {
-        clearTimeout(pngDebounceRef.current)
-        pngDebounceRef.current = null
-      }
-      const canvas = canvasRef.current
-      if (!canvas) return
-      const paths = castPaths(await canvas.exportPaths())
-      if (paths.length === 0) return
-      const dataUrl = await canvas.exportImage('png')
-      if (dataUrl) {
-        lastDataUrlRef.current = dataUrl
-        onChangeRef.current({ dataUrl, paths })
-      }
-    },
-  }))
-
-  // Cancel pending PNG debounce on unmount to prevent setState after unmount.
   useEffect(() => {
     return () => {
       if (pngDebounceRef.current) clearTimeout(pngDebounceRef.current)
     }
   }, [])
 
-  useEffect(() => {
-    canvasRef.current?.eraseMode(tool === 'eraser')
-  }, [tool])
+  useImperativeHandle(ref, () => ({
+    async flushPng() {
+      if (pngDebounceRef.current) {
+        clearTimeout(pngDebounceRef.current)
+        pngDebounceRef.current = null
+      }
+      const strokes = completedStrokesRef.current
+      if (!strokes.length) return
+      const svg = svgRef.current
+      const container = containerRef.current
+      if (!svg || !container) return
+      const dataUrl = await exportSvgToPng(svg, container.clientWidth, canvasHeight, backgroundImage ?? null)
+      if (dataUrl) {
+        lastDataUrlRef.current = dataUrl
+        onChangeRef.current({ dataUrl, paths: strokesToClinicalPaths(strokes) })
+      }
+    },
+  }))
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    canvas.resetCanvas()
-    if (initialPathsRef.current && initialPathsRef.current.length > 0) {
-      canvas.loadPaths(initialPathsRef.current as CanvasPath[])
-    }
-  }, [])
-
+  // Auto-grow canvas as user scrolls near the bottom
   useEffect(() => {
     function maybeGrowCanvas() {
       const container = containerRef.current
       if (!container) return
-
       const rect = container.getBoundingClientRect()
       const scrollContainer = scrollContainerRef?.current
       const viewportBottom = scrollContainer
         ? scrollContainer.getBoundingClientRect().bottom
         : window.innerHeight
       if (rect.bottom - viewportBottom <= CANVAS_GROW_OFFSET) {
-        setCanvasHeight((currentHeight) => currentHeight + CANVAS_GROW_STEP)
+        setCanvasHeight((h) => h + CANVAS_GROW_STEP)
       }
     }
 
     maybeGrowCanvas()
-    const scrollContainer = scrollContainerRef?.current
-    const scrollTarget: Window | HTMLElement = scrollContainer ?? window
-
+    const scrollTarget: Window | HTMLElement = scrollContainerRef?.current ?? window
     scrollTarget.addEventListener('scroll', maybeGrowCanvas, { passive: true })
     window.addEventListener('resize', maybeGrowCanvas)
-
     return () => {
       scrollTarget.removeEventListener('scroll', maybeGrowCanvas)
       window.removeEventListener('resize', maybeGrowCanvas)
     }
   }, [scrollContainerRef])
 
-  // Emit paths immediately on stroke; defer expensive PNG export.
-  // This keeps the drawing responsive — the preview updates shortly after the pen lifts.
-  async function emitPathsThenSchedulePng() {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const paths = castPaths(await canvas.exportPaths())
-    setStrokeCount(paths.length)
-
-    if (paths.length === 0) {
+  function scheduleOrEmitPng(strokes: InternalStroke[]) {
+    const paths = strokesToClinicalPaths(strokes)
+    if (strokes.length === 0) {
       lastDataUrlRef.current = ''
       onChange({ dataUrl: '', paths })
       return
     }
-
+    // Emit immediately with cached dataUrl for responsiveness
     onChange({ dataUrl: lastDataUrlRef.current, paths })
 
     if (pngDebounceRef.current) clearTimeout(pngDebounceRef.current)
     pngDebounceRef.current = setTimeout(async () => {
-      const freshCanvas = canvasRef.current
-      if (!freshCanvas) return
-      const freshPaths = castPaths(await freshCanvas.exportPaths())
-      if (freshPaths.length === 0) return
-      const dataUrl = await freshCanvas.exportImage('png')
-      lastDataUrlRef.current = dataUrl ?? ''
-      // Use the ref so we always call the latest onChange even if the parent re-rendered
-      // between the stroke and this deferred export.
-      onChangeRef.current({ dataUrl: lastDataUrlRef.current, paths: freshPaths })
+      const svg = svgRef.current
+      const container = containerRef.current
+      if (!svg || !container) return
+      const currentStrokes = completedStrokesRef.current
+      if (!currentStrokes.length) return
+      try {
+        const dataUrl = await exportSvgToPng(svg, container.clientWidth, canvasHeight, backgroundImage ?? null)
+        lastDataUrlRef.current = dataUrl
+        onChangeRef.current({ dataUrl, paths: strokesToClinicalPaths(currentStrokes) })
+      } catch {
+        // SVG export failed — skip silently; paths are still saved
+      }
     }, PNG_EXPORT_DEBOUNCE_MS)
   }
 
-  // Detect stylus on first pen pointer-down event and enable palm rejection
-  function handleContainerPointerDown(event: React.PointerEvent) {
-    if (event.pointerType === 'pen' && !penMode) {
+  function handlePointerDown(e: React.PointerEvent<SVGSVGElement>) {
+    if (penMode && e.pointerType !== 'pen') return
+
+    if (e.pointerType === 'pen' && !penMode) {
       setPenMode(true)
       localStorage.setItem(PEN_DETECTED_KEY, '1')
     }
+
+    e.currentTarget.setPointerCapture(e.pointerId)
+    redoStackRef.current = []
+
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    const pressure = e.pressure > 0 ? e.pressure : 0.5
+
+    const color =
+      tool === 'eraser'
+        ? CANVAS_BG
+        : tool === 'highlighter'
+          ? `${strokeColor}66`
+          : strokeColor
+
+    setActiveStroke({
+      id: `stroke-${Date.now()}`,
+      points: [[x, y, pressure]],
+      color,
+      width: strokeWidth,
+      tool,
+    })
   }
 
-  function handleToolChange(nextTool: DrawingTool) {
-    setTool(nextTool)
+  function handlePointerMove(e: React.PointerEvent<SVGSVGElement>) {
+    if (!activeStroke) return
+
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    const pressure = e.pressure > 0 ? e.pressure : 0.5
+
+    setActiveStroke((prev) => {
+      if (!prev) return null
+      return { ...prev, points: [...prev.points, [x, y, pressure]] }
+    })
   }
 
-  async function handleUndo() {
-    canvasRef.current?.undo()
-    await emitPathsThenSchedulePng()
+  function handlePointerUp() {
+    const stroke = activeStroke
+    if (!stroke) return
+    setActiveStroke(null)
+    setCompletedStrokes((prev) => {
+      const next = [...prev, stroke]
+      scheduleOrEmitPng(next)
+      return next
+    })
   }
 
-  async function handleRedo() {
-    canvasRef.current?.redo()
-    await emitPathsThenSchedulePng()
+  function handleUndo() {
+    setCompletedStrokes((prev) => {
+      if (!prev.length) return prev
+      const last = prev[prev.length - 1]
+      redoStackRef.current = [last, ...redoStackRef.current]
+      const next = prev.slice(0, -1)
+      scheduleOrEmitPng(next)
+      return next
+    })
   }
 
-  async function handleClear() {
-    canvasRef.current?.clearCanvas()
+  function handleRedo() {
+    const [first, ...rest] = redoStackRef.current
+    if (!first) return
+    redoStackRef.current = rest
+    setCompletedStrokes((prev) => {
+      const next = [...prev, first]
+      scheduleOrEmitPng(next)
+      return next
+    })
+  }
+
+  function handleClear() {
+    redoStackRef.current = []
     lastDataUrlRef.current = ''
-    setStrokeCount(0)
+    setCompletedStrokes([])
     onChange({ dataUrl: '', paths: [] })
   }
 
-  const visibleStrokeCount = strokeCount ?? initialPaths?.length ?? 0
+  const totalStrokes = completedStrokes.length
 
   return (
     <div className="space-y-3.5">
+      {/* ── Toolbar ── */}
       <div
         className="rounded-[22px] p-2.5"
         style={{
@@ -246,12 +388,11 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
           ].map((item) => {
             const Icon = item.icon
             const active = tool === item.id
-
             return (
               <button
                 key={item.id}
                 type="button"
-                onClick={() => handleToolChange(item.id as DrawingTool)}
+                onClick={() => setTool(item.id as DrawingTool)}
                 className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[14px] whitespace-nowrap shrink-0"
                 style={active ? {
                   background: 'rgba(255,255,255,0.88)',
@@ -348,56 +489,67 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
         </div>
       </div>
 
+      {/* ── Canvas ── */}
       <div
         ref={containerRef}
         className="relative overflow-hidden rounded-[24px]"
         style={{
           minHeight: canvasHeight,
-          touchAction: 'none',
-          background: '#FAF7F4',
+          background: CANVAS_BG,
           border: '1px solid rgba(255,255,255,0.42)',
           boxShadow: '0 18px 42px rgba(120,110,130,0.10)',
         }}
-        onPointerDown={handleContainerPointerDown}
       >
-        <ReactSketchCanvas
-          ref={canvasRef}
+        {backgroundImage && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={backgroundImage}
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+          />
+        )}
+        <svg
+          ref={svgRef}
           width="100%"
-          height={`${canvasHeight}px`}
-          strokeWidth={tool === 'highlighter' ? strokeWidth + 2.5 : strokeWidth}
-          strokeColor={tool === 'eraser' ? '#FAF7F4' : tool === 'highlighter' ? `${strokeColor}66` : strokeColor}
-          eraserWidth={strokeWidth * 3}
-          canvasColor="#FAF7F4"
-          backgroundImage={backgroundImage ?? undefined}
-          exportWithBackgroundImage={Boolean(backgroundImage)}
-          preserveBackgroundImageAspectRatio="none"
-          onChange={(updatedPaths) => {
-            setStrokeCount(updatedPaths.length)
-          }}
-          onStroke={async () => {
-            await emitPathsThenSchedulePng()
-          }}
-          allowOnlyPointerType={penMode ? 'pen' : 'all'}
+          height={canvasHeight}
           style={{
-            borderRadius: '24px',
+            display: 'block',
+            touchAction: 'none',
+            cursor: tool === 'eraser' ? 'cell' : 'crosshair',
             position: 'relative',
-            background: 'transparent',
           }}
-          svgStyle={{
-            // Round caps and joins give strokes a natural pen/ink look instead of flat-ended segments.
-            strokeLinecap: 'round',
-            strokeLinejoin: 'round',
-          }}
-        />
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+        >
+          {completedStrokes.map((stroke) => (
+            <path
+              key={stroke.id}
+              d={computeStrokePath(stroke)}
+              fill={stroke.color}
+              stroke="none"
+            />
+          ))}
+          {activeStroke && activeStroke.points.length > 1 && (
+            <path
+              d={computeStrokePath(activeStroke, true)}
+              fill={activeStroke.color}
+              stroke="none"
+            />
+          )}
+        </svg>
       </div>
 
+      {/* ── Footer ── */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
         <p className="text-[11px]" style={{ color: 'var(--ink-cool-faint)' }}>
-          {visibleStrokeCount === 0
+          {totalStrokes === 0
             ? penMode
               ? 'Listo para escribir con Apple Pencil.'
               : 'Listo para escribir con Apple Pencil o mouse.'
-            : `${visibleStrokeCount} trazos guardados en esta nota.`}
+            : `${totalStrokes} trazos guardados en esta nota.`}
         </p>
         {penMode && (
           <p className="text-[11px]" style={{ color: 'var(--ink-cool-faint)' }}>

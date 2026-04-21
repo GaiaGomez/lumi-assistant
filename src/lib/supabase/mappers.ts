@@ -1,11 +1,11 @@
-import type { Appointment, ClinicalNote, Consultorio, Patient } from '@/types'
+import type { Appointment, ClinicalNote, ClinicalNoteAiStatus, Consultorio, Patient } from '@/types'
 import {
   normalizeClinicalCanvasPaths,
   normalizeClinicalNoteTemplateData,
 } from '@/lib/clinical-note-template'
 import { normalizeAppointmentRecurrenceRule } from '@/lib/appointment-recurrence'
 
-export const APPOINTMENT_SELECT = 'id, patient_id, consultorio_id, user_id, event_type, title, category, color, recurrence_group_id, recurrence_rule, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at, patient:patients(*), consultorio:consultorios(*)'
+export const APPOINTMENT_SELECT = 'id, patient_id, consultorio_id, user_id, event_type, title, category, color, recurrence_group_id, recurrence_rule, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at, source_system, doctoralia_uid, doctoralia_estado_sesion, doctoralia_paciente_nombre, doctoralia_last_synced_at, doctoralia_last_seen_at, doctoralia_removed_at, patient:patients(*), consultorio:consultorios(*)'
 
 type SupabaseRow = Record<string, unknown>
 
@@ -25,6 +25,11 @@ function expectString(value: unknown, field: string): string {
 
 function optionalString(value: unknown): string | null {
   return typeof value === 'string' ? value : null
+}
+
+function optionalAiStatus(value: unknown): ClinicalNoteAiStatus | null {
+  if (value === 'processing' || value === 'done' || value === 'error') return value
+  return null
 }
 
 function optionalPatient(value: unknown): Patient | undefined {
@@ -111,6 +116,14 @@ export function mapAppointmentRow(row: unknown): Appointment {
     modalidad: (record.modalidad as Appointment['modalidad']) ?? null,
     created_at: expectString(record.created_at, 'appointment.created_at'),
     updated_at: optionalString(record.updated_at) ?? undefined,
+    // Campos de integración Doctoralia — null para citas de Lumi
+    source_system: (optionalString(record.source_system) as Appointment['source_system']) ?? null,
+    doctoralia_uid: optionalString(record.doctoralia_uid),
+    doctoralia_estado_sesion: (optionalString(record.doctoralia_estado_sesion) as Appointment['doctoralia_estado_sesion']) ?? null,
+    doctoralia_paciente_nombre: optionalString(record.doctoralia_paciente_nombre),
+    doctoralia_last_synced_at: optionalString(record.doctoralia_last_synced_at),
+    doctoralia_last_seen_at: optionalString(record.doctoralia_last_seen_at),
+    doctoralia_removed_at: optionalString(record.doctoralia_removed_at),
     patient: optionalPatient(record.patient),
     consultorio: optionalConsultorio(record.consultorio),
   }
@@ -134,6 +147,13 @@ export function mapClinicalNoteRow(row: unknown): ClinicalNote {
     template_kind: record.template_kind === 'dap' ? 'dap' : null,
     template_data: normalizeClinicalNoteTemplateData(record.template_data),
     is_draft: record.is_draft === true,
+    transcription_status: optionalAiStatus(record.transcription_status),
+    transcription_text: optionalString(record.transcription_text),
+    transcription_error: optionalString(record.transcription_error),
+    transcribed_at: optionalString(record.transcribed_at),
+    structured_note_status: optionalAiStatus(record.structured_note_status),
+    structured_note_json: normalizeClinicalNoteTemplateData(record.structured_note_json),
+    structured_note_generated_at: optionalString(record.structured_note_generated_at),
     created_at: expectString(record.created_at, 'clinical_note.created_at'),
     updated_at: expectString(record.updated_at, 'clinical_note.updated_at'),
     patient: optionalPatient(record.patient),

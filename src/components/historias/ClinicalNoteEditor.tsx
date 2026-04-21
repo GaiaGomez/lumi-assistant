@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Bookmark, CalendarDays, Expand, Loader2, Save, ShieldAlert, Trash2, X } from 'lucide-react'
-import type { Appointment, ClinicalCanvasPath, ClinicalNote, ClinicalNoteTemplateData, Patient } from '@/types'
+import { ArrowLeft, Bookmark, CalendarDays, Expand, Loader2, Save, ShieldAlert, Sparkles, Trash2, X } from 'lucide-react'
+import type { Appointment, ClinicalCanvasPath, ClinicalNote, ClinicalNoteAiStatus, ClinicalNoteTemplateData, Patient } from '@/types'
 import { createClient } from '@/lib/supabase/client'
 import {
   createClinicalNote,
@@ -147,6 +147,15 @@ export default function ClinicalNoteEditor({
   const canvasModalScrollRef = useRef<HTMLDivElement>(null)
   const drawingCanvasRef = useRef<DrawingCanvasHandle>(null)
 
+  // ── IA: transcripción y generación DAP ──────────────────────────────────
+  // Inicializados desde los campos de la nota; el estado 'idle' equivale a null en BD
+  const [transcriptionStatus, setTranscriptionStatus] = useState<ClinicalNoteAiStatus | 'idle'>('idle')
+  const [transcriptionText, setTranscriptionText] = useState('')
+  const [transcriptionError, setTranscriptionError] = useState<string | null>(null)
+  const [structuredNoteStatus, setStructuredNoteStatus] = useState<ClinicalNoteAiStatus | 'idle'>('idle')
+  // Cuando IA pre-llenó el formulario DAP, mostrar aviso de revisión
+  const [aiPrefilledTemplate, setAiPrefilledTemplate] = useState(false)
+
   async function closeCanvasEditor() {
     // Flush any pending PNG debounce before the canvas unmounts, so canvasDataUrl is
     // always current in the parent even if the modal closes within 500ms of the last stroke.
@@ -167,7 +176,7 @@ export default function ClinicalNoteEditor({
 
           const { data: noteRow, error: noteError } = await supabase
             .from('clinical_notes')
-            .select('id, patient_id, appointment_id, user_id, texto, canvas_url, canvas_paths, template_kind, template_data, is_draft, created_at, updated_at, patient:patients(*)')
+            .select('id, patient_id, appointment_id, user_id, texto, canvas_url, canvas_paths, template_kind, template_data, is_draft, transcription_status, transcription_text, transcription_error, transcribed_at, structured_note_status, structured_note_json, structured_note_generated_at, created_at, updated_at, patient:patients(*)')
             .eq('id', noteId)
             .single()
 
@@ -204,6 +213,11 @@ export default function ClinicalNoteEditor({
           setCanvasRemoved(false)
           setCanvasDataUrl('')
           setIsCanvasEditorOpen(false)
+          // Restaurar estado de IA desde la nota guardada
+          setTranscriptionStatus(mappedNote.transcription_status ?? 'idle')
+          setTranscriptionText(mappedNote.transcription_text ?? '')
+          setTranscriptionError(mappedNote.transcription_error ?? null)
+          setStructuredNoteStatus(mappedNote.structured_note_status ?? 'idle')
         } else {
           if (!patientId) throw new Error('Falta el paciente para crear la nota.')
 
@@ -349,6 +363,57 @@ export default function ClinicalNoteEditor({
       setSaveError(error instanceof Error ? error.message : 'No se pudo guardar la nota. Intenta de nuevo.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleTranscribe() {
+    if (!note) return
+    setTranscriptionStatus('processing')
+    setTranscriptionError(null)
+
+    try {
+      const res = await fetch(`/api/notas/${note.id}/transcribe`, { method: 'POST' })
+      const data = await res.json() as { transcription_text?: string; error?: string; code?: string }
+
+      if (!res.ok) {
+        setTranscriptionError(data.error ?? 'Error al transcribir.')
+        setTranscriptionStatus('error')
+        return
+      }
+
+      setTranscriptionText(data.transcription_text ?? '')
+      setTranscriptionStatus('done')
+    } catch {
+      setTranscriptionError('No se pudo conectar con el servidor.')
+      setTranscriptionStatus('error')
+    }
+  }
+
+  async function handleStructure() {
+    if (!note || !transcriptionText.trim()) return
+    setStructuredNoteStatus('processing')
+
+    try {
+      const res = await fetch(`/api/notas/${note.id}/structure`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcription_text: transcriptionText }),
+      })
+      const data = await res.json() as { structured_note_json?: ClinicalNoteTemplateData; error?: string }
+
+      if (!res.ok) {
+        setStructuredNoteStatus('error')
+        return
+      }
+
+      if (data.structured_note_json) {
+        // Pre-llena el formulario DAP — el usuario debe revisar y guardar explícitamente
+        setTemplate(data.structured_note_json)
+        setAiPrefilledTemplate(true)
+      }
+      setStructuredNoteStatus('done')
+    } catch {
+      setStructuredNoteStatus('error')
     }
   }
 
@@ -548,6 +613,120 @@ export default function ClinicalNoteEditor({
           </button>
         </section>
 
+        {/* ── Transcripción IA (solo en edición de nota con canvas guardado) ── */}
+        {mode === 'edit' && note?.canvas_url && (
+          <section className="glass-cool rounded-[18px] p-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="section-kicker">Asistente de transcripción</p>
+                <h2 className="editorial-panel-title mt-0.5 text-[1.05rem]">Del manuscrito al texto</h2>
+              </div>
+              {transcriptionStatus === 'done' && (
+                <button
+                  type="button"
+                  onClick={handleTranscribe}
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px]"
+                  style={{ background: 'rgba(255,255,255,0.42)', color: 'var(--ink-cool-soft)' }}
+                >
+                  <Sparkles size={12} />
+                  Re-transcribir
+                </button>
+              )}
+            </div>
+
+            <div className="mt-3">
+              {(transcriptionStatus === 'idle') && (
+                <div
+                  className="rounded-[14px] p-4 text-center"
+                  style={{ background: 'rgba(255,255,255,0.44)', border: '1px solid var(--border-glass-white)' }}
+                >
+                  <p className="text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>
+                    La IA puede leer el manuscrito y devolverte una transcripción editable.
+                    Marcará <span style={{ color: 'var(--ink-cool-strong)' }}>[ilegible]</span> donde no pueda leer.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleTranscribe}
+                    className="btn-action mt-3 inline-flex items-center gap-2 px-4 py-2 text-[13px]"
+                  >
+                    <Sparkles size={14} />
+                    Transcribir manuscrito
+                  </button>
+                </div>
+              )}
+
+              {transcriptionStatus === 'processing' && (
+                <div className="flex items-center gap-2.5 px-1 py-2" style={{ color: 'var(--ink-cool-soft)' }}>
+                  <Loader2 size={14} className="animate-spin" />
+                  <span className="text-[13px]">Transcribiendo manuscrito...</span>
+                </div>
+              )}
+
+              {transcriptionStatus === 'error' && (
+                <div className="space-y-2.5">
+                  <div
+                    className="rounded-[14px] px-4 py-3 text-[13px]"
+                    style={{ background: 'rgba(176,124,132,0.10)', color: 'var(--state-cancel-text)' }}
+                  >
+                    {transcriptionError ?? 'No se pudo transcribir. Intentalo de nuevo.'}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleTranscribe}
+                    className="btn-subtle inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px]"
+                  >
+                    <Sparkles size={13} />
+                    Re-intentar
+                  </button>
+                </div>
+              )}
+
+              {transcriptionStatus === 'done' && (
+                <div className="space-y-2.5">
+                  <label className="block space-y-1.5">
+                    <span className="section-kicker">Transcripción — editá si hay errores</span>
+                    <textarea
+                      value={transcriptionText}
+                      onChange={(e) => setTranscriptionText(e.target.value)}
+                      rows={8}
+                      className="w-full resize-y rounded-[14px] px-4 py-3 text-[14px] leading-6 focus:outline-none"
+                      style={{
+                        background: 'rgba(255,255,255,0.66)',
+                        border: '1px solid rgba(255,255,255,0.46)',
+                        color: 'var(--ink-cool-strong)',
+                        boxShadow: '0 10px 28px rgba(124,108,128,0.06)',
+                        fontFamily: 'inherit',
+                      }}
+                    />
+                  </label>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[11px]" style={{ color: 'var(--ink-cool-faint)' }}>
+                      Revisá la transcripción antes de convertir a DAP.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleStructure}
+                      disabled={structuredNoteStatus === 'processing' || !transcriptionText.trim()}
+                      className="btn-action inline-flex items-center gap-1.5 px-4 py-2 text-[13px] disabled:opacity-45"
+                    >
+                      {structuredNoteStatus === 'processing'
+                        ? <><Loader2 size={14} className="animate-spin" /> Generando DAP...</>
+                        : <><Sparkles size={14} /> Convertir a nota DAP</>}
+                    </button>
+                  </div>
+
+                  {structuredNoteStatus === 'error' && (
+                    <p className="text-[12px]" style={{ color: 'var(--state-cancel-text)' }}>
+                      No se pudo generar la nota DAP. Intentalo de nuevo.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         <section className="glass-cool rounded-[18px] p-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -622,6 +801,19 @@ export default function ClinicalNoteEditor({
               <h2 className="editorial-panel-title mt-0.5 text-[1.05rem]">DAP como apoyo estructurado</h2>
             </div>
           </div>
+
+          {aiPrefilledTemplate && (
+            <div
+              className="mt-3 flex items-start gap-2 rounded-[12px] px-3.5 py-2.5"
+              style={{ background: 'rgba(154,129,164,0.10)', border: '1px solid rgba(154,129,164,0.18)' }}
+            >
+              <Sparkles size={14} style={{ color: 'var(--ink-cool-soft)', flexShrink: 0, marginTop: 2 }} />
+              <p className="text-[12px] leading-[1.5]" style={{ color: 'var(--ink-cool-soft)' }}>
+                La plantilla fue pre-llenada por IA con base en la transcripción revisada.
+                Revisá cada campo antes de guardar — la IA puede cometer errores clínicos.
+              </p>
+            </div>
+          )}
 
           <div className="mt-3 grid gap-2.5 md:grid-cols-[1.15fr_0.85fr]">
             <label className="block space-y-2">
