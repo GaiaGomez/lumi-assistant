@@ -133,6 +133,7 @@ export function mapClinicalNoteRow(row: unknown): ClinicalNote {
     canvas_paths: normalizeClinicalCanvasPaths(record.canvas_paths),
     template_kind: record.template_kind === 'dap' ? 'dap' : null,
     template_data: normalizeClinicalNoteTemplateData(record.template_data),
+    is_draft: record.is_draft === true,
     created_at: expectString(record.created_at, 'clinical_note.created_at'),
     updated_at: expectString(record.updated_at, 'clinical_note.updated_at'),
     patient: optionalPatient(record.patient),

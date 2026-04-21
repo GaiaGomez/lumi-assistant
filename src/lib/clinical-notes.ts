@@ -51,20 +51,26 @@ export async function createClinicalNote(
     canvasPaths?: ClinicalCanvasPath[] | null
     templateData?: ClinicalNoteTemplateData | null
     appointmentId?: string | null
+    isDraft?: boolean
   }
 ) {
   const templateData = serializeClinicalNoteTemplateData(input.templateData)
 
-  return supabase.from('clinical_notes').insert({
-    patient_id: input.patientId,
-    appointment_id: input.appointmentId ?? null,
-    user_id: input.userId,
-    texto: input.texto.trim() || null,
-    canvas_url: input.canvasPath,
-    canvas_paths: input.canvasPaths ?? null,
-    template_kind: templateData ? CLINICAL_NOTE_TEMPLATE_KIND : null,
-    template_data: templateData,
-  })
+  return supabase
+    .from('clinical_notes')
+    .insert({
+      patient_id: input.patientId,
+      appointment_id: input.appointmentId ?? null,
+      user_id: input.userId,
+      texto: input.texto.trim() || null,
+      canvas_url: input.canvasPath,
+      canvas_paths: input.canvasPaths ?? null,
+      template_kind: templateData ? CLINICAL_NOTE_TEMPLATE_KIND : null,
+      template_data: templateData,
+      is_draft: input.isDraft ?? false,
+    })
+    .select('id')
+    .single()
 }
 
 export async function updateClinicalNote(
@@ -76,6 +82,7 @@ export async function updateClinicalNote(
     canvasPath: string | null
     canvasPaths?: ClinicalCanvasPath[] | null
     templateData?: ClinicalNoteTemplateData | null
+    isDraft?: boolean
   }
 ) {
   const templateData = serializeClinicalNoteTemplateData(input.templateData)
@@ -89,6 +96,7 @@ export async function updateClinicalNote(
       canvas_paths: input.canvasPaths ?? null,
       template_kind: templateData ? CLINICAL_NOTE_TEMPLATE_KIND : null,
       template_data: templateData,
+      is_draft: input.isDraft ?? false,
     })
     .eq('id', input.id)
 }

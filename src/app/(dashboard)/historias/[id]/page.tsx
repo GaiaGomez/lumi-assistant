@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, CalendarDays, FilePenLine, PencilLine, SquarePen } from 'lucide-react'
+import { ArrowLeft, Bookmark, CalendarDays, FilePenLine, PencilLine, SquarePen } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createClinicalNoteCanvasSignedUrl } from '@/lib/clinical-notes'
 import { CLINICAL_NOTE_RISK_META } from '@/lib/clinical-note-template'
@@ -40,7 +40,7 @@ export default async function HistoriaPage({ params }: Props) {
 
   const { data: note } = await supabase
     .from('clinical_notes')
-    .select('id, patient_id, appointment_id, user_id, texto, canvas_url, canvas_paths, template_kind, template_data, created_at, updated_at, patient:patients(*), appointment:appointments(*)')
+    .select('id, patient_id, appointment_id, user_id, texto, canvas_url, canvas_paths, template_kind, template_data, is_draft, created_at, updated_at, patient:patients(*), appointment:appointments(*)')
     .eq('id', id)
     .single()
 
@@ -94,6 +94,26 @@ export default async function HistoriaPage({ params }: Props) {
           />
         </div>
       </div>
+
+      {clinicalNote.is_draft && (
+        <div
+          className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] px-4 py-3"
+          style={{ background: 'var(--state-pending-bg)', border: '1px solid rgba(255,255,255,0.36)' }}
+        >
+          <div className="flex items-center gap-2">
+            <Bookmark size={15} style={{ color: 'var(--state-pending-text)' }} />
+            <p className="text-[14px]" style={{ color: 'var(--state-pending-text)' }}>
+              Esta nota es un borrador — no forma parte de la historia clínica publicada.
+            </p>
+          </div>
+          <Link
+            href={`/historias/${clinicalNote.id}/editar`}
+            className="btn-action inline-flex items-center gap-1.5 px-4 py-2 text-[13px]"
+          >
+            Publicar historia
+          </Link>
+        </div>
+      )}
 
       <div className="grid gap-2.5 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="space-y-2.5">

@@ -116,6 +116,7 @@ export interface ClinicalNote {
   canvas_paths: ClinicalCanvasPath[] | null
   template_kind: ClinicalNoteTemplateKind | null
   template_data: ClinicalNoteTemplateData | null
+  is_draft: boolean              // true = borrador editable; false = historia clínica publicada
   created_at: string
   updated_at: string
   // Relaciones expandidas

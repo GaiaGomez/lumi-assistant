@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, CalendarDays, Expand, Loader2, Save, ShieldAlert, Trash2, X } from 'lucide-react'
+import { ArrowLeft, Bookmark, CalendarDays, Expand, Loader2, Save, ShieldAlert, Trash2, X } from 'lucide-react'
 import type { Appointment, ClinicalCanvasPath, ClinicalNote, ClinicalNoteTemplateData, Patient } from '@/types'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -20,9 +20,10 @@ import {
 } from '@/lib/clinical-note-template'
 import { formatDateTimeFull } from '@/lib/format'
 import { APPOINTMENT_SELECT, mapAppointmentRows, mapClinicalNoteRow, mapPatientRow } from '@/lib/supabase/mappers'
-import DrawingCanvas from '@/components/historias/DrawingCanvas'
+import DrawingCanvas, { type DrawingCanvasHandle } from '@/components/historias/DrawingCanvas'
 
 type EditorMode = 'create' | 'edit'
+type SavingState = 'draft' | 'publish' | false
 
 interface ClinicalNoteEditorProps {
   mode: EditorMode
@@ -122,7 +123,7 @@ export default function ClinicalNoteEditor({
   const [supabase] = useState(() => createClient())
 
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const [saving, setSaving] = useState<SavingState>(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -144,6 +145,14 @@ export default function ClinicalNoteEditor({
   const [canvasRemoved, setCanvasRemoved] = useState(false)
   const [isCanvasEditorOpen, setIsCanvasEditorOpen] = useState(false)
   const canvasModalScrollRef = useRef<HTMLDivElement>(null)
+  const drawingCanvasRef = useRef<DrawingCanvasHandle>(null)
+
+  async function closeCanvasEditor() {
+    // Flush any pending PNG debounce before the canvas unmounts, so canvasDataUrl is
+    // always current in the parent even if the modal closes within 500ms of the last stroke.
+    await drawingCanvasRef.current?.flushPng()
+    setIsCanvasEditorOpen(false)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -158,7 +167,7 @@ export default function ClinicalNoteEditor({
 
           const { data: noteRow, error: noteError } = await supabase
             .from('clinical_notes')
-            .select('id, patient_id, appointment_id, user_id, texto, canvas_url, canvas_paths, template_kind, template_data, created_at, updated_at, patient:patients(*)')
+            .select('id, patient_id, appointment_id, user_id, texto, canvas_url, canvas_paths, template_kind, template_data, is_draft, created_at, updated_at, patient:patients(*)')
             .eq('id', noteId)
             .single()
 
@@ -265,11 +274,12 @@ export default function ClinicalNoteEditor({
   }, [canvasPaths, canvasRemoved, canvasTouched, note?.canvas_url, patient, template, textoLibre])
 
   const cancelHref = mode === 'edit' && note ? `/historias/${note.id}` : patient ? `/pacientes/${patient.id}` : '/pacientes'
+  const isEditingDraft = mode === 'edit' && note?.is_draft === true
 
-  async function handleSave() {
+  async function handleSave(isDraft: boolean) {
     if (!patient) return
 
-    setSaving(true)
+    setSaving(isDraft ? 'draft' : 'publish')
     setSaveError(null)
 
     try {
@@ -307,13 +317,14 @@ export default function ClinicalNoteEditor({
           canvasPath: nextCanvasPath,
           canvasPaths: nextCanvasPaths,
           templateData: template,
+          isDraft,
         })
 
         if (error) throw error
 
         router.push(`/historias/${note.id}`)
       } else {
-        const { error } = await createClinicalNote(supabase, {
+        const { data: created, error } = await createClinicalNote(supabase, {
           patientId: patient.id,
           userId: user.id,
           appointmentId: appointmentId || null,
@@ -321,11 +332,16 @@ export default function ClinicalNoteEditor({
           canvasPath: nextCanvasPath,
           canvasPaths: nextCanvasPaths,
           templateData: template,
+          isDraft,
         })
 
         if (error) throw error
 
-        router.push(`/pacientes/${patient.id}`)
+        if (isDraft && created?.id) {
+          router.push(`/historias/${created.id}`)
+        } else {
+          router.push(`/pacientes/${patient.id}`)
+        }
       }
 
       router.refresh()
@@ -404,9 +420,20 @@ export default function ClinicalNoteEditor({
         </button>
 
         <div className="min-w-0 flex-1">
-          <p className="section-kicker mb-0.5">
-            {mode === 'edit' ? 'Editar nota clínica' : 'Nueva nota clínica'}
-          </p>
+          <div className="flex flex-wrap items-center gap-2 mb-0.5">
+            <p className="section-kicker">
+              {mode === 'edit' ? 'Editar nota clínica' : 'Nueva nota clínica'}
+            </p>
+            {isEditingDraft && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px]"
+                style={{ background: 'var(--state-pending-bg)', color: 'var(--state-pending-text)' }}
+              >
+                <Bookmark size={10} />
+                Borrador
+              </span>
+            )}
+          </div>
           <h1 className="page-title text-[1.6rem] leading-none">
             {patient.nombre} {patient.apellido}
           </h1>
@@ -684,22 +711,35 @@ export default function ClinicalNoteEditor({
         </section>
       </div>
 
-      <div className="dashboard-sticky-action sticky z-10 flex justify-end pt-1">
+      <div className="dashboard-sticky-action sticky z-10 flex items-center justify-end gap-2 pt-1">
         <button
           type="button"
-          onClick={handleSave}
-          disabled={!canSave || saving}
+          onClick={() => handleSave(true)}
+          disabled={!canSave || saving !== false}
+          className="btn-subtle inline-flex items-center gap-2 px-4 py-2 text-[14px] disabled:opacity-45"
+        >
+          {saving === 'draft' ? <Loader2 size={16} className="animate-spin" /> : <Bookmark size={16} />}
+          {saving === 'draft' ? 'Guardando...' : 'Guardar borrador'}
+        </button>
+        <button
+          type="button"
+          onClick={() => handleSave(false)}
+          disabled={!canSave || saving !== false}
           className="btn-action inline-flex items-center gap-2 px-5 py-2.5 text-[14px] disabled:opacity-45"
         >
-          {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {saving ? 'Guardando...' : 'Guardar nota'}
+          {saving === 'publish' ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          {saving === 'publish'
+            ? 'Guardando...'
+            : isEditingDraft
+              ? 'Publicar historia'
+              : 'Guardar nota'}
         </button>
       </div>
 
       {isCanvasEditorOpen && (
         <div
           className="fixed inset-0 z-50 bg-[rgba(52,34,35,0.22)] backdrop-blur-[10px]"
-          onClick={() => setIsCanvasEditorOpen(false)}
+          onClick={closeCanvasEditor}
         >
           <div
             ref={canvasModalScrollRef}
@@ -743,7 +783,7 @@ export default function ClinicalNoteEditor({
                     )}
                     <button
                       type="button"
-                      onClick={() => setIsCanvasEditorOpen(false)}
+                      onClick={closeCanvasEditor}
                       className="btn-subtle inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px]"
                     >
                       <X size={13} />
@@ -754,6 +794,7 @@ export default function ClinicalNoteEditor({
 
                 <div className="mt-4">
                   <DrawingCanvas
+                    ref={drawingCanvasRef}
                     key={`canvas-modal-${note?.id ?? 'new'}-${canvasHasLegacyBackground ? 'legacy' : 'clean'}`}
                     initialPaths={canvasInitialPaths}
                     backgroundImage={canvasBackgroundImage}

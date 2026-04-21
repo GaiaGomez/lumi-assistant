@@ -49,7 +49,7 @@ export default async function PatientProfilePage({ params }: Props) {
       .order('fecha_inicio', { ascending: false }),
     supabase
       .from('clinical_notes')
-      .select('id, patient_id, appointment_id, user_id, texto, canvas_url, canvas_paths, template_kind, template_data, created_at, updated_at')
+      .select('id, patient_id, appointment_id, user_id, texto, canvas_url, canvas_paths, template_kind, template_data, is_draft, created_at, updated_at')
       .eq('patient_id', id)
       .order('created_at', { ascending: false }),
   ])

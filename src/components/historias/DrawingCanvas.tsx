@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, type RefObject } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type RefObject } from 'react'
 import type { CanvasPath } from 'react-sketch-canvas'
 import { ReactSketchCanvas, ReactSketchCanvasRef } from 'react-sketch-canvas'
 import {
@@ -33,27 +33,96 @@ const COLOR_OPTIONS = [
 const STROKE_OPTIONS = [1.5, 2.5, 4, 5.5]
 const CANVAS_GROW_STEP = 520
 const CANVAS_GROW_OFFSET = 280
+const PNG_EXPORT_DEBOUNCE_MS = 500
+const PEN_DETECTED_KEY = 'lumi-canvas-pen-mode'
 
 function castPaths(paths: CanvasPath[]): ClinicalCanvasPath[] {
   return paths as ClinicalCanvasPath[]
 }
 
-export default function DrawingCanvas({
+function readPenDetected(): boolean {
+  if (typeof window === 'undefined') return false
+  return localStorage.getItem(PEN_DETECTED_KEY) === '1'
+}
+
+// Returns true when the primary device is touch-based (tablet/phone) AND a fine pointer
+// (stylus) is also available — i.e., iPad with Apple Pencil capability. In that case we
+// start in pen-only mode from the very first stroke, preventing palm smudges before any
+// stylus event has been observed.
+function isStylusTabletEnvironment(): boolean {
+  if (typeof window === 'undefined') return false
+  return (
+    window.matchMedia('(pointer: coarse)').matches &&
+    window.matchMedia('(any-pointer: fine)').matches
+  )
+}
+
+export interface DrawingCanvasHandle {
+  /** Forces the pending PNG export to fire immediately. Call before unmounting the canvas
+   *  to ensure canvasDataUrl is up-to-date in the parent (e.g., when closing the modal). */
+  flushPng: () => Promise<void>
+}
+
+const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(function DrawingCanvas({
   onChange,
   initialPaths,
   backgroundImage,
   initialHeight = 640,
   scrollContainerRef,
-}: DrawingCanvasProps) {
+}, ref) {
   const canvasRef = useRef<ReactSketchCanvasRef>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const initialPathsRef = useRef(initialPaths)
+  // Keep a stable ref to onChange so imperative handle and cleanup can call the latest version
+  // without re-running effects.
+  const onChangeRef = useRef(onChange)
+  useEffect(() => { onChangeRef.current = onChange }, [onChange])
 
   const [tool, setTool] = useState<DrawingTool>('pen')
   const [strokeWidth, setStrokeWidth] = useState(2.5)
   const [strokeColor, setStrokeColor] = useState(COLOR_OPTIONS[0].value)
   const [canvasHeight, setCanvasHeight] = useState(initialHeight)
   const [strokeCount, setStrokeCount] = useState<number | null>(null)
+
+  // Palm rejection — start in pen-only mode when:
+  // (a) user has previously drawn with a stylus on this device (localStorage), OR
+  // (b) environment looks like a stylus-capable tablet (pointer:coarse + any-pointer:fine)
+  // In both cases mouse users on desktop are unaffected (pointer:fine → isStylusTabletEnvironment=false).
+  const [penMode, setPenMode] = useState<boolean>(false)
+  useEffect(() => {
+    setPenMode(readPenDetected() || isStylusTabletEnvironment())
+  }, [])
+
+  // defer PNG export to avoid blocking stroke rendering
+  const lastDataUrlRef = useRef<string>('')
+  const pngDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Expose flushPng so the parent can force an immediate PNG export before unmounting
+  // (e.g., when the modal closes within 500ms of the last stroke).
+  useImperativeHandle(ref, () => ({
+    async flushPng() {
+      if (pngDebounceRef.current) {
+        clearTimeout(pngDebounceRef.current)
+        pngDebounceRef.current = null
+      }
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const paths = castPaths(await canvas.exportPaths())
+      if (paths.length === 0) return
+      const dataUrl = await canvas.exportImage('png')
+      if (dataUrl) {
+        lastDataUrlRef.current = dataUrl
+        onChangeRef.current({ dataUrl, paths })
+      }
+    },
+  }))
+
+  // Cancel pending PNG debounce on unmount to prevent setState after unmount.
+  useEffect(() => {
+    return () => {
+      if (pngDebounceRef.current) clearTimeout(pngDebounceRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     canvasRef.current?.eraseMode(tool === 'eraser')
@@ -66,7 +135,6 @@ export default function DrawingCanvas({
     canvas.resetCanvas()
     if (initialPathsRef.current && initialPathsRef.current.length > 0) {
       canvas.loadPaths(initialPathsRef.current as CanvasPath[])
-      return
     }
   }, [])
 
@@ -98,18 +166,43 @@ export default function DrawingCanvas({
     }
   }, [scrollContainerRef])
 
-  async function emitSnapshot() {
+  // Emit paths immediately on stroke; defer expensive PNG export.
+  // This keeps the drawing responsive — the preview updates shortly after the pen lifts.
+  async function emitPathsThenSchedulePng() {
     const canvas = canvasRef.current
     if (!canvas) return
 
     const paths = castPaths(await canvas.exportPaths())
     setStrokeCount(paths.length)
 
-    const dataUrl = paths.length > 0 ? await canvas.exportImage('png') : ''
-    onChange({
-      dataUrl: dataUrl ?? '',
-      paths,
-    })
+    if (paths.length === 0) {
+      lastDataUrlRef.current = ''
+      onChange({ dataUrl: '', paths })
+      return
+    }
+
+    onChange({ dataUrl: lastDataUrlRef.current, paths })
+
+    if (pngDebounceRef.current) clearTimeout(pngDebounceRef.current)
+    pngDebounceRef.current = setTimeout(async () => {
+      const freshCanvas = canvasRef.current
+      if (!freshCanvas) return
+      const freshPaths = castPaths(await freshCanvas.exportPaths())
+      if (freshPaths.length === 0) return
+      const dataUrl = await freshCanvas.exportImage('png')
+      lastDataUrlRef.current = dataUrl ?? ''
+      // Use the ref so we always call the latest onChange even if the parent re-rendered
+      // between the stroke and this deferred export.
+      onChangeRef.current({ dataUrl: lastDataUrlRef.current, paths: freshPaths })
+    }, PNG_EXPORT_DEBOUNCE_MS)
+  }
+
+  // Detect stylus on first pen pointer-down event and enable palm rejection
+  function handleContainerPointerDown(event: React.PointerEvent) {
+    if (event.pointerType === 'pen' && !penMode) {
+      setPenMode(true)
+      localStorage.setItem(PEN_DETECTED_KEY, '1')
+    }
   }
 
   function handleToolChange(nextTool: DrawingTool) {
@@ -118,16 +211,17 @@ export default function DrawingCanvas({
 
   async function handleUndo() {
     canvasRef.current?.undo()
-    await emitSnapshot()
+    await emitPathsThenSchedulePng()
   }
 
   async function handleRedo() {
     canvasRef.current?.redo()
-    await emitSnapshot()
+    await emitPathsThenSchedulePng()
   }
 
   async function handleClear() {
     canvasRef.current?.clearCanvas()
+    lastDataUrlRef.current = ''
     setStrokeCount(0)
     onChange({ dataUrl: '', paths: [] })
   }
@@ -264,6 +358,7 @@ export default function DrawingCanvas({
           border: '1px solid rgba(255,255,255,0.42)',
           boxShadow: '0 18px 42px rgba(120,110,130,0.10)',
         }}
+        onPointerDown={handleContainerPointerDown}
       >
         <ReactSketchCanvas
           ref={canvasRef}
@@ -280,25 +375,38 @@ export default function DrawingCanvas({
             setStrokeCount(updatedPaths.length)
           }}
           onStroke={async () => {
-            await emitSnapshot()
+            await emitPathsThenSchedulePng()
           }}
-          allowOnlyPointerType="all"
+          allowOnlyPointerType={penMode ? 'pen' : 'all'}
           style={{
             borderRadius: '24px',
             position: 'relative',
             background: 'transparent',
+          }}
+          svgStyle={{
+            // Round caps and joins give strokes a natural pen/ink look instead of flat-ended segments.
+            strokeLinecap: 'round',
+            strokeLinejoin: 'round',
           }}
         />
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
         <p className="text-[11px]" style={{ color: 'var(--ink-cool-faint)' }}>
-          {visibleStrokeCount === 0 ? 'Listo para escribir con Apple Pencil o mouse.' : `${visibleStrokeCount} trazos guardados en esta nota.`}
+          {visibleStrokeCount === 0
+            ? penMode
+              ? 'Listo para escribir con Apple Pencil.'
+              : 'Listo para escribir con Apple Pencil o mouse.'
+            : `${visibleStrokeCount} trazos guardados en esta nota.`}
         </p>
-        <p className="text-[11px]" style={{ color: 'var(--ink-cool-muted)' }}>
-          Amplia el lienzo cuando necesites mas espacio visual.
-        </p>
+        {penMode && (
+          <p className="text-[11px]" style={{ color: 'var(--ink-cool-faint)' }}>
+            Modo lápiz activo — los toques con palma no dibujan.
+          </p>
+        )}
       </div>
     </div>
   )
-}
+})
+
+export default DrawingCanvas
