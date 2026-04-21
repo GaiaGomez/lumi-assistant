@@ -7,11 +7,19 @@ import {
 import { transcribeCanvas } from '@/lib/ai'
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
   const supabase = await createClient()
+
+  let force = false
+  try {
+    const body = await request.json() as { force?: boolean }
+    force = body.force === true
+  } catch {
+    // body vacío o no-JSON es válido — force queda false
+  }
 
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
@@ -60,7 +68,7 @@ export async function POST(
 
   try {
     const transcriptionText = await transcribeCanvas(signedUrl)
-    await saveTranscriptionResult(supabase, id, { status: 'done', text: transcriptionText })
+    await saveTranscriptionResult(supabase, id, { status: 'done', text: transcriptionText, force })
     return NextResponse.json({ transcription_text: transcriptionText })
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Error desconocido'

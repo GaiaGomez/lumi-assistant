@@ -134,21 +134,39 @@ export async function saveTranscriptionResult(
   supabase: SupabaseClient,
   noteId: string,
   result:
-    | { status: 'done'; text: string }
+    | { status: 'done'; text: string; force?: boolean }
     | { status: 'error'; error: string }
 ) {
   const now = new Date().toISOString()
+
   if (result.status === 'done') {
+    if (!result.force) {
+      // Bloquear sobrescritura si el usuario editó manualmente, a menos que sea reemplazo explícito
+      const { data: currentNote } = await supabase
+        .from('clinical_notes')
+        .select('transcription_manually_edited')
+        .eq('id', noteId)
+        .single()
+
+      if (currentNote?.transcription_manually_edited) {
+        throw new Error(
+          'La transcripción ha sido editada manualmente. Use la versión editada o reinicie la transcripción.'
+        )
+      }
+    }
+
     return supabase
       .from('clinical_notes')
       .update({
         transcription_status: 'done',
         transcription_text: result.text,
         transcription_error: null,
+        transcription_manually_edited: false,
         transcribed_at: now,
       })
       .eq('id', noteId)
   }
+
   return supabase
     .from('clinical_notes')
     .update({

@@ -18,7 +18,7 @@ export async function POST(
 
   const { data: note } = await supabase
     .from('clinical_notes')
-    .select('id, user_id')
+    .select('id, user_id, transcription_text')
     .eq('id', id)
     .single()
 
@@ -27,6 +27,12 @@ export async function POST(
   }
   if (note.user_id !== user.id) {
     return NextResponse.json({ error: 'Sin permiso' }, { status: 403 })
+  }
+  if (!note.transcription_text) {
+    return NextResponse.json(
+      { error: 'La nota no tiene transcripción. Transcribe el canvas primero.' },
+      { status: 400 }
+    )
   }
 
   let body: unknown

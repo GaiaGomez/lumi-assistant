@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Bookmark, CalendarDays, Expand, Loader2, Save, ShieldAlert, Sparkles, Trash2, X } from 'lucide-react'
 import type { Appointment, ClinicalCanvasPath, ClinicalNote, ClinicalNoteAiStatus, ClinicalNoteTemplateData, Patient } from '@/types'
@@ -21,6 +22,7 @@ import {
 import { formatDateTimeFull } from '@/lib/format'
 import { APPOINTMENT_SELECT, mapAppointmentRows, mapClinicalNoteRow, mapPatientRow } from '@/lib/supabase/mappers'
 import DrawingCanvas, { type DrawingCanvasHandle } from '@/components/historias/DrawingCanvas'
+import ModalShell from '@/components/ui/ModalShell'
 
 type EditorMode = 'create' | 'edit'
 type SavingState = 'draft' | 'publish' | false
@@ -152,6 +154,8 @@ export default function ClinicalNoteEditor({
   const [transcriptionStatus, setTranscriptionStatus] = useState<ClinicalNoteAiStatus | 'idle'>('idle')
   const [transcriptionText, setTranscriptionText] = useState('')
   const [transcriptionError, setTranscriptionError] = useState<string | null>(null)
+  const [transcriptionEdited, setTranscriptionEdited] = useState(false)
+  const [showRetranscribeConfirm, setShowRetranscribeConfirm] = useState(false)
   const [structuredNoteStatus, setStructuredNoteStatus] = useState<ClinicalNoteAiStatus | 'idle'>('idle')
   // Cuando IA pre-llenó el formulario DAP, mostrar aviso de revisión
   const [aiPrefilledTemplate, setAiPrefilledTemplate] = useState(false)
@@ -176,7 +180,7 @@ export default function ClinicalNoteEditor({
 
           const { data: noteRow, error: noteError } = await supabase
             .from('clinical_notes')
-            .select('id, patient_id, appointment_id, user_id, texto, canvas_url, canvas_paths, template_kind, template_data, is_draft, transcription_status, transcription_text, transcription_error, transcribed_at, structured_note_status, structured_note_json, structured_note_generated_at, created_at, updated_at, patient:patients(*)')
+            .select('id, patient_id, appointment_id, user_id, texto, canvas_url, canvas_paths, template_kind, template_data, is_draft, transcription_status, transcription_text, transcription_error, transcription_manually_edited, transcribed_at, structured_note_status, structured_note_json, structured_note_generated_at, created_at, updated_at, patient:patients(*)')
             .eq('id', noteId)
             .single()
 
@@ -217,6 +221,7 @@ export default function ClinicalNoteEditor({
           setTranscriptionStatus(mappedNote.transcription_status ?? 'idle')
           setTranscriptionText(mappedNote.transcription_text ?? '')
           setTranscriptionError(mappedNote.transcription_error ?? null)
+          setTranscriptionEdited(mappedNote.transcription_manually_edited ?? false)
           setStructuredNoteStatus(mappedNote.structured_note_status ?? 'idle')
         } else {
           if (!patientId) throw new Error('Falta el paciente para crear la nota.')
@@ -366,13 +371,18 @@ export default function ClinicalNoteEditor({
     }
   }
 
-  async function handleTranscribe() {
+  async function handleTranscribe(force = false) {
     if (!note) return
     setTranscriptionStatus('processing')
     setTranscriptionError(null)
+    setShowRetranscribeConfirm(false)
 
     try {
-      const res = await fetch(`/api/notas/${note.id}/transcribe`, { method: 'POST' })
+      const res = await fetch(`/api/notas/${note.id}/transcribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ force }),
+      })
       const data = await res.json() as { transcription_text?: string; error?: string; code?: string }
 
       if (!res.ok) {
@@ -382,10 +392,19 @@ export default function ClinicalNoteEditor({
       }
 
       setTranscriptionText(data.transcription_text ?? '')
+      setTranscriptionEdited(false)
       setTranscriptionStatus('done')
     } catch {
       setTranscriptionError('No se pudo conectar con el servidor.')
       setTranscriptionStatus('error')
+    }
+  }
+
+  function handleRetranscribeClick() {
+    if (transcriptionEdited) {
+      setShowRetranscribeConfirm(true)
+    } else {
+      handleTranscribe()
     }
   }
 
@@ -624,12 +643,12 @@ export default function ClinicalNoteEditor({
               {transcriptionStatus === 'done' && (
                 <button
                   type="button"
-                  onClick={handleTranscribe}
+                  onClick={handleRetranscribeClick}
                   className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px]"
                   style={{ background: 'rgba(255,255,255,0.42)', color: 'var(--ink-cool-soft)' }}
                 >
                   <Sparkles size={12} />
-                  Re-transcribir
+                  Retranscribir
                 </button>
               )}
             </div>
@@ -646,7 +665,7 @@ export default function ClinicalNoteEditor({
                   </p>
                   <button
                     type="button"
-                    onClick={handleTranscribe}
+                    onClick={() => handleTranscribe()}
                     className="btn-action mt-3 inline-flex items-center gap-2 px-4 py-2 text-[13px]"
                   >
                     <Sparkles size={14} />
@@ -672,7 +691,7 @@ export default function ClinicalNoteEditor({
                   </div>
                   <button
                     type="button"
-                    onClick={handleTranscribe}
+                    onClick={() => handleTranscribe()}
                     className="btn-subtle inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px]"
                   >
                     <Sparkles size={13} />
@@ -684,10 +703,20 @@ export default function ClinicalNoteEditor({
               {transcriptionStatus === 'done' && (
                 <div className="space-y-2.5">
                   <label className="block space-y-1.5">
-                    <span className="section-kicker">Transcripción — editá si hay errores</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="section-kicker">Transcripción — editá si hay errores</span>
+                      {transcriptionEdited && (
+                        <span
+                          className="rounded-full px-2 py-0.5 text-[11px]"
+                          style={{ background: 'rgba(255,255,255,0.42)', color: 'var(--ink-cool-soft)' }}
+                        >
+                          Editada manualmente
+                        </span>
+                      )}
+                    </div>
                     <textarea
                       value={transcriptionText}
-                      onChange={(e) => setTranscriptionText(e.target.value)}
+                      onChange={(e) => { setTranscriptionText(e.target.value); setTranscriptionEdited(true) }}
                       rows={8}
                       className="w-full resize-y rounded-[14px] px-4 py-3 text-[14px] leading-6 focus:outline-none"
                       style={{
@@ -702,7 +731,9 @@ export default function ClinicalNoteEditor({
 
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-[11px]" style={{ color: 'var(--ink-cool-faint)' }}>
-                      Revisá la transcripción antes de convertir a DAP.
+                      {transcriptionEdited
+                        ? 'Si retranscribís, esta versión se reemplazará.'
+                        : 'Revisá la transcripción antes de convertir a DAP.'}
                     </p>
                     <button
                       type="button"
@@ -1004,6 +1035,39 @@ export default function ClinicalNoteEditor({
             </div>
           </div>
         </div>
+      )}
+
+      {showRetranscribeConfirm && typeof document !== 'undefined' && createPortal(
+        <ModalShell onClose={() => setShowRetranscribeConfirm(false)}>
+          <div className="p-5 space-y-4">
+            <div>
+              <p className="section-kicker">Confirmar acción</p>
+              <h2 className="editorial-panel-title mt-0.5 text-[1.05rem]">¿Retranscribir manuscrito?</h2>
+              <p className="mt-2 text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>
+                Esto reemplazará la versión que editaste manualmente. La edición no se puede recuperar.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowRetranscribeConfirm(false)}
+                className="btn-subtle inline-flex items-center px-4 py-2 text-[13px]"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTranscribe(true)}
+                className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px]"
+                style={{ background: 'rgba(176,124,132,0.12)', color: 'var(--state-cancel-text)' }}
+              >
+                <Sparkles size={13} />
+                Retranscribir y reemplazar
+              </button>
+            </div>
+          </div>
+        </ModalShell>,
+        document.body
       )}
     </div>
   )

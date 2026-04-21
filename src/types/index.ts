@@ -126,6 +126,7 @@ export interface ClinicalNote {
   transcription_text: string | null
   transcription_error: string | null
   transcribed_at: string | null
+  transcription_manually_edited: boolean // true = usuario editó el texto; bloquea sobrescrituras
   // ── Nota DAP generada por IA ──────────────────────────────
   // Sugerencia que pre-llena el formulario; nunca escribe template_data automáticamente
   structured_note_status: ClinicalNoteAiStatus | null

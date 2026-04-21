@@ -143,6 +143,7 @@ export function mapClinicalNoteRow(row: unknown): ClinicalNote {
     transcription_text: optionalString(record.transcription_text),
     transcription_error: optionalString(record.transcription_error),
     transcribed_at: optionalString(record.transcribed_at),
+    transcription_manually_edited: record.transcription_manually_edited === true,
     structured_note_status: optionalAiStatus(record.structured_note_status),
     structured_note_json: normalizeClinicalNoteTemplateData(record.structured_note_json),
     structured_note_generated_at: optionalString(record.structured_note_generated_at),

@@ -81,6 +81,13 @@ create index if not exists appointments_consultorio_id_idx
 
 -- TABLA: clinical_notes
 -- Una nota clínica por sesión. Tiene texto escrito con teclado Y/O imagen del canvas
+--
+-- TRES CAPAS DE DATOS:
+-- 1. Manuscrito: canvas_url + canvas_paths (imagen y trazos originales)
+-- 2. Transcripción: transcription_text (IA lee canvas; usuario puede editar)
+-- 3. Nota publicada: template_data (DAP final, la fuente de verdad. IA nunca la toca)
+-- La IA sugiere con structured_note_json, pero template_data es lo que se guarda/publica.
+--
 create table if not exists clinical_notes (
   id             uuid default gen_random_uuid() primary key,
   patient_id     uuid references patients(id) on delete cascade not null,
@@ -90,7 +97,7 @@ create table if not exists clinical_notes (
   canvas_url     text,       -- path privado del canvas en Storage (o URL legacy hasta migrarlo)
   canvas_paths   jsonb,      -- trazos serializados para permitir edicion real del canvas
   template_kind  text check (template_kind in ('dap')),
-  template_data  jsonb,      -- estructura clinica de progreso (DAP)
+  template_data  jsonb,      -- estructura clinica de progreso (DAP) — FUENTE DE VERDAD, nunca modificada por IA
   created_at     timestamptz default now(),
   updated_at     timestamptz default now()
 );
