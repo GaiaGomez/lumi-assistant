@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { upsertSessionNote, signNote as signNoteAction } from '@/lib/notes/actions'
+import { upsertSessionNote } from '@/lib/notes/actions'
 import { createClient } from '@/lib/supabase/client'
 import { uploadNoteCanvas } from '@/lib/notes/storage'
 import DrawingCanvas, { type DrawingCanvasHandle } from '@/components/historias/DrawingCanvas'
@@ -31,7 +31,6 @@ export default function SessionNote({ appointmentId, patientId, patientName }: S
 
   const [isSaving, setIsSaving] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
-  const [isSigningNote, setIsSigningNote] = useState(false)
   const [showCanvas, setShowCanvas] = useState(false)
   const [canvasPaths, setCanvasPaths] = useState<ClinicalCanvasPath[] | null>(null)
   const [quickNoteExpanded, setQuickNoteExpanded] = useState(false)
@@ -74,23 +73,19 @@ export default function SessionNote({ appointmentId, patientId, patientName }: S
 
   function handleFormalFieldChange(
     field: 'comoLlego' | 'queTrabajaron' | 'comoVaProceso' | 'queSigue',
-    value: string,
-    currentComoLlego: string,
-    currentQueTrabajaron: string,
-    currentComoVaProceso: string,
-    currentQueSigue: string
+    value: string
   ) {
-    const updates = {
-      comoLlego: field === 'comoLlego' ? value : currentComoLlego,
-      queTrabajaron: field === 'queTrabajaron' ? value : currentQueTrabajaron,
-      comoVaProceso: field === 'comoVaProceso' ? value : currentComoVaProceso,
-      queSigue: field === 'queSigue' ? value : currentQueSigue,
-    }
     if (field === 'comoLlego') setComoLlego(value)
     else if (field === 'queTrabajaron') setQueTrabajaron(value)
     else if (field === 'comoVaProceso') setComoVaProceso(value)
     else if (field === 'queSigue') setQueSigue(value)
-    scheduleAutosave(updates)
+
+    scheduleAutosave({
+      comoLlego: field === 'comoLlego' ? value : comoLlego,
+      queTrabajaron: field === 'queTrabajaron' ? value : queTrabajaron,
+      comoVaProceso: field === 'comoVaProceso' ? value : comoVaProceso,
+      queSigue: field === 'queSigue' ? value : queSigue,
+    })
   }
 
   const handleCanvasChange = useCallback(
@@ -130,21 +125,6 @@ export default function SessionNote({ appointmentId, patientId, patientName }: S
 
     setShowCanvas(false)
   }
-
-  async function handleSignNote() {
-    if (!note) return
-    setIsSigningNote(true)
-    try {
-      await signNoteAction(note.id)
-      setNote((prev) =>
-        prev ? { ...prev, isDraft: false, signedAt: new Date().toISOString() } : prev
-      )
-    } finally {
-      setIsSigningNote(false)
-    }
-  }
-
-  const isSigned = note !== null && !note.isDraft && note.signedAt !== null
 
   if (!note) {
     return (
@@ -221,80 +201,62 @@ export default function SessionNote({ appointmentId, patientId, patientName }: S
           </div>
         </div>
 
-        {!isSigned && (
-          <div
-            className="inline-flex self-start rounded-full p-0.5"
-            style={{
-              background: 'rgba(255,255,255,0.32)',
-              border: '1px solid rgba(255,255,255,0.42)',
-            }}
-          >
-            {(['session', 'formal'] as NoteMode[]).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setMode(m)}
-                className="rounded-full px-3.5 py-1.5 text-[13px] transition-all"
-                style={
-                  mode === m
-                    ? {
-                        background: 'rgba(255,255,255,0.88)',
-                        color: 'var(--ink-cool-strong)',
-                        fontWeight: 500,
-                        boxShadow: '0 2px 8px rgba(120,108,130,0.10)',
-                      }
-                    : {
-                        color: 'var(--ink-cool-soft)',
-                      }
-                }
-              >
-                {m === 'session' ? 'Durante la sesión' : 'Nota formal'}
-              </button>
-            ))}
-          </div>
-        )}
+        <div
+          className="inline-flex self-start rounded-full p-0.5"
+          style={{
+            background: 'rgba(255,255,255,0.32)',
+            border: '1px solid rgba(255,255,255,0.42)',
+          }}
+        >
+          {(['session', 'formal'] as NoteMode[]).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              className="rounded-full px-3.5 py-1.5 text-[13px] transition-all"
+              style={
+                mode === m
+                  ? {
+                      background: 'rgba(255,255,255,0.88)',
+                      color: 'var(--ink-cool-strong)',
+                      fontWeight: 500,
+                      boxShadow: '0 2px 8px rgba(120,108,130,0.10)',
+                    }
+                  : { color: 'var(--ink-cool-soft)' }
+              }
+            >
+              {m === 'session' ? 'Durante la sesión' : 'Nota formal'}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── Body ── */}
       <div className="flex-1 px-4 py-4">
         {mode === 'session' && (
           <div className="relative">
-            {isSigned ? (
-              <p
-                className="min-h-[60vh] text-[15px] leading-relaxed whitespace-pre-wrap"
-                style={{
-                  fontFamily: 'Iowan Old Style, Georgia, serif',
-                  color: quickNote ? 'var(--ink-cool-strong)' : 'var(--ink-cool-faint)',
-                }}
-              >
-                {quickNote || 'Sin notas de sesión.'}
-              </p>
-            ) : (
-              <textarea
-                value={quickNote}
-                onChange={(e) => handleQuickNoteChange(e.target.value)}
-                placeholder="Escribe lo que quieras mientras escuchas..."
-                className="min-h-[60vh] w-full resize-none bg-transparent text-[15px] leading-relaxed focus:outline-none"
-                style={{
-                  fontFamily: 'Iowan Old Style, Georgia, serif',
-                  color: 'var(--ink-cool-strong)',
-                }}
-              />
-            )}
+            <textarea
+              value={quickNote}
+              onChange={(e) => handleQuickNoteChange(e.target.value)}
+              placeholder="Escribe lo que quieras mientras escuchas..."
+              className="min-h-[60vh] w-full resize-none bg-transparent text-[15px] leading-relaxed focus:outline-none"
+              style={{
+                fontFamily: 'Iowan Old Style, Georgia, serif',
+                color: 'var(--ink-cool-strong)',
+              }}
+            />
 
-            {!isSigned && (
-              <div className="mt-8 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowCanvas(true)}
-                  className="btn-ghost flex items-center gap-1.5 text-[13px]"
-                  style={{ opacity: 0.45 }}
-                >
-                  <PenLine size={14} />
-                  Canvas
-                </button>
-              </div>
-            )}
+            <div className="mt-8 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowCanvas(true)}
+                className="btn-ghost flex items-center gap-1.5 text-[13px]"
+                style={{ opacity: 0.45 }}
+              >
+                <PenLine size={14} />
+                Canvas
+              </button>
+            </div>
           </div>
         )}
 
@@ -334,77 +296,19 @@ export default function SessionNote({ appointmentId, patientId, patientName }: S
             {formalFields.map(({ key, label, placeholder, value }) => (
               <label key={key} className="block space-y-1.5">
                 <span className="section-kicker">{label}</span>
-                {isSigned ? (
-                  <div
-                    className="rounded-[14px] px-3.5 py-3"
-                    style={{
-                      background: 'rgba(255,255,255,0.38)',
-                      border: '1px solid var(--border-glass-white)',
-                    }}
-                  >
-                    <p
-                      className="text-[14px] leading-relaxed whitespace-pre-wrap"
-                      style={{
-                        color: value ? 'var(--ink-cool-strong)' : 'var(--ink-cool-faint)',
-                      }}
-                    >
-                      {value || 'Sin contenido.'}
-                    </p>
-                  </div>
-                ) : (
-                  <textarea
-                    value={value}
-                    onChange={(e) => {
-                      e.target.style.height = 'auto'
-                      e.target.style.height = `${e.target.scrollHeight}px`
-                      handleFormalFieldChange(
-                        key,
-                        e.target.value,
-                        comoLlego,
-                        queTrabajaron,
-                        comoVaProceso,
-                        queSigue
-                      )
-                    }}
-                    placeholder={placeholder}
-                    rows={3}
-                    className="w-full resize-none overflow-hidden rounded-[14px] px-3.5 py-3 text-[14px] leading-relaxed focus:outline-none"
-                  />
-                )}
+                <textarea
+                  value={value}
+                  onChange={(e) => {
+                    e.target.style.height = 'auto'
+                    e.target.style.height = `${e.target.scrollHeight}px`
+                    handleFormalFieldChange(key, e.target.value)
+                  }}
+                  placeholder={placeholder}
+                  rows={3}
+                  className="w-full resize-none overflow-hidden rounded-[14px] px-3.5 py-3 text-[14px] leading-relaxed focus:outline-none"
+                />
               </label>
             ))}
-
-            {!isSigned && (
-              <div className="pt-2">
-                <Button
-                  variant="action"
-                  onClick={handleSignNote}
-                  disabled={isSigningNote}
-                  className="w-full px-4 py-2.5 text-[14px]"
-                >
-                  {isSigningNote ? 'Firmando...' : 'Firmar y cerrar nota'}
-                </Button>
-              </div>
-            )}
-
-            {isSigned && note.signedAt && (
-              <div
-                className="rounded-[14px] px-3.5 py-2.5 text-center"
-                style={{
-                  background: 'var(--state-success-bg)',
-                  color: 'var(--state-success-text)',
-                }}
-              >
-                <p className="text-[13px]">
-                  Firmada el{' '}
-                  {new Date(note.signedAt).toLocaleDateString('es-CO', {
-                    day: '2-digit',
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </p>
-              </div>
-            )}
           </div>
         )}
       </div>

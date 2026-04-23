@@ -599,23 +599,7 @@ export default function AppointmentModal({
                 className="flex-1 gap-2 py-3 text-[14px]"
               >
                 <NotebookPen size={15} />
-                {existingNote ? (
-                  <span className="flex items-center gap-1.5">
-                    Ver nota
-                    <span
-                      className="rounded-full px-1.5 py-0.5 text-[11px] leading-none"
-                      style={
-                        existingNote.isDraft
-                          ? { background: 'var(--state-pending-bg)', color: 'var(--state-pending-text)' }
-                          : { background: 'var(--state-success-bg)', color: 'var(--state-success-text)' }
-                      }
-                    >
-                      {existingNote.isDraft ? 'Borrador' : 'Firmada'}
-                    </span>
-                  </span>
-                ) : (
-                  'Nueva nota'
-                )}
+                {existingNote ? 'Ver nota' : 'Nueva nota'}
               </Button>
             )}
 
