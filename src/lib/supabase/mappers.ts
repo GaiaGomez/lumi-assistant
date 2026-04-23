@@ -1,8 +1,4 @@
-import type { Appointment, ClinicalNote, ClinicalNoteAiStatus, Consultorio, Patient } from '@/types'
-import {
-  normalizeClinicalCanvasPaths,
-  normalizeClinicalNoteTemplateData,
-} from '@/lib/clinical-note-template'
+import type { Appointment, Consultorio, Patient } from '@/types'
 import { normalizeAppointmentRecurrenceRule } from '@/lib/appointment-recurrence'
 
 export const APPOINTMENT_SELECT = 'id, patient_id, consultorio_id, user_id, event_type, title, category, color, recurrence_group_id, recurrence_rule, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at, patient:patients(*), consultorio:consultorios(*)'
@@ -25,11 +21,6 @@ function expectString(value: unknown, field: string): string {
 
 function optionalString(value: unknown): string | null {
   return typeof value === 'string' ? value : null
-}
-
-function optionalAiStatus(value: unknown): ClinicalNoteAiStatus | null {
-  if (value === 'processing' || value === 'done' || value === 'error') return value
-  return null
 }
 
 function optionalPatient(value: unknown): Patient | undefined {
@@ -126,35 +117,3 @@ export function mapAppointmentRows(rows: unknown): Appointment[] {
   return rows.map(mapAppointmentRow)
 }
 
-export function mapClinicalNoteRow(row: unknown): ClinicalNote {
-  const record = expectRecord(row, 'clinical note')
-  return {
-    id: expectString(record.id, 'clinical_note.id'),
-    patient_id: expectString(record.patient_id, 'clinical_note.patient_id'),
-    appointment_id: optionalString(record.appointment_id),
-    user_id: expectString(record.user_id, 'clinical_note.user_id'),
-    texto: optionalString(record.texto),
-    canvas_url: optionalString(record.canvas_url),
-    canvas_paths: normalizeClinicalCanvasPaths(record.canvas_paths),
-    template_kind: record.template_kind === 'dap' ? 'dap' : null,
-    template_data: normalizeClinicalNoteTemplateData(record.template_data),
-    is_draft: record.is_draft === true,
-    transcription_status: optionalAiStatus(record.transcription_status),
-    transcription_text: optionalString(record.transcription_text),
-    transcription_error: optionalString(record.transcription_error),
-    transcribed_at: optionalString(record.transcribed_at),
-    transcription_manually_edited: record.transcription_manually_edited === true,
-    structured_note_status: optionalAiStatus(record.structured_note_status),
-    structured_note_json: normalizeClinicalNoteTemplateData(record.structured_note_json),
-    structured_note_generated_at: optionalString(record.structured_note_generated_at),
-    created_at: expectString(record.created_at, 'clinical_note.created_at'),
-    updated_at: expectString(record.updated_at, 'clinical_note.updated_at'),
-    patient: optionalPatient(record.patient),
-    appointment: optionalAppointment(record.appointment),
-  }
-}
-
-export function mapClinicalNoteRows(rows: unknown): ClinicalNote[] {
-  if (!Array.isArray(rows)) return []
-  return rows.map(mapClinicalNoteRow)
-}

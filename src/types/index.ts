@@ -39,18 +39,6 @@ export interface AppointmentRecurrenceRule {
   weekdays?: AppointmentWeekday[] | null
 }
 
-export type ClinicalNoteTemplateKind = 'dap'
-export type ClinicalNoteRiskLevel = 'sin-riesgo-agudo' | 'monitoreo' | 'atencion-prioritaria'
-
-export interface ClinicalNoteTemplateData {
-  format: ClinicalNoteTemplateKind
-  focus: string
-  riskLevel: ClinicalNoteRiskLevel | null
-  data: string
-  assessment: string
-  plan: string
-}
-
 export interface ClinicalCanvasPoint {
   x: number
   y: number
@@ -107,36 +95,23 @@ export interface Appointment {
   consultorio?: Consultorio
 }
 
-export type ClinicalNoteAiStatus = 'processing' | 'done' | 'error'
-
-export interface ClinicalNote {
+export type SessionNote = {
   id: string
-  patient_id: string
-  appointment_id: string | null
-  user_id: string
-  texto: string | null           // notas escritas con teclado
-  canvas_url: string | null      // path privado del canvas en Storage (o URL legacy)
-  canvas_paths: ClinicalCanvasPath[] | null
-  template_kind: ClinicalNoteTemplateKind | null
-  template_data: ClinicalNoteTemplateData | null
-  is_draft: boolean              // true = borrador editable; false = historia clínica publicada
-  // ── Transcripción IA ─────────────────────────────────────
-  // null = sin acción iniciada; 'done' = disponible en transcription_text
-  transcription_status: ClinicalNoteAiStatus | null
-  transcription_text: string | null
-  transcription_error: string | null
-  transcribed_at: string | null
-  transcription_manually_edited: boolean // true = usuario editó el texto; bloquea sobrescrituras
-  // ── Nota DAP generada por IA ──────────────────────────────
-  // Sugerencia que pre-llena el formulario; nunca escribe template_data automáticamente
-  structured_note_status: ClinicalNoteAiStatus | null
-  structured_note_json: ClinicalNoteTemplateData | null
-  structured_note_generated_at: string | null
-  created_at: string
-  updated_at: string
-  // Relaciones expandidas
-  patient?: Patient
-  appointment?: Appointment
+  appointmentId: string
+  patientId: string
+  psychologistId: string
+  quickNote: string | null
+  comoLlego: string | null
+  queTrabajaron: string | null
+  comoVaProceso: string | null
+  queSigue: string | null
+  canvasPaths: ClinicalCanvasPath[] | null
+  canvasUrl: string | null
+  sessionNumber: number | null
+  isDraft: boolean
+  signedAt: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 // Tipo para el calendario — react-big-calendar necesita esta forma

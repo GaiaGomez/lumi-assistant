@@ -1,5 +1,5 @@
 import { MessageCircle } from 'lucide-react'
-import { Appointment, ClinicalNote, Patient } from '@/types'
+import { Appointment, Patient } from '@/types'
 import { type SettingsMap } from '@/lib/settings'
 import { buildPatientWhatsAppQuickActions } from '@/lib/pending-actions'
 import { resolveWhatsApp } from '@/lib/whatsapp'
@@ -10,7 +10,7 @@ interface PatientTopMosaicProps {
   appointments: Appointment[]
   nextAppointment: Appointment | null
   lastPastAppointment: Appointment | null
-  latestNote: ClinicalNote | null
+  latestNoteId: string | null
   pendingPaymentsCount: number
   settings: SettingsMap
 }
@@ -94,7 +94,7 @@ export default function PatientTopMosaic({
   appointments,
   nextAppointment,
   lastPastAppointment,
-  latestNote,
+  latestNoteId,
   pendingPaymentsCount,
   settings,
 }: PatientTopMosaicProps) {
@@ -150,9 +150,9 @@ export default function PatientTopMosaic({
         />
         <StatCard
           label="Historia clínica"
-          value={latestNote ? 'Última nota' : 'Sin notas'}
-          href={latestNote ? `/historias/${latestNote.id}` : undefined}
-          muted={!latestNote}
+          value={latestNoteId ? 'Última nota' : 'Sin notas'}
+          href={latestNoteId ? `/notas/${latestNoteId}` : undefined}
+          muted={!latestNoteId}
         />
       </div>
 

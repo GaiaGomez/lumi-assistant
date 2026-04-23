@@ -1,8 +1,4 @@
 export const dynamic = 'force-dynamic'
-// ============================================================
-// PERFIL DE PACIENTE — historial de citas y notas clínicas
-// [id] = parámetro dinámico de la URL: /pacientes/uuid-del-paciente
-// ============================================================
 
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
@@ -16,9 +12,9 @@ import {
 import {
   APPOINTMENT_SELECT,
   mapAppointmentRows,
-  mapClinicalNoteRows,
   mapPatientRow,
 } from '@/lib/supabase/mappers'
+import { getPatientNotes } from '@/lib/notes/actions'
 import PageBlobs from '@/components/ui/PageBlobs'
 import EmptyState from '@/components/ui/EmptyState'
 import PatientCaseNotesCard from '@/components/pacientes/PatientCaseNotesCard'
@@ -26,7 +22,7 @@ import PatientEditModal from '@/components/pacientes/PatientEditModal'
 import PatientHeaderCard from '@/components/pacientes/PatientHeaderCard'
 import PatientTopMosaic from '@/components/pacientes/PatientTopMosaic'
 import AppointmentQuickStateEditor from '@/components/appointments/AppointmentQuickStateEditor'
-import ClinicalNoteSummaryCard from '@/components/historias/ClinicalNoteSummaryCard'
+import Link from 'next/link'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -40,18 +36,14 @@ export default async function PatientProfilePage({ params }: Props) {
 
   const settingsPromise = fetchSettings(supabase, user.id)
 
-  const [{ data: patient }, { data: appointments }, { data: notes }] = await Promise.all([
+  const [{ data: patient }, { data: appointments }, notes] = await Promise.all([
     supabase.from('patients').select('*').eq('id', id).single(),
     supabase
       .from('appointments')
       .select(APPOINTMENT_SELECT)
       .eq('patient_id', id)
       .order('fecha_inicio', { ascending: false }),
-    supabase
-      .from('clinical_notes')
-      .select('id, patient_id, appointment_id, user_id, texto, canvas_url, canvas_paths, template_kind, template_data, is_draft, created_at, updated_at')
-      .eq('patient_id', id)
-      .order('created_at', { ascending: false }),
+    getPatientNotes(id),
   ])
 
   const settings = await settingsPromise
@@ -60,11 +52,10 @@ export default async function PatientProfilePage({ params }: Props) {
 
   const p = mapPatientRow(patient)
   const patientAppointments = mapAppointmentRows(appointments)
-  const patientNotes = mapClinicalNoteRows(notes)
 
   const nextAppointment = getNextAppointment(patientAppointments)
   const lastPastAppointment = getLastPastAppointment(patientAppointments)
-  const latestNote = patientNotes[0] ?? null
+  const latestNoteId = notes[0]?.id ?? null
   const pendingPayments = getPendingPayments(patientAppointments)
   const pendingPaymentsCount = pendingPayments.length
 
@@ -75,7 +66,6 @@ export default async function PatientProfilePage({ params }: Props) {
       <PatientHeaderCard
         patient={p}
         lastAppointmentDate={lastPastAppointment?.fecha_inicio ?? null}
-        newNoteHref={`/historias/nueva?paciente=${id}`}
         editSlot={<PatientEditModal patient={p} />}
       />
 
@@ -84,7 +74,7 @@ export default async function PatientProfilePage({ params }: Props) {
         appointments={patientAppointments}
         nextAppointment={nextAppointment}
         lastPastAppointment={lastPastAppointment}
-        latestNote={latestNote}
+        latestNoteId={latestNoteId}
         pendingPaymentsCount={pendingPaymentsCount}
         settings={settings}
       />
@@ -96,10 +86,60 @@ export default async function PatientProfilePage({ params }: Props) {
             Historia clínica
           </h2>
           <div className="space-y-1.5">
-            {patientNotes.length === 0 && <EmptyState message="No hay notas clínicas aún" />}
-            {patientNotes.map((note) => (
-              <ClinicalNoteSummaryCard key={note.id} note={note} />
-            ))}
+            {notes.length === 0 && <EmptyState message="No hay notas clínicas aún" />}
+            {notes.map((note) => {
+              const preview = note.quickNote ?? note.comoLlego ?? '—'
+              const previewText = preview.length > 80 ? `${preview.slice(0, 80)}…` : preview
+              const fecha = new Date(note.createdAt).toLocaleDateString('es-CO', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+              })
+              return (
+                <Link
+                  key={note.id}
+                  href={`/notas/${note.id}`}
+                  className="block rounded-[14px] px-3 py-2 transition-opacity hover:opacity-80"
+                  style={{
+                    background:
+                      'linear-gradient(180deg, rgba(255,255,255,0.48) 0%, rgba(255,255,255,0.32) 100%)',
+                    border: '1px solid var(--border-glass-white)',
+                    boxShadow: '0 10px 24px rgba(124, 108, 128, 0.07)',
+                  }}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="section-kicker">
+                        Sesión #{note.sessionNumber ?? '—'}
+                      </span>
+                      <span
+                        className="text-[11px]"
+                        style={{ color: 'var(--ink-cool-faint)' }}
+                      >
+                        {fecha}
+                      </span>
+                    </div>
+                    {note.isDraft && (
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[11px]"
+                        style={{
+                          background: 'var(--state-pending-bg)',
+                          color: 'var(--state-pending-text)',
+                        }}
+                      >
+                        Borrador
+                      </span>
+                    )}
+                  </div>
+                  <p
+                    className="mt-0.5 text-[13px] leading-snug"
+                    style={{ color: 'var(--ink-cool-soft)' }}
+                  >
+                    {previewText}
+                  </p>
+                </Link>
+              )
+            })}
           </div>
         </section>
 
