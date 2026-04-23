@@ -10,7 +10,7 @@ import ModalShell from '@/components/ui/ModalShell'
 import SectionHeader from '@/components/ui/SectionHeader'
 import Button from '@/components/ui/Button'
 import type { ClinicalCanvasPath, SessionNote as SessionNoteType } from '@/types'
-import { X, PenLine } from 'lucide-react'
+import { X } from 'lucide-react'
 
 type NoteMode = 'session' | 'formal'
 
@@ -238,7 +238,7 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
               key={m}
               type="button"
               onClick={() => setMode(m)}
-              className="rounded-full px-3.5 py-1.5 text-[13px] transition-all"
+              className="shrink-0 rounded-full px-3.5 py-1.5 text-[13px] transition-all"
               style={
                 mode === m
                   ? {
@@ -253,6 +253,20 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
               {m === 'session' ? 'Durante la sesión' : 'Nota formal'}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setShowCanvas(true)}
+            className="shrink-0 flex items-center gap-1 rounded-full px-3.5 py-1.5 text-[13px] transition-all"
+            style={{ color: 'var(--ink-cool-soft)' }}
+          >
+            Canvas
+            {canvasPaths && canvasPaths.length > 0 && (
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ background: '#6BAF8D' }}
+              />
+            )}
+          </button>
         </div>
       </div>
 
@@ -271,16 +285,6 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
               }}
             />
 
-            <div className="mt-8 flex justify-center">
-              <button
-                type="button"
-                onClick={() => setShowCanvas(true)}
-                className="btn-subtle flex items-center gap-2 rounded-full px-4 py-2 text-[13px]"
-              >
-                <PenLine size={15} />
-                {canvasPaths && canvasPaths.length > 0 ? 'Ver canvas' : 'Abrir canvas'}
-              </button>
-            </div>
           </div>
         )}
 
@@ -334,16 +338,6 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
               </label>
             ))}
 
-            <div className="flex justify-center pt-2">
-              <button
-                type="button"
-                onClick={() => setShowCanvas(true)}
-                className="btn-subtle flex items-center gap-2 rounded-full px-4 py-2 text-[13px]"
-              >
-                <PenLine size={15} />
-                {canvasPaths && canvasPaths.length > 0 ? 'Ver canvas' : 'Abrir canvas'}
-              </button>
-            </div>
           </div>
         )}
       </div>
