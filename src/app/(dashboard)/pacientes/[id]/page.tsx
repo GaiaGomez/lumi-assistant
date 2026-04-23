@@ -84,18 +84,12 @@ export default async function PatientProfilePage({ params }: Props) {
         <section className="glass-cool relative rounded-[18px] p-3">
           <div className="mb-1.5 flex items-center justify-between gap-2">
             <h2 className="editorial-panel-title text-[1.05rem]">Historia clínica</h2>
-            {nextAppointment ? (
-              <Link
-                href={`/citas/${nextAppointment.id}`}
-                className="btn-action gap-1.5 px-3 py-1.5 text-[13px]"
-              >
-                + Nueva nota
-              </Link>
-            ) : (
-              <span className="text-[12px]" style={{ color: 'var(--ink-cool-faint)' }}>
-                Agenda una cita primero
-              </span>
-            )}
+            <Link
+              href={`/notas/nueva?paciente=${id}`}
+              className="btn-action gap-1.5 px-3 py-1.5 text-[13px]"
+            >
+              + Nueva nota
+            </Link>
           </div>
           <div className="space-y-1.5">
             {notes.length === 0 && <EmptyState message="No hay notas clínicas aún" />}

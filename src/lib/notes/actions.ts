@@ -8,7 +8,7 @@ type SessionNoteRow = Record<string, unknown>
 function mapRow(row: SessionNoteRow): SessionNote {
   return {
     id: row.id as string,
-    appointmentId: row.appointment_id as string,
+    appointmentId: (row.appointment_id as string | null) ?? null,
     patientId: row.patient_id as string,
     psychologistId: row.psychologist_id as string,
     quickNote: (row.quick_note as string | null) ?? null,
@@ -26,10 +26,45 @@ function mapRow(row: SessionNoteRow): SessionNote {
   }
 }
 
-export async function upsertSessionNote(
-  appointmentId: string,
+async function nextSessionNumber(supabase: Awaited<ReturnType<typeof createClient>>, patientId: string): Promise<number> {
+  const { count } = await supabase
+    .from('session_notes')
+    .select('*', { count: 'exact', head: true })
+    .eq('patient_id', patientId)
+  return (count ?? 0) + 1
+}
+
+// Crea una nota vacía. appointmentId es opcional — para notas libres del perfil.
+export async function createSessionNote(
   patientId: string,
-  data: Partial<SessionNote>
+  appointmentId?: string
+): Promise<SessionNote> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autenticado')
+
+  const sessionNumber = await nextSessionNumber(supabase, patientId)
+
+  const { data: row, error } = await supabase
+    .from('session_notes')
+    .insert({
+      patient_id: patientId,
+      psychologist_id: user.id,
+      appointment_id: appointmentId ?? null,
+      session_number: sessionNumber,
+    })
+    .select()
+    .single()
+
+  if (error) throw new Error(error.message)
+  return mapRow(row as SessionNoteRow)
+}
+
+// Para /citas/[id]: devuelve la nota más reciente de esa cita,
+// o crea una nueva si todavía no hay ninguna.
+export async function getOrCreateNoteForAppointment(
+  appointmentId: string,
+  patientId: string
 ): Promise<SessionNote> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -40,39 +75,22 @@ export async function upsertSessionNote(
     .select('*')
     .eq('appointment_id', appointmentId)
     .eq('psychologist_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
     .maybeSingle()
 
-  let sessionNumber: number
-  if (existing?.session_number) {
-    sessionNumber = existing.session_number as number
-  } else {
-    const { count } = await supabase
-      .from('session_notes')
-      .select('*', { count: 'exact', head: true })
-      .eq('patient_id', patientId)
-    sessionNumber = (count ?? 0) + 1
-  }
+  if (existing) return mapRow(existing as SessionNoteRow)
 
-  const ex = existing as SessionNoteRow | null
-
-  const merged = {
-    appointment_id: appointmentId,
-    patient_id: patientId,
-    psychologist_id: user.id,
-    session_number: sessionNumber,
-    quick_note: data.quickNote !== undefined ? data.quickNote : ((ex?.quick_note as string | null) ?? null),
-    como_llego: data.comoLlego !== undefined ? data.comoLlego : ((ex?.como_llego as string | null) ?? null),
-    que_trabajaron: data.queTrabajaron !== undefined ? data.queTrabajaron : ((ex?.que_trabajaron as string | null) ?? null),
-    como_va_proceso: data.comoVaProceso !== undefined ? data.comoVaProceso : ((ex?.como_va_proceso as string | null) ?? null),
-    que_sigue: data.queSigue !== undefined ? data.queSigue : ((ex?.que_sigue as string | null) ?? null),
-    canvas_paths: data.canvasPaths !== undefined ? data.canvasPaths : ((ex?.canvas_paths as SessionNote['canvasPaths']) ?? null),
-    canvas_url: data.canvasUrl !== undefined ? data.canvasUrl : ((ex?.canvas_url as string | null) ?? null),
-    is_draft: data.isDraft !== undefined ? data.isDraft : (ex?.is_draft !== false),
-  }
+  const sessionNumber = await nextSessionNumber(supabase, patientId)
 
   const { data: row, error } = await supabase
     .from('session_notes')
-    .upsert(merged, { onConflict: 'appointment_id' })
+    .insert({
+      patient_id: patientId,
+      psychologist_id: user.id,
+      appointment_id: appointmentId,
+      session_number: sessionNumber,
+    })
     .select()
     .single()
 
@@ -80,19 +98,34 @@ export async function upsertSessionNote(
   return mapRow(row as SessionNoteRow)
 }
 
-export async function getSessionNote(appointmentId: string): Promise<SessionNote | null> {
+// Actualiza solo los campos provistos — el componente llama esto en autosave.
+export async function updateSessionNote(
+  noteId: string,
+  data: Partial<Pick<SessionNote, 'quickNote' | 'comoLlego' | 'queTrabajaron' | 'comoVaProceso' | 'queSigue' | 'canvasPaths' | 'canvasUrl'>>
+): Promise<SessionNote> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  if (!user) throw new Error('No autenticado')
 
-  const { data } = await supabase
+  const payload: Record<string, unknown> = {}
+  if (data.quickNote !== undefined) payload.quick_note = data.quickNote
+  if (data.comoLlego !== undefined) payload.como_llego = data.comoLlego
+  if (data.queTrabajaron !== undefined) payload.que_trabajaron = data.queTrabajaron
+  if (data.comoVaProceso !== undefined) payload.como_va_proceso = data.comoVaProceso
+  if (data.queSigue !== undefined) payload.que_sigue = data.queSigue
+  if (data.canvasPaths !== undefined) payload.canvas_paths = data.canvasPaths
+  if (data.canvasUrl !== undefined) payload.canvas_url = data.canvasUrl
+
+  const { data: row, error } = await supabase
     .from('session_notes')
-    .select('*')
-    .eq('appointment_id', appointmentId)
+    .update(payload)
+    .eq('id', noteId)
     .eq('psychologist_id', user.id)
-    .maybeSingle()
+    .select()
+    .single()
 
-  return data ? mapRow(data as SessionNoteRow) : null
+  if (error) throw new Error(error.message)
+  return mapRow(row as SessionNoteRow)
 }
 
 export async function getSessionNoteById(noteId: string): Promise<SessionNote | null> {
@@ -123,18 +156,4 @@ export async function getPatientNotes(patientId: string): Promise<SessionNote[]>
     .order('created_at', { ascending: false })
 
   return (data ?? []).map((r) => mapRow(r as SessionNoteRow))
-}
-
-export async function signNote(noteId: string): Promise<void> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('No autenticado')
-
-  const { error } = await supabase
-    .from('session_notes')
-    .update({ signed_at: new Date().toISOString(), is_draft: false })
-    .eq('id', noteId)
-    .eq('psychologist_id', user.id)
-
-  if (error) throw new Error(error.message)
 }

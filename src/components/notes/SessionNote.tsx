@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { upsertSessionNote } from '@/lib/notes/actions'
+import { getSessionNoteById, updateSessionNote } from '@/lib/notes/actions'
 import { createClient } from '@/lib/supabase/client'
 import { uploadNoteCanvas } from '@/lib/notes/storage'
 import DrawingCanvas, { type DrawingCanvasHandle } from '@/components/historias/DrawingCanvas'
@@ -14,12 +14,11 @@ import { X, PenLine } from 'lucide-react'
 type NoteMode = 'session' | 'formal'
 
 interface SessionNoteProps {
-  appointmentId: string
-  patientId: string
+  noteId: string
   patientName: string
 }
 
-export default function SessionNote({ appointmentId, patientId, patientName }: SessionNoteProps) {
+export default function SessionNote({ noteId, patientName }: SessionNoteProps) {
   const [note, setNote] = useState<SessionNoteType | null>(null)
   const [mode, setMode] = useState<NoteMode>('session')
 
@@ -40,7 +39,8 @@ export default function SessionNote({ appointmentId, patientId, patientName }: S
   const canvasSnapshotRef = useRef<{ dataUrl: string; paths: ClinicalCanvasPath[] } | null>(null)
 
   useEffect(() => {
-    upsertSessionNote(appointmentId, patientId, {}).then((loaded) => {
+    getSessionNoteById(noteId).then((loaded) => {
+      if (!loaded) return
       setNote(loaded)
       setQuickNote(loaded.quickNote ?? '')
       setComoLlego(loaded.comoLlego ?? '')
@@ -49,15 +49,17 @@ export default function SessionNote({ appointmentId, patientId, patientName }: S
       setQueSigue(loaded.queSigue ?? '')
       setCanvasPaths(loaded.canvasPaths)
     })
-  }, [appointmentId, patientId])
+  }, [noteId])
 
-  function scheduleAutosave(data: Partial<SessionNoteType>) {
+  function scheduleAutosave(
+    data: Partial<Pick<SessionNoteType, 'quickNote' | 'comoLlego' | 'queTrabajaron' | 'comoVaProceso' | 'queSigue' | 'canvasPaths' | 'canvasUrl'>>
+  ) {
     setIsSaving(true)
     setIsSaved(false)
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
       try {
-        const updated = await upsertSessionNote(appointmentId, patientId, data)
+        const updated = await updateSessionNote(noteId, data)
         setNote(updated)
         setIsSaved(true)
       } finally {
@@ -111,7 +113,7 @@ export default function SessionNote({ appointmentId, patientId, patientName }: S
           snapshot.dataUrl,
           `${note.psychologistId}/${note.id}.png`
         )
-        const updated = await upsertSessionNote(appointmentId, patientId, {
+        const updated = await updateSessionNote(noteId, {
           canvasPaths: snapshot.paths,
           canvasUrl: path,
         })

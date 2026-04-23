@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { APPOINTMENT_SELECT, mapAppointmentRow } from '@/lib/supabase/mappers'
+import { getOrCreateNoteForAppointment } from '@/lib/notes/actions'
 import SessionNote from '@/components/notes/SessionNote'
 import PageBlobs from '@/components/ui/PageBlobs'
 import { formatDateTimeFull } from '@/lib/format'
@@ -29,16 +30,16 @@ export default async function CitaPage({ params }: Props) {
   if (!apt) notFound()
 
   const appointment = mapAppointmentRow(apt)
-
   if (!appointment.patient_id || !appointment.patient) notFound()
 
   const patientName = `${appointment.patient.nombre} ${appointment.patient.apellido}`
+
+  const note = await getOrCreateNoteForAppointment(id, appointment.patient_id)
 
   return (
     <div className="relative pb-6">
       <PageBlobs />
 
-      {/* Header */}
       <div className="mb-4 flex items-center gap-3">
         <Link
           href={`/pacientes/${appointment.patient_id}`}
@@ -56,11 +57,7 @@ export default async function CitaPage({ params }: Props) {
       </div>
 
       <div className="glass-cool rounded-[18px] overflow-hidden">
-        <SessionNote
-          appointmentId={id}
-          patientId={appointment.patient_id}
-          patientName={patientName}
-        />
+        <SessionNote noteId={note.id} patientName={patientName} />
       </div>
     </div>
   )

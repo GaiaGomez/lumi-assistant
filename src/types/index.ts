@@ -97,7 +97,7 @@ export interface Appointment {
 
 export type SessionNote = {
   id: string
-  appointmentId: string
+  appointmentId: string | null
   patientId: string
   psychologistId: string
   quickNote: string | null
