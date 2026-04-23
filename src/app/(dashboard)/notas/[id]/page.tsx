@@ -51,7 +51,7 @@ export default async function NotaPage({ params }: Props) {
       </div>
 
       <div className="glass-cool rounded-[18px] overflow-hidden">
-        <SessionNote noteId={id} patientName={patientName} />
+        <SessionNote noteId={id} patientName={patientName} patientId={note.patientId} />
       </div>
     </div>
   )

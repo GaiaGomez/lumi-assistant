@@ -143,6 +143,20 @@ export async function getSessionNoteById(noteId: string): Promise<SessionNote | 
   return data ? mapRow(data as SessionNoteRow) : null
 }
 
+export async function deleteSessionNote(noteId: string): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autenticado')
+
+  const { error } = await supabase
+    .from('session_notes')
+    .delete()
+    .eq('id', noteId)
+    .eq('psychologist_id', user.id)
+
+  if (error) throw new Error(error.message)
+}
+
 export async function getPatientNotes(patientId: string): Promise<SessionNote[]> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

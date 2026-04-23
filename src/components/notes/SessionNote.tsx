@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { getSessionNoteById, updateSessionNote } from '@/lib/notes/actions'
+import { useRouter } from 'next/navigation'
+import { getSessionNoteById, updateSessionNote, deleteSessionNote } from '@/lib/notes/actions'
 import { createClient } from '@/lib/supabase/client'
 import { uploadNoteCanvas } from '@/lib/notes/storage'
 import DrawingCanvas, { type DrawingCanvasHandle } from '@/components/historias/DrawingCanvas'
@@ -16,9 +17,11 @@ type NoteMode = 'session' | 'formal'
 interface SessionNoteProps {
   noteId: string
   patientName: string
+  patientId: string
 }
 
-export default function SessionNote({ noteId, patientName }: SessionNoteProps) {
+export default function SessionNote({ noteId, patientName, patientId }: SessionNoteProps) {
+  const router = useRouter()
   const [note, setNote] = useState<SessionNoteType | null>(null)
   const [mode, setMode] = useState<NoteMode>('session')
 
@@ -33,6 +36,8 @@ export default function SessionNote({ noteId, patientName }: SessionNoteProps) {
   const [showCanvas, setShowCanvas] = useState(false)
   const [canvasPaths, setCanvasPaths] = useState<ClinicalCanvasPath[] | null>(null)
   const [quickNoteExpanded, setQuickNoteExpanded] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const canvasRef = useRef<DrawingCanvasHandle>(null)
@@ -128,6 +133,16 @@ export default function SessionNote({ noteId, patientName }: SessionNoteProps) {
     setShowCanvas(false)
   }
 
+  async function handleDelete() {
+    setIsDeleting(true)
+    try {
+      await deleteSessionNote(noteId)
+      router.push(`/pacientes/${patientId}`)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   if (!note) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -200,6 +215,14 @@ export default function SessionNote({ noteId, patientName }: SessionNoteProps) {
                 title="Guardado"
               />
             )}
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="rounded-full px-3 py-1.5 text-[11px]"
+              style={{ background: 'rgba(176,124,132,0.12)', color: 'var(--state-cancel-text)' }}
+            >
+              Eliminar nota
+            </button>
           </div>
         </div>
 
@@ -248,15 +271,14 @@ export default function SessionNote({ noteId, patientName }: SessionNoteProps) {
               }}
             />
 
-            <div className="mt-8 flex justify-end">
+            <div className="mt-8 flex justify-center">
               <button
                 type="button"
                 onClick={() => setShowCanvas(true)}
-                className="btn-ghost flex items-center gap-1.5 text-[13px]"
-                style={{ opacity: 0.45 }}
+                className="btn-subtle flex items-center gap-2 rounded-full px-4 py-2 text-[13px]"
               >
-                <PenLine size={14} />
-                Canvas
+                <PenLine size={15} />
+                {canvasPaths && canvasPaths.length > 0 ? 'Ver canvas' : 'Abrir canvas'}
               </button>
             </div>
           </div>
@@ -311,6 +333,17 @@ export default function SessionNote({ noteId, patientName }: SessionNoteProps) {
                 />
               </label>
             ))}
+
+            <div className="flex justify-center pt-2">
+              <button
+                type="button"
+                onClick={() => setShowCanvas(true)}
+                className="btn-subtle flex items-center gap-2 rounded-full px-4 py-2 text-[13px]"
+              >
+                <PenLine size={15} />
+                {canvasPaths && canvasPaths.length > 0 ? 'Ver canvas' : 'Abrir canvas'}
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -333,6 +366,40 @@ export default function SessionNote({ noteId, patientName }: SessionNoteProps) {
               initialPaths={canvasPaths}
               onChange={handleCanvasChange}
             />
+          </div>
+        </ModalShell>
+      )}
+
+      {/* ── Confirmar eliminación ── */}
+      {confirmDelete && (
+        <ModalShell onClose={() => setConfirmDelete(false)} maxWidth="max-w-sm">
+          <div className="flex items-start justify-between p-4">
+            <div>
+              <SectionHeader label="Acción irreversible" className="mb-1" />
+              <h2 className="editorial-panel-title text-[1.05rem]">¿Eliminar esta nota?</h2>
+            </div>
+            <Button variant="subtle" onClick={() => setConfirmDelete(false)} className="p-2">
+              <X size={16} />
+            </Button>
+          </div>
+          <div className="px-4 pb-4 space-y-3">
+            <p className="text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>
+              Se eliminará la nota de la Sesión #{note.sessionNumber ?? '—'} de {patientName}. Esta acción no se puede deshacer.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="subtle" onClick={() => setConfirmDelete(false)}>
+                Cancelar
+              </Button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleDelete}
+                className="rounded-full px-4 py-1.5 text-[13px]"
+                style={{ background: 'rgba(176,124,132,0.12)', color: 'var(--state-cancel-text)' }}
+              >
+                {isDeleting ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            </div>
           </div>
         </ModalShell>
       )}

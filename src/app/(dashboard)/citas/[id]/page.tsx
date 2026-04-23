@@ -57,7 +57,7 @@ export default async function CitaPage({ params }: Props) {
       </div>
 
       <div className="glass-cool rounded-[18px] overflow-hidden">
-        <SessionNote noteId={note.id} patientName={patientName} />
+        <SessionNote noteId={note.id} patientName={patientName} patientId={appointment.patient_id} />
       </div>
     </div>
   )
