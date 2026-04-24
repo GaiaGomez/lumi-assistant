@@ -36,39 +36,38 @@ function sanitizeClinicalAlerts(value: ClinicalAlertKey[] | null | undefined) {
   return normalized.length > 0 ? Array.from(new Set(normalized)) : null
 }
 
-function sanitizePayload(payload: PatientClinicalProfileUpdateInput) {
-  return {
-    documento: normalizeText(payload.documento),
-    birth_date: payload.birth_date?.trim() || null,
-    genero: normalizeText(payload.genero),
-    ocupacion: normalizeText(payload.ocupacion),
-    email: normalizeText(payload.email),
-    direccion: normalizeText(payload.direccion),
-    ciudad: normalizeText(payload.ciudad),
-    eps: normalizeText(payload.eps),
-    emergency_contact_name: normalizeText(payload.emergency_contact_name),
-    emergency_contact_relationship: normalizeText(payload.emergency_contact_relationship),
-    emergency_contact_phone: normalizeText(payload.emergency_contact_phone),
-    emergency_contact_authorized:
-      typeof payload.emergency_contact_authorized === 'boolean'
-        ? payload.emergency_contact_authorized
-        : null,
-    emergency_contact_notes: normalizeText(payload.emergency_contact_notes),
-    medication: normalizeText(payload.medication),
-    allergies: normalizeText(payload.allergies),
-    medical_conditions: normalizeText(payload.medical_conditions),
-    diagnoses: normalizeText(payload.diagnoses),
-    previous_treatments: normalizeText(payload.previous_treatments),
-    consultation_reason: normalizeText(payload.consultation_reason),
-    therapeutic_objective: normalizeText(payload.therapeutic_objective),
-    session_frequency: normalizeText(payload.session_frequency),
-    care_modality: normalizeText(payload.care_modality),
-    process_status: normalizeText(payload.process_status),
-    support_network: normalizeText(payload.support_network),
-    clinical_alerts: sanitizeClinicalAlerts(payload.clinical_alerts),
-    informed_consent_status: payload.informed_consent_status ?? null,
-    administrative_notes: normalizeText(payload.administrative_notes),
-  }
+function sanitizePayload(payload: PatientClinicalProfileUpdateInput): Partial<Omit<PatientClinicalProfile, 'id' | 'patient_id' | 'psychologist_id' | 'created_at' | 'updated_at'>> {
+  const out: ReturnType<typeof sanitizePayload> = {}
+
+  if ('documento' in payload) out.documento = normalizeText(payload.documento)
+  if ('birth_date' in payload) out.birth_date = payload.birth_date?.trim() || null
+  if ('genero' in payload) out.genero = normalizeText(payload.genero)
+  if ('ocupacion' in payload) out.ocupacion = normalizeText(payload.ocupacion)
+  if ('email' in payload) out.email = normalizeText(payload.email)
+  if ('direccion' in payload) out.direccion = normalizeText(payload.direccion)
+  if ('ciudad' in payload) out.ciudad = normalizeText(payload.ciudad)
+  if ('eps' in payload) out.eps = normalizeText(payload.eps)
+  if ('emergency_contact_name' in payload) out.emergency_contact_name = normalizeText(payload.emergency_contact_name)
+  if ('emergency_contact_relationship' in payload) out.emergency_contact_relationship = normalizeText(payload.emergency_contact_relationship)
+  if ('emergency_contact_phone' in payload) out.emergency_contact_phone = normalizeText(payload.emergency_contact_phone)
+  if ('emergency_contact_authorized' in payload) out.emergency_contact_authorized = typeof payload.emergency_contact_authorized === 'boolean' ? payload.emergency_contact_authorized : null
+  if ('emergency_contact_notes' in payload) out.emergency_contact_notes = normalizeText(payload.emergency_contact_notes)
+  if ('medication' in payload) out.medication = normalizeText(payload.medication)
+  if ('allergies' in payload) out.allergies = normalizeText(payload.allergies)
+  if ('medical_conditions' in payload) out.medical_conditions = normalizeText(payload.medical_conditions)
+  if ('diagnoses' in payload) out.diagnoses = normalizeText(payload.diagnoses)
+  if ('previous_treatments' in payload) out.previous_treatments = normalizeText(payload.previous_treatments)
+  if ('consultation_reason' in payload) out.consultation_reason = normalizeText(payload.consultation_reason)
+  if ('therapeutic_objective' in payload) out.therapeutic_objective = normalizeText(payload.therapeutic_objective)
+  if ('session_frequency' in payload) out.session_frequency = normalizeText(payload.session_frequency)
+  if ('care_modality' in payload) out.care_modality = normalizeText(payload.care_modality)
+  if ('process_status' in payload) out.process_status = normalizeText(payload.process_status)
+  if ('support_network' in payload) out.support_network = normalizeText(payload.support_network)
+  if ('clinical_alerts' in payload) out.clinical_alerts = sanitizeClinicalAlerts(payload.clinical_alerts)
+  if ('informed_consent_status' in payload) out.informed_consent_status = payload.informed_consent_status ?? null
+  if ('administrative_notes' in payload) out.administrative_notes = normalizeText(payload.administrative_notes)
+
+  return out
 }
 
 export function getClinicalAlertLabel(alert: ClinicalAlertKey) {

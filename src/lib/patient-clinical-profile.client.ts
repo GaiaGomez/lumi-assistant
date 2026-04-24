@@ -14,13 +14,16 @@ export async function upsertPatientClinicalProfile(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('No autenticado')
 
+  const normalized = normalizePatientClinicalProfilePayload(payload)
+  console.log('[clinical-profile] saving', { patient_id: patientId, ...normalized })
+
   const { data, error } = await supabase
     .from('patient_clinical_profiles')
     .upsert(
       {
         patient_id: patientId,
         psychologist_id: user.id,
-        ...normalizePatientClinicalProfilePayload(payload),
+        ...normalized,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'patient_id' }
@@ -28,6 +31,11 @@ export async function upsertPatientClinicalProfile(
     .select('*')
     .single()
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    console.error('[clinical-profile] save error', error)
+    throw new Error(error.message)
+  }
+
+  console.log('[clinical-profile] saved', data)
   return mapPatientClinicalProfileRow(data)
 }
