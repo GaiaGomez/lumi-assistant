@@ -120,41 +120,42 @@ interface PenParams {
 }
 
 const PRESET_PARAMS: Record<'pluma-fina' | 'pluma-gel' | 'lapiz-suave' | 'marcador', PenParams> = {
-  // Fine liner — tight smoothing, elegant taper, sensitive to pressure
+  // Fine liner — very thin, highly polished silhouette, elegant taper
   'pluma-fina': {
-    sizeScale: 3.2,
-    thinning: 0.55,
-    smoothing: 0.82,
-    streamline: 0.58,
-    startTaper: 16,
-    endTaper: 12,
+    sizeScale: 2.4,    // 1.5×2.4=3.6px default — genuinely fine
+    thinning: 0.52,
+    smoothing: 0.86,   // highest smoothing = most rounded outline
+    streamline: 0.64,
+    startTaper: 12,
+    endTaper: 9,
     startEasing: (t) => Math.sqrt(t),
-    endEasing: (t) => t * (2 - t),  // ease-out: softer end than t*t
-  },
-  // Gel pen — more body, stable, forgiving. The "handwriting looks good automatically" preset.
-  // High streamline reduces jitter; ease-out easing kills sharp knife-tip ends.
-  'pluma-gel': {
-    sizeScale: 4.5,    // more body (+18% vs before)
-    thinning: 0.32,    // less pressure reactivity = more consistent, less dry
-    smoothing: 0.78,   // smoother silhouette
-    streamline: 0.62,  // significantly more stable input path
-    startTaper: 8,     // shorter taper = entry fills quickly, no thin needle start
-    endTaper: 6,       // shorter exit = blunt enough to avoid knife tips
-    startEasing: (t) => t * (2 - t),  // ease-out start = gentle entry
-    endEasing: (t) => t * (2 - t),    // ease-out end = soft, natural exit
-  },
-  // Soft pencil — more pressure variation, longer gentle fades, less smooth
-  'lapiz-suave': {
-    sizeScale: 4.8,
-    thinning: 0.62,
-    smoothing: 0.63,
-    streamline: 0.48,
-    startTaper: 20,
-    endTaper: 16,
-    startEasing: (t) => t,            // linear = pencil enters full width
     endEasing: (t) => t * (2 - t),
   },
-  // Felt marker — thick, nearly uniform, blunt ends
+  // Gel pen — the recommended writing preset. Thin enough to feel precise,
+  // thinning at 0.42 gives organic width variation (shape/roundness), high
+  // streamline stabilises the path so jitter doesn't amplify that variation.
+  'pluma-gel': {
+    sizeScale: 3.2,    // 2.5×3.2=8px default — down from 11.25px, noticeably finer
+    thinning: 0.42,    // restored: gives the stroke organic roundness without dryness
+    smoothing: 0.82,   // up from 0.78 — rounder silhouette
+    streamline: 0.65,  // up from 0.62 — absorbs more hand jitter
+    startTaper: 10,
+    endTaper: 8,
+    startEasing: (t) => t * (2 - t),
+    endEasing: (t) => t * (2 - t),
+  },
+  // Soft pencil — moderate thinness, more variation, slightly rougher than pen
+  'lapiz-suave': {
+    sizeScale: 3.8,    // down from 4.8
+    thinning: 0.58,    // down from 0.62
+    smoothing: 0.66,
+    streamline: 0.52,
+    startTaper: 18,
+    endTaper: 14,
+    startEasing: (t) => t,
+    endEasing: (t) => t * (2 - t),
+  },
+  // Felt marker — unchanged, already correct character
   'marcador': {
     sizeScale: 5.5,
     thinning: 0.08,
