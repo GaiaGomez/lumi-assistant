@@ -13,6 +13,7 @@ import {
 import type { ClinicalCanvasPath } from '@/types'
 
 type DrawingTool = 'pen' | 'highlighter' | 'eraser'
+type BackgroundStyle = 'plain' | 'dots' | 'lines'
 
 interface DrawingCanvasProps {
   onChange: (snapshot: { dataUrl: string; paths: ClinicalCanvasPath[] }) => void
@@ -26,7 +27,18 @@ export interface DrawingCanvasHandle {
   flushPng: () => Promise<void>
 }
 
+// Metadata captured at pointer-down — stays stable for the life of one stroke
+interface StrokeMeta {
+  id: string
+  color: string
+  width: number
+  tool: DrawingTool
+  simulatePressure: boolean
+}
+
 const COLOR_OPTIONS = [
+  { label: 'Negro', value: '#1C1C1E' },
+  { label: 'Pizarra', value: '#3B5278' },
   { label: 'Cafe', value: '#3D2E22' },
   { label: 'Taupe', value: '#7B685F' },
   { label: 'Rosado', value: '#B98F95' },
@@ -40,13 +52,13 @@ const PNG_EXPORT_DEBOUNCE_MS = 500
 const PEN_DETECTED_KEY = 'lumi-canvas-pen-mode'
 const CANVAS_BG = '#FAF7F4'
 
-// Internal stroke representation — richer than ClinicalCanvasPath for rendering
 interface InternalStroke {
   id: string
-  points: Array<[number, number, number]>   // [x, y, pressure]
+  points: Array<[number, number, number]>
   color: string
   width: number
   tool: DrawingTool
+  simulatePressure: boolean
 }
 
 function readPenDetected(): boolean {
@@ -54,8 +66,6 @@ function readPenDetected(): boolean {
   return localStorage.getItem(PEN_DETECTED_KEY) === '1'
 }
 
-// Returns true on stylus-capable tablets (iPad + Apple Pencil) so we start in
-// pen-only mode before any stylus event has been observed.
 function isStylusTabletEnvironment(): boolean {
   if (typeof window === 'undefined') return false
   return (
@@ -64,7 +74,6 @@ function isStylusTabletEnvironment(): boolean {
   )
 }
 
-// Convert the outline polygon from perfect-freehand to an SVG path string.
 function svgPathFromOutline(points: number[][]): string {
   if (!points.length) return ''
   const d: (string | number)[] = ['M', points[0][0], points[0][1]]
@@ -81,25 +90,40 @@ function svgPathFromOutline(points: number[][]): string {
   return d.join(' ')
 }
 
+// isActive=true → last:false (stroke still growing); isActive=false → last:true (taper applied)
 function computeStrokePath(stroke: InternalStroke, isActive = false): string {
-  // perfect-freehand size is the maximum stroke diameter in px.
-  // We scale up from the UI width values (which were SVG stroke-width values)
-  // to get visually equivalent results.
-  const baseSize =
-    stroke.tool === 'highlighter'
-      ? (stroke.width + 2.5) * 3.5
-      : stroke.tool === 'eraser'
-        ? stroke.width * 9
-        : stroke.width * 3.5
+  let outline: number[][]
 
-  const outline = getStroke(stroke.points, {
-    size: baseSize,
-    thinning: stroke.tool === 'highlighter' ? 0 : 0.55,
-    smoothing: 0.5,
-    streamline: 0.4,
-    simulatePressure: false,
-    last: !isActive,
-  })
+  if (stroke.tool === 'highlighter') {
+    outline = getStroke(stroke.points, {
+      size: (stroke.width + 3) * 4,
+      thinning: 0,
+      smoothing: 0.68,
+      streamline: 0.50,
+      simulatePressure: false,
+      last: !isActive,
+    })
+  } else if (stroke.tool === 'eraser') {
+    outline = getStroke(stroke.points, {
+      size: stroke.width * 10,
+      thinning: 0,
+      smoothing: 0.5,
+      streamline: 0.5,
+      simulatePressure: false,
+      last: !isActive,
+    })
+  } else {
+    outline = getStroke(stroke.points, {
+      size: stroke.width * 3.8,
+      thinning: 0.42,
+      smoothing: 0.72,
+      streamline: 0.50,
+      simulatePressure: stroke.simulatePressure,
+      last: !isActive,
+      start: { taper: 14, easing: (t: number) => Math.sqrt(t) },
+      end: { taper: 10, easing: (t: number) => t * t },
+    })
+  }
 
   return svgPathFromOutline(outline)
 }
@@ -107,12 +131,11 @@ function computeStrokePath(stroke: InternalStroke, isActive = false): string {
 function loadedPathsToStrokes(paths: ClinicalCanvasPath[]): InternalStroke[] {
   return paths.map((p, i) => ({
     id: `loaded-${i}`,
-    // Legacy paths have no pressure — use 0.5 (neutral) for uniform appearance
     points: p.paths.map(pt => [pt.x, pt.y, pt.pressure ?? 0.5] as [number, number, number]),
-    // Eraser strokes were stored with drawMode=false
     color: p.drawMode ? p.strokeColor : CANVAS_BG,
     width: p.strokeWidth,
     tool: p.drawMode ? 'pen' : 'eraser',
+    simulatePressure: true,
   }))
 }
 
@@ -143,10 +166,7 @@ async function exportSvgToPng(
     await new Promise<void>((resolve) => {
       const img = new Image()
       img.crossOrigin = 'anonymous'
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, width, height)
-        resolve()
-      }
+      img.onload = () => { ctx.drawImage(img, 0, 0, width, height); resolve() }
       img.onerror = () => resolve()
       img.src = backgroundImage
     })
@@ -158,11 +178,7 @@ async function exportSvgToPng(
 
   await new Promise<void>((resolve, reject) => {
     const img = new Image()
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0)
-      URL.revokeObjectURL(url)
-      resolve()
-    }
+    img.onload = () => { ctx.drawImage(img, 0, 0); URL.revokeObjectURL(url); resolve() }
     img.onerror = () => { URL.revokeObjectURL(url); reject() }
     img.src = url
   })
@@ -182,31 +198,43 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
   const onChangeRef = useRef(onChange)
   useEffect(() => { onChangeRef.current = onChange }, [onChange])
 
+  // ── Toolbar UI state (React renders these) ──────────────────────────────────
   const [tool, setTool] = useState<DrawingTool>('pen')
   const [strokeWidth, setStrokeWidth] = useState(2.5)
   const [strokeColor, setStrokeColor] = useState(COLOR_OPTIONS[0].value)
   const [canvasHeight, setCanvasHeight] = useState(initialHeight)
+  const [backgroundStyle, setBackgroundStyle] = useState<BackgroundStyle>('plain')
+  const [penMode, setPenMode] = useState<boolean>(false)
 
+  // ── Committed strokes (React renders these, updated only on pointer-up) ─────
   const [completedStrokes, setCompletedStrokes] = useState<InternalStroke[]>(
     () => initialPaths ? loadedPathsToStrokes(initialPaths) : []
   )
-  const [activeStroke, setActiveStroke] = useState<InternalStroke | null>(null)
   const redoStackRef = useRef<InternalStroke[]>([])
-  // Keep a stable ref for use inside event handlers
   const completedStrokesRef = useRef<InternalStroke[]>(completedStrokes)
   useEffect(() => { completedStrokesRef.current = completedStrokes }, [completedStrokes])
 
-  const [penMode, setPenMode] = useState<boolean>(false)
-  useEffect(() => {
-    setPenMode(readPenDetected() || isStylusTabletEnvironment())
-  }, [])
+  // ── Live stroke — fully outside React, zero re-renders during drawing ───────
+  // Points accumulate here on every pointer-move; RAF reads and renders them.
+  const activePointsRef = useRef<Array<[number, number, number]>>([])
+  // Metadata captured once at pointer-down (color, width, tool, etc.)
+  const activeMetaRef = useRef<StrokeMeta | null>(null)
+  // Direct ref to the persistent SVG <path> element for the live stroke
+  const activeSvgPathRef = useRef<SVGPathElement | null>(null)
+  // requestAnimationFrame handle — null when no frame is pending
+  const rafRef = useRef<number | null>(null)
 
   const lastDataUrlRef = useRef<string>('')
   const pngDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
+    setPenMode(readPenDetected() || isStylusTabletEnvironment())
+  }, [])
+
+  useEffect(() => {
     return () => {
       if (pngDebounceRef.current) clearTimeout(pngDebounceRef.current)
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
     }
   }, [])
 
@@ -229,7 +257,6 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
     },
   }))
 
-  // Auto-grow canvas as user scrolls near the bottom
   useEffect(() => {
     function maybeGrowCanvas() {
       const container = containerRef.current
@@ -243,7 +270,6 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
         setCanvasHeight((h) => h + CANVAS_GROW_STEP)
       }
     }
-
     maybeGrowCanvas()
     const scrollTarget: Window | HTMLElement = scrollContainerRef?.current ?? window
     scrollTarget.addEventListener('scroll', maybeGrowCanvas, { passive: true })
@@ -261,9 +287,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
       onChange({ dataUrl: '', paths })
       return
     }
-    // Emit immediately with cached dataUrl for responsiveness
     onChange({ dataUrl: lastDataUrlRef.current, paths })
-
     if (pngDebounceRef.current) clearTimeout(pngDebounceRef.current)
     pngDebounceRef.current = setTimeout(async () => {
       const svg = svgRef.current
@@ -276,10 +300,39 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
         lastDataUrlRef.current = dataUrl
         onChangeRef.current({ dataUrl, paths: strokesToClinicalPaths(currentStrokes) })
       } catch {
-        // SVG export failed — skip silently; paths are still saved
+        // export failed — paths are still saved
       }
     }, PNG_EXPORT_DEBOUNCE_MS)
   }
+
+  // ── RAF render loop for the live stroke ─────────────────────────────────────
+  // Called at most once per display frame. Reads from refs, writes to DOM directly.
+  function renderActiveStroke() {
+    rafRef.current = null
+    const meta = activeMetaRef.current
+    const points = activePointsRef.current
+    const pathEl = activeSvgPathRef.current
+    if (!meta || !pathEl || points.length < 2) return
+
+    const tempStroke: InternalStroke = {
+      id: meta.id,
+      points,
+      color: meta.color,
+      width: meta.width,
+      tool: meta.tool,
+      simulatePressure: meta.simulatePressure,
+    }
+    pathEl.setAttribute('d', computeStrokePath(tempStroke, true))
+    pathEl.setAttribute('fill', meta.color)
+  }
+
+  function scheduleRaf() {
+    if (rafRef.current === null) {
+      rafRef.current = requestAnimationFrame(renderActiveStroke)
+    }
+  }
+
+  // ── Pointer handlers ─────────────────────────────────────────────────────────
 
   function handlePointerDown(e: React.PointerEvent<SVGSVGElement>) {
     if (penMode && e.pointerType !== 'pen') return
@@ -304,33 +357,75 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
           ? `${strokeColor}66`
           : strokeColor
 
-    setActiveStroke({
+    // Populate refs — no setState, no re-render
+    activePointsRef.current = [[x, y, pressure]]
+    activeMetaRef.current = {
       id: `stroke-${Date.now()}`,
-      points: [[x, y, pressure]],
       color,
       width: strokeWidth,
       tool,
-    })
+      simulatePressure: e.pointerType !== 'pen',
+    }
   }
 
   function handlePointerMove(e: React.PointerEvent<SVGSVGElement>) {
-    if (!activeStroke) return
+    if (!activeMetaRef.current) return
 
     const rect = e.currentTarget.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-    const pressure = e.pressure > 0 ? e.pressure : 0.5
+    // Coalesced events recover all intermediate positions between frames
+    // (critical for Apple Pencil at 240Hz)
+    const events = (
+      (e.nativeEvent as PointerEvent & { getCoalescedEvents?: () => PointerEvent[] })
+        .getCoalescedEvents?.() ?? [e.nativeEvent as PointerEvent]
+    )
 
-    setActiveStroke((prev) => {
-      if (!prev) return null
-      return { ...prev, points: [...prev.points, [x, y, pressure]] }
-    })
+    for (const evt of events) {
+      activePointsRef.current.push([
+        evt.clientX - rect.left,
+        evt.clientY - rect.top,
+        evt.pressure > 0 ? evt.pressure : 0.5,
+      ])
+    }
+
+    // Schedule one RAF per frame — batches all points accumulated since last frame
+    scheduleRaf()
   }
 
-  function handlePointerUp() {
-    const stroke = activeStroke
-    if (!stroke) return
-    setActiveStroke(null)
+  function finalizeStroke() {
+    const meta = activeMetaRef.current
+    if (!meta) return
+
+    // Cancel any pending RAF for this stroke
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+
+    const points = [...activePointsRef.current]
+
+    // Reset the live path element immediately
+    const pathEl = activeSvgPathRef.current
+    if (pathEl) {
+      pathEl.setAttribute('d', '')
+      pathEl.setAttribute('fill', 'none')
+    }
+
+    // Clear active refs
+    activePointsRef.current = []
+    activeMetaRef.current = null
+
+    if (!points.length) return
+
+    const stroke: InternalStroke = {
+      id: meta.id,
+      points,
+      color: meta.color,
+      width: meta.width,
+      tool: meta.tool,
+      simulatePressure: meta.simulatePressure,
+    }
+
+    // React state update happens once, after the stroke is complete
     setCompletedStrokes((prev) => {
       const next = [...prev, stroke]
       scheduleOrEmitPng(next)
@@ -365,6 +460,10 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
     lastDataUrlRef.current = ''
     setCompletedStrokes([])
     onChange({ dataUrl: '', paths: [] })
+  }
+
+  function cycleBackground() {
+    setBackgroundStyle(s => s === 'plain' ? 'dots' : s === 'dots' ? 'lines' : 'plain')
   }
 
   const totalStrokes = completedStrokes.length
@@ -419,11 +518,13 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
                   key={option.value}
                   type="button"
                   onClick={() => setStrokeColor(option.value)}
-                  className="h-8 w-8 rounded-full shrink-0"
+                  className="h-7 w-7 rounded-full shrink-0"
                   style={{
                     background: option.value,
                     border: active ? '2px solid rgba(255,255,255,0.92)' : '1px solid rgba(255,255,255,0.42)',
-                    boxShadow: active ? '0 0 0 2px rgba(120, 106, 130, 0.24)' : 'none',
+                    boxShadow: active ? '0 0 0 2.5px rgba(120, 106, 130, 0.30)' : 'none',
+                    transform: active ? 'scale(1.14)' : 'scale(1)',
+                    transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                   }}
                   aria-label={`Usar ${option.label}`}
                 />
@@ -458,6 +559,42 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
           </div>
 
           <div className="ml-auto flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={cycleBackground}
+              className="flex h-8 w-8 items-center justify-center rounded-full shrink-0"
+              title={backgroundStyle === 'plain' ? 'Ver con puntos' : backgroundStyle === 'dots' ? 'Ver con líneas' : 'Sin fondo'}
+              style={{
+                background: backgroundStyle !== 'plain' ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.32)',
+                color: backgroundStyle !== 'plain' ? 'var(--ink-cool-strong)' : 'var(--ink-cool-soft)',
+              }}
+              aria-label="Cambiar fondo del canvas"
+            >
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden>
+                {backgroundStyle === 'dots' ? (
+                  <>
+                    <circle cx="3.5" cy="3.5" r="1.1" fill="currentColor" />
+                    <circle cx="7.5" cy="3.5" r="1.1" fill="currentColor" />
+                    <circle cx="11.5" cy="3.5" r="1.1" fill="currentColor" />
+                    <circle cx="3.5" cy="7.5" r="1.1" fill="currentColor" />
+                    <circle cx="7.5" cy="7.5" r="1.1" fill="currentColor" />
+                    <circle cx="11.5" cy="7.5" r="1.1" fill="currentColor" />
+                    <circle cx="3.5" cy="11.5" r="1.1" fill="currentColor" />
+                    <circle cx="7.5" cy="11.5" r="1.1" fill="currentColor" />
+                    <circle cx="11.5" cy="11.5" r="1.1" fill="currentColor" />
+                  </>
+                ) : backgroundStyle === 'lines' ? (
+                  <>
+                    <line x1="2" y1="4.5" x2="13" y2="4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <line x1="2" y1="7.5" x2="13" y2="7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <line x1="2" y1="10.5" x2="13" y2="10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </>
+                ) : (
+                  <rect x="2" y="2" width="11" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                )}
+              </svg>
+            </button>
+
             <button
               type="button"
               onClick={handleUndo}
@@ -521,24 +658,41 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
           }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
+          onPointerUp={finalizeStroke}
+          onPointerCancel={finalizeStroke}
         >
+          <defs>
+            <pattern id="canvas-dots" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
+              <circle cx="14" cy="14" r="1" fill="rgba(55,45,65,0.14)" />
+            </pattern>
+            <pattern id="canvas-lines" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
+              <line x1="0" y1="28" x2="28" y2="28" stroke="rgba(55,45,65,0.11)" strokeWidth="1" />
+            </pattern>
+          </defs>
+
+          {backgroundStyle !== 'plain' && (
+            <rect width="100%" height={canvasHeight} fill={`url(#canvas-${backgroundStyle})`} />
+          )}
+
+          {/* Committed strokes — rendered by React, updated only on pointer-up */}
           {completedStrokes.map((stroke) => (
             <path
               key={stroke.id}
               d={computeStrokePath(stroke)}
               fill={stroke.color}
               stroke="none"
+              shapeRendering="geometricPrecision"
             />
           ))}
-          {activeStroke && activeStroke.points.length > 1 && (
-            <path
-              d={computeStrokePath(activeStroke, true)}
-              fill={activeStroke.color}
-              stroke="none"
-            />
-          )}
+
+          {/* Live stroke — always in the DOM, updated directly via setAttribute in RAF */}
+          <path
+            ref={activeSvgPathRef}
+            d=""
+            fill="none"
+            stroke="none"
+            shapeRendering="geometricPrecision"
+          />
         </svg>
       </div>
 
