@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { getSessionNoteById, updateSessionNote, deleteSessionNote } from '@/lib/notes/actions'
 import { createClient } from '@/lib/supabase/client'
@@ -43,6 +44,16 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
   const canvasRef = useRef<DrawingCanvasHandle>(null)
   const canvasSnapshotRef = useRef<{ dataUrl: string; paths: ClinicalCanvasPath[] } | null>(null)
   const canvasScrollRef = useRef<HTMLDivElement>(null)
+
+  // Lock body scroll while canvas is open so the app doesn't scroll behind
+  useEffect(() => {
+    if (showCanvas) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [showCanvas])
 
   useEffect(() => {
     getSessionNoteById(noteId).then((loaded) => {
@@ -343,11 +354,11 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
         )}
       </div>
 
-      {/* ── Canvas — fullscreen overlay ── */}
-      {showCanvas && (
+      {/* ── Canvas — fullscreen portal, mounted at document.body to escape layout stacking context ── */}
+      {showCanvas && createPortal(
         <div
-          className="fixed inset-0 z-[60] flex flex-col"
-          style={{ background: '#FAF7F4' }}
+          className="fixed inset-0 flex flex-col"
+          style={{ zIndex: 9999, background: '#FAF7F4' }}
         >
           {/* Context bar — patient + session + status + close */}
           <div
@@ -415,7 +426,8 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
               scrollContainerRef={canvasScrollRef}
             />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Confirmar eliminación ── */}

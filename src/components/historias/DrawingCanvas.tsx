@@ -120,40 +120,41 @@ interface PenParams {
 }
 
 const PRESET_PARAMS: Record<'pluma-fina' | 'pluma-gel' | 'lapiz-suave' | 'marcador', PenParams> = {
-  // Very fine, high-pressure sensitivity, long elegant taper — like a 0.3mm liner
+  // Fine liner — tight smoothing, elegant taper, sensitive to pressure
   'pluma-fina': {
-    sizeScale: 3.0,
-    thinning: 0.62,
-    smoothing: 0.80,
-    streamline: 0.55,
-    startTaper: 22,
-    endTaper: 18,
+    sizeScale: 3.2,
+    thinning: 0.55,
+    smoothing: 0.82,
+    streamline: 0.58,
+    startTaper: 16,
+    endTaper: 12,
     startEasing: (t) => Math.sqrt(t),
-    endEasing: (t) => t * t,
+    endEasing: (t) => t * (2 - t),  // ease-out: softer end than t*t
   },
-  // Versatile gel pen — balanced pressure response, clean taper
+  // Gel pen — more body, stable, forgiving. The "handwriting looks good automatically" preset.
+  // High streamline reduces jitter; ease-out easing kills sharp knife-tip ends.
   'pluma-gel': {
-    sizeScale: 3.8,
-    thinning: 0.42,
-    smoothing: 0.72,
-    streamline: 0.50,
-    startTaper: 12,
-    endTaper: 9,
-    startEasing: (t) => Math.sqrt(t),
-    endEasing: (t) => t * t,
+    sizeScale: 4.5,    // more body (+18% vs before)
+    thinning: 0.32,    // less pressure reactivity = more consistent, less dry
+    smoothing: 0.78,   // smoother silhouette
+    streamline: 0.62,  // significantly more stable input path
+    startTaper: 8,     // shorter taper = entry fills quickly, no thin needle start
+    endTaper: 6,       // shorter exit = blunt enough to avoid knife tips
+    startEasing: (t) => t * (2 - t),  // ease-out start = gentle entry
+    endEasing: (t) => t * (2 - t),    // ease-out end = soft, natural exit
   },
-  // Soft pencil — wider range of pressure variation, longer fades, slightly less smooth
+  // Soft pencil — more pressure variation, longer gentle fades, less smooth
   'lapiz-suave': {
-    sizeScale: 4.5,
-    thinning: 0.68,
-    smoothing: 0.60,
-    streamline: 0.45,
-    startTaper: 28,
-    endTaper: 22,
-    startEasing: (t) => t,       // linear start = pencil enters full width
-    endEasing: (t) => t * t,
+    sizeScale: 4.8,
+    thinning: 0.62,
+    smoothing: 0.63,
+    streamline: 0.48,
+    startTaper: 20,
+    endTaper: 16,
+    startEasing: (t) => t,            // linear = pencil enters full width
+    endEasing: (t) => t * (2 - t),
   },
-  // Felt marker — thick, nearly uniform, minimal taper for blunt ends
+  // Felt marker — thick, nearly uniform, blunt ends
   'marcador': {
     sizeScale: 5.5,
     thinning: 0.08,
