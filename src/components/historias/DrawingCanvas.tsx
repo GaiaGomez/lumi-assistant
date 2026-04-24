@@ -2,17 +2,12 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type RefObject } from 'react'
 import { getStroke } from 'perfect-freehand'
-import {
-  Eraser,
-  Highlighter,
-  Pen,
-  Redo2,
-  Trash2,
-  Undo2,
-} from 'lucide-react'
+import { Eraser, Redo2, Trash2, Undo2 } from 'lucide-react'
 import type { ClinicalCanvasPath } from '@/types'
 
-type DrawingTool = 'pen' | 'highlighter' | 'eraser'
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type DrawingTool = 'pluma-fina' | 'pluma-gel' | 'lapiz-suave' | 'marcador' | 'resaltador' | 'borrador'
 type BackgroundStyle = 'plain' | 'dots' | 'lines'
 
 interface DrawingCanvasProps {
@@ -36,6 +31,143 @@ interface StrokeMeta {
   simulatePressure: boolean
 }
 
+interface InternalStroke {
+  id: string
+  points: Array<[number, number, number]>
+  color: string
+  width: number
+  tool: DrawingTool
+  simulatePressure: boolean
+}
+
+// ─── Pen presets ──────────────────────────────────────────────────────────────
+// Each preset defines its visual character independently of stroke width.
+// The toolbar shows a live stroke preview bar colored with the current ink color.
+
+interface PenPreset {
+  id: DrawingTool
+  label: string
+  defaultWidth: number  // auto-applied when preset is selected
+  // Stroke preview bar (toolbar visual)
+  previewH: number      // bar height in px
+  previewRadius: number // border-radius
+  previewOpacity: number
+  previewSquare?: boolean  // flat ends for marcador
+}
+
+const PEN_PRESETS: PenPreset[] = [
+  {
+    id: 'pluma-fina',
+    label: 'Fina',
+    defaultWidth: 1.5,
+    previewH: 1.5,
+    previewRadius: 999,
+    previewOpacity: 1,
+  },
+  {
+    id: 'pluma-gel',
+    label: 'Gel',
+    defaultWidth: 2.5,
+    previewH: 2.5,
+    previewRadius: 999,
+    previewOpacity: 1,
+  },
+  {
+    id: 'lapiz-suave',
+    label: 'Lápiz',
+    defaultWidth: 2.5,
+    previewH: 3,
+    previewRadius: 999,
+    previewOpacity: 0.72,
+  },
+  {
+    id: 'marcador',
+    label: 'Marcador',
+    defaultWidth: 4,
+    previewH: 6,
+    previewRadius: 2,
+    previewOpacity: 1,
+    previewSquare: true,
+  },
+  {
+    id: 'resaltador',
+    label: 'Resaltador',
+    defaultWidth: 5.5,
+    previewH: 10,
+    previewRadius: 3,
+    previewOpacity: 0.42,
+  },
+  {
+    id: 'borrador',
+    label: 'Borrador',
+    defaultWidth: 4,
+    previewH: 0,
+    previewRadius: 0,
+    previewOpacity: 0,
+  },
+]
+
+// perfect-freehand parameters per pen type
+interface PenParams {
+  sizeScale: number
+  thinning: number
+  smoothing: number
+  streamline: number
+  startTaper: number
+  endTaper: number
+  startEasing: (t: number) => number
+  endEasing: (t: number) => number
+}
+
+const PRESET_PARAMS: Record<'pluma-fina' | 'pluma-gel' | 'lapiz-suave' | 'marcador', PenParams> = {
+  // Very fine, high-pressure sensitivity, long elegant taper — like a 0.3mm liner
+  'pluma-fina': {
+    sizeScale: 3.0,
+    thinning: 0.62,
+    smoothing: 0.80,
+    streamline: 0.55,
+    startTaper: 22,
+    endTaper: 18,
+    startEasing: (t) => Math.sqrt(t),
+    endEasing: (t) => t * t,
+  },
+  // Versatile gel pen — balanced pressure response, clean taper
+  'pluma-gel': {
+    sizeScale: 3.8,
+    thinning: 0.42,
+    smoothing: 0.72,
+    streamline: 0.50,
+    startTaper: 12,
+    endTaper: 9,
+    startEasing: (t) => Math.sqrt(t),
+    endEasing: (t) => t * t,
+  },
+  // Soft pencil — wider range of pressure variation, longer fades, slightly less smooth
+  'lapiz-suave': {
+    sizeScale: 4.5,
+    thinning: 0.68,
+    smoothing: 0.60,
+    streamline: 0.45,
+    startTaper: 28,
+    endTaper: 22,
+    startEasing: (t) => t,       // linear start = pencil enters full width
+    endEasing: (t) => t * t,
+  },
+  // Felt marker — thick, nearly uniform, minimal taper for blunt ends
+  'marcador': {
+    sizeScale: 5.5,
+    thinning: 0.08,
+    smoothing: 0.68,
+    streamline: 0.50,
+    startTaper: 2,
+    endTaper: 2,
+    startEasing: (t) => t,
+    endEasing: (t) => t,
+  },
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 const COLOR_OPTIONS = [
   { label: 'Negro', value: '#1C1C1E' },
   { label: 'Pizarra', value: '#3B5278' },
@@ -52,14 +184,7 @@ const PNG_EXPORT_DEBOUNCE_MS = 500
 const PEN_DETECTED_KEY = 'lumi-canvas-pen-mode'
 const CANVAS_BG = '#FAF7F4'
 
-interface InternalStroke {
-  id: string
-  points: Array<[number, number, number]>
-  color: string
-  width: number
-  tool: DrawingTool
-  simulatePressure: boolean
-}
+// ─── Pure functions ───────────────────────────────────────────────────────────
 
 function readPenDetected(): boolean {
   if (typeof window === 'undefined') return false
@@ -90,20 +215,11 @@ function svgPathFromOutline(points: number[][]): string {
   return d.join(' ')
 }
 
-// isActive=true → last:false (stroke still growing); isActive=false → last:true (taper applied)
+// isActive=true → last:false (stroke growing); isActive=false → last:true (taper finalized)
 function computeStrokePath(stroke: InternalStroke, isActive = false): string {
   let outline: number[][]
 
-  if (stroke.tool === 'highlighter') {
-    outline = getStroke(stroke.points, {
-      size: (stroke.width + 3) * 4,
-      thinning: 0,
-      smoothing: 0.68,
-      streamline: 0.50,
-      simulatePressure: false,
-      last: !isActive,
-    })
-  } else if (stroke.tool === 'eraser') {
+  if (stroke.tool === 'borrador') {
     outline = getStroke(stroke.points, {
       size: stroke.width * 10,
       thinning: 0,
@@ -112,20 +228,37 @@ function computeStrokePath(stroke: InternalStroke, isActive = false): string {
       simulatePressure: false,
       last: !isActive,
     })
-  } else {
+  } else if (stroke.tool === 'resaltador') {
     outline = getStroke(stroke.points, {
-      size: stroke.width * 3.8,
-      thinning: 0.42,
-      smoothing: 0.72,
-      streamline: 0.50,
+      size: (stroke.width + 4) * 6,
+      thinning: 0,
+      smoothing: 0.65,
+      streamline: 0.48,
+      simulatePressure: false,
+      last: !isActive,
+    })
+  } else {
+    const p = PRESET_PARAMS[stroke.tool]
+    outline = getStroke(stroke.points, {
+      size: stroke.width * p.sizeScale,
+      thinning: p.thinning,
+      smoothing: p.smoothing,
+      streamline: p.streamline,
       simulatePressure: stroke.simulatePressure,
       last: !isActive,
-      start: { taper: 14, easing: (t: number) => Math.sqrt(t) },
-      end: { taper: 10, easing: (t: number) => t * t },
+      start: { taper: p.startTaper, easing: p.startEasing },
+      end: { taper: p.endTaper, easing: p.endEasing },
     })
   }
 
   return svgPathFromOutline(outline)
+}
+
+function detectLegacyTool(p: ClinicalCanvasPath): DrawingTool {
+  if (!p.drawMode) return 'borrador'
+  // Highlighter colors were stored as #xxxxxx66 (9-char hex with opacity suffix)
+  if (p.strokeColor.length === 9) return 'resaltador'
+  return 'pluma-gel'
 }
 
 function loadedPathsToStrokes(paths: ClinicalCanvasPath[]): InternalStroke[] {
@@ -134,14 +267,14 @@ function loadedPathsToStrokes(paths: ClinicalCanvasPath[]): InternalStroke[] {
     points: p.paths.map(pt => [pt.x, pt.y, pt.pressure ?? 0.5] as [number, number, number]),
     color: p.drawMode ? p.strokeColor : CANVAS_BG,
     width: p.strokeWidth,
-    tool: p.drawMode ? 'pen' : 'eraser',
+    tool: detectLegacyTool(p),
     simulatePressure: true,
   }))
 }
 
 function strokesToClinicalPaths(strokes: InternalStroke[]): ClinicalCanvasPath[] {
   return strokes.map(s => ({
-    drawMode: s.tool !== 'eraser',
+    drawMode: s.tool !== 'borrador',
     strokeColor: s.color,
     strokeWidth: s.width,
     paths: s.points.map(([x, y, pressure]) => ({ x, y, pressure })),
@@ -186,6 +319,8 @@ async function exportSvgToPng(
   return canvas.toDataURL('image/png')
 }
 
+// ─── Component ────────────────────────────────────────────────────────────────
+
 const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(function DrawingCanvas({
   onChange,
   initialPaths,
@@ -198,15 +333,15 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
   const onChangeRef = useRef(onChange)
   useEffect(() => { onChangeRef.current = onChange }, [onChange])
 
-  // ── Toolbar UI state (React renders these) ──────────────────────────────────
-  const [tool, setTool] = useState<DrawingTool>('pen')
+  // ── Toolbar UI state ────────────────────────────────────────────────────────
+  const [tool, setTool] = useState<DrawingTool>('pluma-gel')
   const [strokeWidth, setStrokeWidth] = useState(2.5)
   const [strokeColor, setStrokeColor] = useState(COLOR_OPTIONS[0].value)
   const [canvasHeight, setCanvasHeight] = useState(initialHeight)
   const [backgroundStyle, setBackgroundStyle] = useState<BackgroundStyle>('plain')
   const [penMode, setPenMode] = useState<boolean>(false)
 
-  // ── Committed strokes (React renders these, updated only on pointer-up) ─────
+  // ── Committed strokes (React renders, updated only on pointer-up) ───────────
   const [completedStrokes, setCompletedStrokes] = useState<InternalStroke[]>(
     () => initialPaths ? loadedPathsToStrokes(initialPaths) : []
   )
@@ -215,13 +350,9 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
   useEffect(() => { completedStrokesRef.current = completedStrokes }, [completedStrokes])
 
   // ── Live stroke — fully outside React, zero re-renders during drawing ───────
-  // Points accumulate here on every pointer-move; RAF reads and renders them.
   const activePointsRef = useRef<Array<[number, number, number]>>([])
-  // Metadata captured once at pointer-down (color, width, tool, etc.)
   const activeMetaRef = useRef<StrokeMeta | null>(null)
-  // Direct ref to the persistent SVG <path> element for the live stroke
   const activeSvgPathRef = useRef<SVGPathElement | null>(null)
-  // requestAnimationFrame handle — null when no frame is pending
   const rafRef = useRef<number | null>(null)
 
   const lastDataUrlRef = useRef<string>('')
@@ -293,34 +424,26 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
       const svg = svgRef.current
       const container = containerRef.current
       if (!svg || !container) return
-      const currentStrokes = completedStrokesRef.current
-      if (!currentStrokes.length) return
+      const current = completedStrokesRef.current
+      if (!current.length) return
       try {
         const dataUrl = await exportSvgToPng(svg, container.clientWidth, canvasHeight, backgroundImage ?? null)
         lastDataUrlRef.current = dataUrl
-        onChangeRef.current({ dataUrl, paths: strokesToClinicalPaths(currentStrokes) })
-      } catch {
-        // export failed — paths are still saved
-      }
+        onChangeRef.current({ dataUrl, paths: strokesToClinicalPaths(current) })
+      } catch { /* export failed — paths still saved */ }
     }, PNG_EXPORT_DEBOUNCE_MS)
   }
 
-  // ── RAF render loop for the live stroke ─────────────────────────────────────
-  // Called at most once per display frame. Reads from refs, writes to DOM directly.
+  // ── RAF render loop — reads refs, writes to DOM, zero React overhead ────────
   function renderActiveStroke() {
     rafRef.current = null
     const meta = activeMetaRef.current
     const points = activePointsRef.current
     const pathEl = activeSvgPathRef.current
     if (!meta || !pathEl || points.length < 2) return
-
     const tempStroke: InternalStroke = {
-      id: meta.id,
-      points,
-      color: meta.color,
-      width: meta.width,
-      tool: meta.tool,
-      simulatePressure: meta.simulatePressure,
+      id: meta.id, points, color: meta.color, width: meta.width,
+      tool: meta.tool, simulatePressure: meta.simulatePressure,
     }
     pathEl.setAttribute('d', computeStrokePath(tempStroke, true))
     pathEl.setAttribute('fill', meta.color)
@@ -332,11 +455,10 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
     }
   }
 
-  // ── Pointer handlers ─────────────────────────────────────────────────────────
+  // ── Pointer handlers ────────────────────────────────────────────────────────
 
   function handlePointerDown(e: React.PointerEvent<SVGSVGElement>) {
     if (penMode && e.pointerType !== 'pen') return
-
     if (e.pointerType === 'pen' && !penMode) {
       setPenMode(true)
       localStorage.setItem(PEN_DETECTED_KEY, '1')
@@ -351,13 +473,12 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
     const pressure = e.pressure > 0 ? e.pressure : 0.5
 
     const color =
-      tool === 'eraser'
+      tool === 'borrador'
         ? CANVAS_BG
-        : tool === 'highlighter'
+        : tool === 'resaltador'
           ? `${strokeColor}66`
           : strokeColor
 
-    // Populate refs — no setState, no re-render
     activePointsRef.current = [[x, y, pressure]]
     activeMetaRef.current = {
       id: `stroke-${Date.now()}`,
@@ -370,15 +491,13 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
 
   function handlePointerMove(e: React.PointerEvent<SVGSVGElement>) {
     if (!activeMetaRef.current) return
-
     const rect = e.currentTarget.getBoundingClientRect()
     // Coalesced events recover all intermediate positions between frames
-    // (critical for Apple Pencil at 240Hz)
+    // — on Apple Pencil at 240Hz this recovers 2-4x more points per frame
     const events = (
       (e.nativeEvent as PointerEvent & { getCoalescedEvents?: () => PointerEvent[] })
         .getCoalescedEvents?.() ?? [e.nativeEvent as PointerEvent]
     )
-
     for (const evt of events) {
       activePointsRef.current.push([
         evt.clientX - rect.left,
@@ -386,46 +505,27 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
         evt.pressure > 0 ? evt.pressure : 0.5,
       ])
     }
-
-    // Schedule one RAF per frame — batches all points accumulated since last frame
     scheduleRaf()
   }
 
   function finalizeStroke() {
     const meta = activeMetaRef.current
     if (!meta) return
-
-    // Cancel any pending RAF for this stroke
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current)
       rafRef.current = null
     }
-
     const points = [...activePointsRef.current]
-
-    // Reset the live path element immediately
     const pathEl = activeSvgPathRef.current
-    if (pathEl) {
-      pathEl.setAttribute('d', '')
-      pathEl.setAttribute('fill', 'none')
-    }
-
-    // Clear active refs
+    if (pathEl) { pathEl.setAttribute('d', ''); pathEl.setAttribute('fill', 'none') }
     activePointsRef.current = []
     activeMetaRef.current = null
-
     if (!points.length) return
 
     const stroke: InternalStroke = {
-      id: meta.id,
-      points,
-      color: meta.color,
-      width: meta.width,
-      tool: meta.tool,
-      simulatePressure: meta.simulatePressure,
+      id: meta.id, points, color: meta.color, width: meta.width,
+      tool: meta.tool, simulatePressure: meta.simulatePressure,
     }
-
-    // React state update happens once, after the stroke is complete
     setCompletedStrokes((prev) => {
       const next = [...prev, stroke]
       scheduleOrEmitPng(next)
@@ -436,8 +536,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
   function handleUndo() {
     setCompletedStrokes((prev) => {
       if (!prev.length) return prev
-      const last = prev[prev.length - 1]
-      redoStackRef.current = [last, ...redoStackRef.current]
+      redoStackRef.current = [prev[prev.length - 1], ...redoStackRef.current]
       const next = prev.slice(0, -1)
       scheduleOrEmitPng(next)
       return next
@@ -462,179 +561,230 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
     onChange({ dataUrl: '', paths: [] })
   }
 
+  function selectTool(id: DrawingTool) {
+    setTool(id)
+    const preset = PEN_PRESETS.find(p => p.id === id)
+    if (preset) setStrokeWidth(preset.defaultWidth)
+  }
+
   function cycleBackground() {
     setBackgroundStyle(s => s === 'plain' ? 'dots' : s === 'dots' ? 'lines' : 'plain')
   }
 
   const totalStrokes = completedStrokes.length
 
+  // ─── Render ─────────────────────────────────────────────────────────────────
+
   return (
-    <div className="space-y-3.5">
-      {/* ── Toolbar ── */}
+    <div className="flex flex-col">
+
+      {/* ── Sticky toolbar ── */}
       <div
-        className="rounded-[22px] p-2.5"
+        className="sticky top-0 z-10 flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5"
         style={{
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.58) 0%, rgba(255,255,255,0.34) 100%)',
-          border: '1px solid rgba(255,255,255,0.42)',
-          boxShadow: '0 14px 36px rgba(124, 108, 128, 0.08)',
+          background: 'rgba(250,247,244,0.97)',
+          backdropFilter: 'blur(20px) saturate(140%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(140%)',
+          borderBottom: '1px solid rgba(170,160,185,0.16)',
         }}
       >
-        <div className="flex flex-wrap items-center gap-1.5 lg:flex-nowrap">
-          {[
-            { id: 'pen', label: 'Lapiz', icon: Pen },
-            { id: 'highlighter', label: 'Marcador', icon: Highlighter },
-            { id: 'eraser', label: 'Borrador', icon: Eraser },
-          ].map((item) => {
-            const Icon = item.icon
-            const active = tool === item.id
+
+        {/* Preset selector */}
+        <div className="flex items-center gap-0.5">
+          {PEN_PRESETS.map((preset) => {
+            const active = tool === preset.id
+            const isEraser = preset.id === 'borrador'
             return (
               <button
-                key={item.id}
+                key={preset.id}
                 type="button"
-                onClick={() => setTool(item.id as DrawingTool)}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[14px] whitespace-nowrap shrink-0"
+                onClick={() => selectTool(preset.id)}
+                className="flex flex-col items-center justify-center rounded-[12px] px-2.5 py-1.5 gap-1 shrink-0 transition-all"
                 style={active ? {
-                  background: 'rgba(255,255,255,0.88)',
-                  color: 'var(--ink-cool-strong)',
-                  border: '1px solid rgba(255,255,255,0.62)',
-                  boxShadow: '0 10px 22px rgba(124, 108, 128, 0.10)',
+                  background: 'rgba(255,255,255,0.96)',
+                  boxShadow: '0 2px 10px rgba(110,100,130,0.13), 0 0 0 1px rgba(255,255,255,0.7)',
                 } : {
-                  background: 'rgba(255,255,255,0.22)',
-                  color: 'var(--ink-cool-soft)',
-                  border: '1px solid rgba(255,255,255,0.24)',
+                  background: 'transparent',
                 }}
               >
-                <Icon size={15} />
-                {item.label}
+                {/* Stroke character preview */}
+                <div className="flex h-[14px] items-center justify-center w-7">
+                  {isEraser ? (
+                    <Eraser
+                      size={13}
+                      style={{ color: active ? 'var(--ink-cool-strong)' : 'var(--ink-cool-muted)' }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: 28,
+                        height: preset.previewH,
+                        borderRadius: preset.previewRadius,
+                        background: strokeColor,
+                        opacity: preset.previewOpacity,
+                      }}
+                    />
+                  )}
+                </div>
+                <span
+                  className="text-[10px] leading-none whitespace-nowrap"
+                  style={{ color: active ? 'var(--ink-cool-strong)' : 'var(--ink-cool-muted)' }}
+                >
+                  {preset.label}
+                </span>
               </button>
             )
           })}
+        </div>
 
-          <div className="flex flex-wrap items-center gap-1.5">
-            {COLOR_OPTIONS.map((option) => {
-              const active = strokeColor === option.value
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setStrokeColor(option.value)}
-                  className="h-7 w-7 rounded-full shrink-0"
-                  style={{
-                    background: option.value,
-                    border: active ? '2px solid rgba(255,255,255,0.92)' : '1px solid rgba(255,255,255,0.42)',
-                    boxShadow: active ? '0 0 0 2.5px rgba(120, 106, 130, 0.30)' : 'none',
-                    transform: active ? 'scale(1.14)' : 'scale(1)',
-                    transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                  }}
-                  aria-label={`Usar ${option.label}`}
-                />
-              )
-            })}
-          </div>
+        {/* Separator */}
+        <div className="h-6 w-px shrink-0" style={{ background: 'rgba(150,140,165,0.18)' }} />
 
-          <div className="flex flex-wrap items-center gap-1.5">
-            {STROKE_OPTIONS.map((width) => (
+        {/* Color palette */}
+        <div className="flex items-center gap-1.5">
+          {COLOR_OPTIONS.map((option) => {
+            const active = strokeColor === option.value
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setStrokeColor(option.value)}
+                className="h-6 w-6 rounded-full shrink-0 transition-all"
+                style={{
+                  background: option.value,
+                  border: active ? '2px solid rgba(255,255,255,0.95)' : '1px solid rgba(255,255,255,0.5)',
+                  boxShadow: active ? `0 0 0 2px ${option.value}55` : 'none',
+                  transform: active ? 'scale(1.18)' : 'scale(1)',
+                }}
+                aria-label={`Usar ${option.label}`}
+              />
+            )
+          })}
+        </div>
+
+        {/* Separator */}
+        <div className="h-6 w-px shrink-0" style={{ background: 'rgba(150,140,165,0.18)' }} />
+
+        {/* Stroke width */}
+        <div className="flex items-center gap-1">
+          {STROKE_OPTIONS.map((width) => {
+            const active = strokeWidth === width
+            return (
               <button
                 key={width}
                 type="button"
                 onClick={() => setStrokeWidth(width)}
-                className="flex h-8 min-w-8 items-center justify-center rounded-full px-2 shrink-0"
-                style={strokeWidth === width ? {
-                  background: 'rgba(255,255,255,0.88)',
-                  border: '1px solid rgba(255,255,255,0.64)',
-                  color: 'var(--ink-cool-strong)',
+                className="flex h-7 min-w-[28px] items-center justify-center rounded-full px-1.5 shrink-0 transition-all"
+                style={active ? {
+                  background: 'rgba(255,255,255,0.96)',
+                  boxShadow: '0 2px 8px rgba(110,100,130,0.12)',
                 } : {
-                  background: 'rgba(255,255,255,0.24)',
-                  border: '1px solid rgba(255,255,255,0.24)',
-                  color: 'var(--ink-cool-soft)',
+                  background: 'transparent',
                 }}
                 aria-label={`Grosor ${width}`}
               >
                 <span
-                  className="rounded-full"
-                  style={{ width: width * 2 + 1, height: width * 2 + 1, background: 'currentColor' }}
+                  className="rounded-full block"
+                  style={{
+                    width: Math.round(width * 2) + 1,
+                    height: Math.round(width * 2) + 1,
+                    background: active ? 'var(--ink-cool-strong)' : 'var(--ink-cool-muted)',
+                  }}
                 />
               </button>
-            ))}
-          </div>
-
-          <div className="ml-auto flex flex-wrap items-center gap-1.5">
-            <button
-              type="button"
-              onClick={cycleBackground}
-              className="flex h-8 w-8 items-center justify-center rounded-full shrink-0"
-              title={backgroundStyle === 'plain' ? 'Ver con puntos' : backgroundStyle === 'dots' ? 'Ver con líneas' : 'Sin fondo'}
-              style={{
-                background: backgroundStyle !== 'plain' ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.32)',
-                color: backgroundStyle !== 'plain' ? 'var(--ink-cool-strong)' : 'var(--ink-cool-soft)',
-              }}
-              aria-label="Cambiar fondo del canvas"
-            >
-              <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden>
-                {backgroundStyle === 'dots' ? (
-                  <>
-                    <circle cx="3.5" cy="3.5" r="1.1" fill="currentColor" />
-                    <circle cx="7.5" cy="3.5" r="1.1" fill="currentColor" />
-                    <circle cx="11.5" cy="3.5" r="1.1" fill="currentColor" />
-                    <circle cx="3.5" cy="7.5" r="1.1" fill="currentColor" />
-                    <circle cx="7.5" cy="7.5" r="1.1" fill="currentColor" />
-                    <circle cx="11.5" cy="7.5" r="1.1" fill="currentColor" />
-                    <circle cx="3.5" cy="11.5" r="1.1" fill="currentColor" />
-                    <circle cx="7.5" cy="11.5" r="1.1" fill="currentColor" />
-                    <circle cx="11.5" cy="11.5" r="1.1" fill="currentColor" />
-                  </>
-                ) : backgroundStyle === 'lines' ? (
-                  <>
-                    <line x1="2" y1="4.5" x2="13" y2="4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    <line x1="2" y1="7.5" x2="13" y2="7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    <line x1="2" y1="10.5" x2="13" y2="10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </>
-                ) : (
-                  <rect x="2" y="2" width="11" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" fill="none" />
-                )}
-              </svg>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleUndo}
-              className="flex h-8 w-8 items-center justify-center rounded-full shrink-0"
-              style={{ background: 'rgba(255,255,255,0.32)', color: 'var(--ink-cool-soft)' }}
-              aria-label="Deshacer"
-            >
-              <Undo2 size={15} />
-            </button>
-            <button
-              type="button"
-              onClick={handleRedo}
-              className="flex h-8 w-8 items-center justify-center rounded-full shrink-0"
-              style={{ background: 'rgba(255,255,255,0.32)', color: 'var(--ink-cool-soft)' }}
-              aria-label="Rehacer"
-            >
-              <Redo2 size={15} />
-            </button>
-            <button
-              type="button"
-              onClick={handleClear}
-              className="flex h-8 w-8 items-center justify-center rounded-full shrink-0"
-              style={{ background: 'rgba(255,255,255,0.32)', color: 'var(--state-cancel-text)' }}
-              aria-label="Eliminar dibujo"
-            >
-              <Trash2 size={15} />
-            </button>
-          </div>
+            )
+          })}
         </div>
+
+        {/* Separator */}
+        <div className="h-6 w-px shrink-0" style={{ background: 'rgba(150,140,165,0.18)' }} />
+
+        {/* Actions */}
+        <div className="flex items-center gap-1">
+          {/* Background grid */}
+          <button
+            type="button"
+            onClick={cycleBackground}
+            className="flex h-7 w-7 items-center justify-center rounded-full shrink-0 transition-all"
+            title={backgroundStyle === 'plain' ? 'Ver con puntos' : backgroundStyle === 'dots' ? 'Ver con líneas' : 'Sin fondo'}
+            style={{
+              background: backgroundStyle !== 'plain' ? 'rgba(255,255,255,0.96)' : 'transparent',
+              color: backgroundStyle !== 'plain' ? 'var(--ink-cool-strong)' : 'var(--ink-cool-muted)',
+            }}
+            aria-label="Cambiar fondo"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+              {backgroundStyle === 'dots' ? (
+                <>
+                  <circle cx="3" cy="3" r="1.1" fill="currentColor" />
+                  <circle cx="7" cy="3" r="1.1" fill="currentColor" />
+                  <circle cx="11" cy="3" r="1.1" fill="currentColor" />
+                  <circle cx="3" cy="7" r="1.1" fill="currentColor" />
+                  <circle cx="7" cy="7" r="1.1" fill="currentColor" />
+                  <circle cx="11" cy="7" r="1.1" fill="currentColor" />
+                  <circle cx="3" cy="11" r="1.1" fill="currentColor" />
+                  <circle cx="7" cy="11" r="1.1" fill="currentColor" />
+                  <circle cx="11" cy="11" r="1.1" fill="currentColor" />
+                </>
+              ) : backgroundStyle === 'lines' ? (
+                <>
+                  <line x1="1.5" y1="4" x2="12.5" y2="4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                  <line x1="1.5" y1="7" x2="12.5" y2="7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                  <line x1="1.5" y1="10" x2="12.5" y2="10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                </>
+              ) : (
+                <rect x="1.5" y="1.5" width="11" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4" fill="none" />
+              )}
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleUndo}
+            className="flex h-7 w-7 items-center justify-center rounded-full shrink-0"
+            style={{ color: 'var(--ink-cool-muted)' }}
+            aria-label="Deshacer"
+          >
+            <Undo2 size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={handleRedo}
+            className="flex h-7 w-7 items-center justify-center rounded-full shrink-0"
+            style={{ color: 'var(--ink-cool-muted)' }}
+            aria-label="Rehacer"
+          >
+            <Redo2 size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={handleClear}
+            className="flex h-7 w-7 items-center justify-center rounded-full shrink-0"
+            style={{ color: 'var(--state-cancel-text)' }}
+            aria-label="Eliminar dibujo"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+
+        {/* Pen mode indicator */}
+        {penMode && (
+          <span
+            className="ml-auto text-[10px] shrink-0"
+            style={{ color: 'var(--ink-cool-faint)' }}
+          >
+            Modo lápiz
+          </span>
+        )}
       </div>
 
       {/* ── Canvas ── */}
       <div
         ref={containerRef}
-        className="relative overflow-hidden rounded-[24px]"
+        className="relative"
         style={{
           minHeight: canvasHeight,
           background: CANVAS_BG,
-          border: '1px solid rgba(255,255,255,0.42)',
-          boxShadow: '0 18px 42px rgba(120,110,130,0.10)',
         }}
       >
         {backgroundImage && (
@@ -653,7 +803,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
           style={{
             display: 'block',
             touchAction: 'none',
-            cursor: tool === 'eraser' ? 'cell' : 'crosshair',
+            cursor: tool === 'borrador' ? 'cell' : 'crosshair',
             position: 'relative',
           }}
           onPointerDown={handlePointerDown}
@@ -662,11 +812,13 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
           onPointerCancel={finalizeStroke}
         >
           <defs>
-            <pattern id="canvas-dots" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
-              <circle cx="14" cy="14" r="1" fill="rgba(55,45,65,0.14)" />
+            {/* Subtle dot grid — 26px spacing, warm-toned */}
+            <pattern id="canvas-dots" x="0" y="0" width="26" height="26" patternUnits="userSpaceOnUse">
+              <circle cx="13" cy="13" r="0.9" fill="rgba(80,65,100,0.13)" />
             </pattern>
-            <pattern id="canvas-lines" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
-              <line x1="0" y1="28" x2="28" y2="28" stroke="rgba(55,45,65,0.11)" strokeWidth="1" />
+            {/* Ruled lines — 30px spacing, light and elegant */}
+            <pattern id="canvas-lines" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+              <line x1="0" y1="30" x2="30" y2="30" stroke="rgba(80,65,100,0.10)" strokeWidth="1" />
             </pattern>
           </defs>
 
@@ -685,7 +837,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
             />
           ))}
 
-          {/* Live stroke — always in the DOM, updated directly via setAttribute in RAF */}
+          {/* Live stroke — DOM-managed directly via setAttribute in RAF */}
           <path
             ref={activeSvgPathRef}
             d=""
@@ -697,20 +849,13 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
       </div>
 
       {/* ── Footer ── */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-        <p className="text-[11px]" style={{ color: 'var(--ink-cool-faint)' }}>
-          {totalStrokes === 0
-            ? penMode
-              ? 'Listo para escribir con Apple Pencil.'
-              : 'Listo para escribir con Apple Pencil o mouse.'
-            : `${totalStrokes} trazos guardados en esta nota.`}
-        </p>
-        {penMode && (
+      {totalStrokes > 0 && (
+        <div className="px-4 py-2">
           <p className="text-[11px]" style={{ color: 'var(--ink-cool-faint)' }}>
-            Modo lápiz activo — los toques con palma no dibujan.
+            {totalStrokes} {totalStrokes === 1 ? 'trazo' : 'trazos'}
           </p>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 })

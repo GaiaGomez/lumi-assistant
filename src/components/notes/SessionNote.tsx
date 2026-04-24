@@ -10,7 +10,7 @@ import ModalShell from '@/components/ui/ModalShell'
 import SectionHeader from '@/components/ui/SectionHeader'
 import Button from '@/components/ui/Button'
 import type { ClinicalCanvasPath, SessionNote as SessionNoteType } from '@/types'
-import { X } from 'lucide-react'
+import { ChevronDown, X } from 'lucide-react'
 
 type NoteMode = 'session' | 'formal'
 
@@ -42,6 +42,7 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const canvasRef = useRef<DrawingCanvasHandle>(null)
   const canvasSnapshotRef = useRef<{ dataUrl: string; paths: ClinicalCanvasPath[] } | null>(null)
+  const canvasScrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     getSessionNoteById(noteId).then((loaded) => {
@@ -342,26 +343,79 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
         )}
       </div>
 
-      {/* ── Canvas Modal ── */}
+      {/* ── Canvas — fullscreen overlay ── */}
       {showCanvas && (
-        <ModalShell onClose={handleCanvasClose} maxWidth="max-w-2xl">
-          <div className="flex items-start justify-between p-4">
-            <div>
-              <SectionHeader label="Canvas" className="mb-1" />
-              <h2 className="editorial-panel-title text-[1.05rem]">Notas manuscritas</h2>
+        <div
+          className="fixed inset-0 z-[60] flex flex-col"
+          style={{ background: '#FAF7F4' }}
+        >
+          {/* Context bar — patient + session + status + close */}
+          <div
+            className="flex shrink-0 items-center gap-3 px-4"
+            style={{
+              height: 44,
+              background: 'rgba(250,247,244,0.97)',
+              borderBottom: '1px solid rgba(170,160,185,0.14)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+            }}
+          >
+            <div className="flex flex-1 items-center gap-2 min-w-0">
+              <p
+                className="text-[13px] font-medium truncate"
+                style={{ color: 'var(--ink-cool-strong)' }}
+              >
+                {patientName}
+              </p>
+              <span
+                className="text-[12px] shrink-0"
+                style={{ color: 'var(--ink-cool-faint)' }}
+              >
+                · Sesión #{note.sessionNumber ?? '—'}
+              </span>
             </div>
-            <Button variant="subtle" onClick={handleCanvasClose} className="p-2">
-              <X size={16} />
-            </Button>
+
+            <div className="flex shrink-0 items-center gap-2">
+              {isSaving && (
+                <span
+                  className="h-1.5 w-1.5 animate-pulse rounded-full"
+                  style={{ background: '#D4A84B' }}
+                  title="Guardando..."
+                />
+              )}
+              {!isSaving && isSaved && (
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ background: '#6BAF8D' }}
+                  title="Guardado"
+                />
+              )}
+              <button
+                type="button"
+                onClick={handleCanvasClose}
+                className="flex h-7 w-7 items-center justify-center rounded-full"
+                style={{
+                  background: 'rgba(160,150,175,0.14)',
+                  color: 'var(--ink-cool-soft)',
+                }}
+                aria-label="Cerrar canvas"
+              >
+                <ChevronDown size={16} />
+              </button>
+            </div>
           </div>
-          <div className="px-4 pb-4">
+
+          {/* Scrollable canvas area */}
+          <div ref={canvasScrollRef} className="flex-1 overflow-auto">
             <DrawingCanvas
               ref={canvasRef}
               initialPaths={canvasPaths}
               onChange={handleCanvasChange}
+              initialHeight={900}
+              scrollContainerRef={canvasScrollRef}
             />
           </div>
-        </ModalShell>
+        </div>
       )}
 
       {/* ── Confirmar eliminación ── */}
