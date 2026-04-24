@@ -13,6 +13,51 @@ create table if not exists patients (
   created_at   timestamptz default now()
 );
 
+-- TABLA: patient_clinical_profiles
+-- Perfil clínico estable del paciente. No reemplaza las notas por sesión.
+create table if not exists patient_clinical_profiles (
+  id                             uuid default gen_random_uuid() primary key,
+  patient_id                     uuid references patients(id) on delete cascade not null,
+  psychologist_id                uuid references auth.users(id) on delete cascade not null,
+  documento                      text,
+  birth_date                     date,
+  genero                         text,
+  ocupacion                      text,
+  email                          text,
+  direccion                      text,
+  ciudad                         text,
+  eps                            text,
+  emergency_contact_name         text,
+  emergency_contact_relationship text,
+  emergency_contact_phone        text,
+  emergency_contact_authorized   boolean,
+  emergency_contact_notes        text,
+  medication                     text,
+  allergies                      text,
+  medical_conditions             text,
+  diagnoses                      text,
+  previous_treatments            text,
+  consultation_reason            text,
+  therapeutic_objective          text,
+  session_frequency              text,
+  care_modality                  text,
+  process_status                 text,
+  support_network                text,
+  clinical_alerts                text[] default '{}'::text[],
+  informed_consent_status        text
+                                 check (informed_consent_status in ('pending', 'signed', 'not_required')),
+  administrative_notes           text,
+  created_at                     timestamptz default now(),
+  updated_at                     timestamptz default now(),
+  unique (patient_id)
+);
+
+create index if not exists patient_clinical_profiles_psychologist_idx
+  on patient_clinical_profiles(psychologist_id);
+
+create index if not exists patient_clinical_profiles_patient_psychologist_idx
+  on patient_clinical_profiles(patient_id, psychologist_id);
+
 -- TABLA: appointments
 -- Guarda cada cita del consultorio o eventos generales del calendario
 create table if not exists appointments (
@@ -127,6 +172,10 @@ create trigger update_consultorios_updated_at
   before update on consultorios
   for each row execute function update_updated_at_column();
 
+create trigger update_patient_clinical_profiles_updated_at
+  before update on patient_clinical_profiles
+  for each row execute function update_updated_at_column();
+
 -- ============================================================
 -- ROW LEVEL SECURITY (RLS) — MUY IMPORTANTE
 -- Cada usuario solo puede ver y modificar SUS propios datos
@@ -134,6 +183,7 @@ create trigger update_consultorios_updated_at
 -- ============================================================
 
 alter table patients        enable row level security;
+alter table patient_clinical_profiles enable row level security;
 alter table appointments    enable row level security;
 alter table clinical_notes  enable row level security;
 alter table settings        enable row level security;
@@ -144,6 +194,12 @@ create policy "patients: solo el dueño puede ver"   on patients for select usin
 create policy "patients: solo el dueño puede crear" on patients for insert with check (auth.uid() = user_id);
 create policy "patients: solo el dueño puede editar" on patients for update using (auth.uid() = user_id);
 create policy "patients: solo el dueño puede borrar" on patients for delete using (auth.uid() = user_id);
+
+-- Políticas para patient_clinical_profiles
+create policy "patient_clinical_profiles: solo el dueño puede ver" on patient_clinical_profiles for select using (auth.uid() = psychologist_id);
+create policy "patient_clinical_profiles: solo el dueño puede crear" on patient_clinical_profiles for insert with check (auth.uid() = psychologist_id);
+create policy "patient_clinical_profiles: solo el dueño puede editar" on patient_clinical_profiles for update using (auth.uid() = psychologist_id);
+create policy "patient_clinical_profiles: solo el dueño puede borrar" on patient_clinical_profiles for delete using (auth.uid() = psychologist_id);
 
 -- Políticas para appointments
 create policy "appointments: solo el dueño puede ver"   on appointments for select using (auth.uid() = user_id);

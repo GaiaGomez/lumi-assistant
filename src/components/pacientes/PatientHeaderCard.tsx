@@ -9,13 +9,21 @@ interface PatientHeaderCardProps {
   patient: Patient
   lastAppointmentDate: string | null
   editSlot?: ReactNode
+  nameHref?: string
 }
 
 export default function PatientHeaderCard({
   patient,
   lastAppointmentDate,
   editSlot,
+  nameHref,
 }: PatientHeaderCardProps) {
+  const title = (
+    <h1 className="editorial-panel-title text-[1.18rem] sm:text-[1.28rem] lg:text-[1.36rem] leading-tight break-words">
+      {patient.nombre} {patient.apellido}
+    </h1>
+  )
+
   return (
     <div className="relative mb-2 overflow-hidden rounded-[18px]">
       <div
@@ -49,9 +57,11 @@ export default function PatientHeaderCard({
             <Avatar nombre={patient.nombre} apellido={patient.apellido} size="md" />
 
             <div className="min-w-0">
-              <h1 className="editorial-panel-title text-[1.18rem] sm:text-[1.28rem] lg:text-[1.36rem] leading-tight break-words">
-                {patient.nombre} {patient.apellido}
-              </h1>
+              {nameHref ? (
+                <Link href={nameHref} className="block transition-opacity hover:opacity-80">
+                  {title}
+                </Link>
+              ) : title}
               <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
                 <PatientInactivityStatus
                   lastAppointmentDate={lastAppointmentDate}

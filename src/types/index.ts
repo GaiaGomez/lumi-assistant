@@ -16,6 +16,51 @@ export interface Patient {
   created_at: string
 }
 
+export type ClinicalAlertKey =
+  | 'medicacion_activa'
+  | 'contacto_incompleto'
+  | 'consentimiento_pendiente'
+  | 'prefiere_whatsapp'
+  | 'no_llamar'
+  | 'riesgo_clinico'
+
+export type InformedConsentStatus = 'pending' | 'signed' | 'not_required'
+
+export interface PatientClinicalProfile {
+  id: string
+  patient_id: string
+  psychologist_id: string
+  documento: string | null
+  birth_date: string | null
+  genero: string | null
+  ocupacion: string | null
+  email: string | null
+  direccion: string | null
+  ciudad: string | null
+  eps: string | null
+  emergency_contact_name: string | null
+  emergency_contact_relationship: string | null
+  emergency_contact_phone: string | null
+  emergency_contact_authorized: boolean | null
+  emergency_contact_notes: string | null
+  medication: string | null
+  allergies: string | null
+  medical_conditions: string | null
+  diagnoses: string | null
+  previous_treatments: string | null
+  consultation_reason: string | null
+  therapeutic_objective: string | null
+  session_frequency: string | null
+  care_modality: string | null
+  process_status: string | null
+  support_network: string | null
+  clinical_alerts: ClinicalAlertKey[] | null
+  informed_consent_status: InformedConsentStatus | null
+  administrative_notes: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type AppointmentModalidad = 'online' | 'medellin' | 'retiro'
 export type ConsultorioPrimaryType = 'direccion' | 'enlace' | 'nota'
 export type AppointmentEventType = 'patient' | 'general'

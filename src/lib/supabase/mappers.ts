@@ -1,4 +1,4 @@
-import type { Appointment, Consultorio, Patient } from '@/types'
+import type { Appointment, Consultorio, Patient, PatientClinicalProfile } from '@/types'
 import { normalizeAppointmentRecurrenceRule } from '@/lib/appointment-recurrence'
 
 export const APPOINTMENT_SELECT = 'id, patient_id, consultorio_id, user_id, event_type, title, category, color, recurrence_group_id, recurrence_rule, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at, patient:patients(*), consultorio:consultorios(*)'
@@ -84,6 +84,49 @@ export function mapPatientRows(rows: unknown): Patient[] {
   return rows.map(mapPatientRow)
 }
 
+export function mapPatientClinicalProfileRow(row: unknown): PatientClinicalProfile {
+  const record = expectRecord(row, 'patient_clinical_profile')
+
+  return {
+    id: expectString(record.id, 'patient_clinical_profile.id'),
+    patient_id: expectString(record.patient_id, 'patient_clinical_profile.patient_id'),
+    psychologist_id: expectString(record.psychologist_id, 'patient_clinical_profile.psychologist_id'),
+    documento: optionalString(record.documento),
+    birth_date: optionalString(record.birth_date),
+    genero: optionalString(record.genero),
+    ocupacion: optionalString(record.ocupacion),
+    email: optionalString(record.email),
+    direccion: optionalString(record.direccion),
+    ciudad: optionalString(record.ciudad),
+    eps: optionalString(record.eps),
+    emergency_contact_name: optionalString(record.emergency_contact_name),
+    emergency_contact_relationship: optionalString(record.emergency_contact_relationship),
+    emergency_contact_phone: optionalString(record.emergency_contact_phone),
+    emergency_contact_authorized: typeof record.emergency_contact_authorized === 'boolean'
+      ? record.emergency_contact_authorized
+      : null,
+    emergency_contact_notes: optionalString(record.emergency_contact_notes),
+    medication: optionalString(record.medication),
+    allergies: optionalString(record.allergies),
+    medical_conditions: optionalString(record.medical_conditions),
+    diagnoses: optionalString(record.diagnoses),
+    previous_treatments: optionalString(record.previous_treatments),
+    consultation_reason: optionalString(record.consultation_reason),
+    therapeutic_objective: optionalString(record.therapeutic_objective),
+    session_frequency: optionalString(record.session_frequency),
+    care_modality: optionalString(record.care_modality),
+    process_status: optionalString(record.process_status),
+    support_network: optionalString(record.support_network),
+    clinical_alerts: Array.isArray(record.clinical_alerts)
+      ? record.clinical_alerts.filter((value): value is string => typeof value === 'string') as PatientClinicalProfile['clinical_alerts']
+      : null,
+    informed_consent_status: optionalString(record.informed_consent_status) as PatientClinicalProfile['informed_consent_status'],
+    administrative_notes: optionalString(record.administrative_notes),
+    created_at: expectString(record.created_at, 'patient_clinical_profile.created_at'),
+    updated_at: expectString(record.updated_at, 'patient_clinical_profile.updated_at'),
+  }
+}
+
 export function mapAppointmentRow(row: unknown): Appointment {
   const record = expectRecord(row, 'appointment')
   const estadoSesion = record.estado_sesion as Appointment['estado_sesion']
@@ -116,4 +159,3 @@ export function mapAppointmentRows(rows: unknown): Appointment[] {
   if (!Array.isArray(rows)) return []
   return rows.map(mapAppointmentRow)
 }
-
