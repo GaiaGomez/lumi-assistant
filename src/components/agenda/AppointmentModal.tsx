@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, FileText, MessageCircle, AlertTriangle, Trash2, CalendarDays, Clock3, ChevronDown, MapPin, Tag, Type, NotebookPen } from 'lucide-react'
+import { X, MessageCircle, AlertTriangle, Trash2, CalendarDays, Clock3, ChevronDown, MapPin, Tag, Type } from 'lucide-react'
 import { Appointment, Consultorio } from '@/types'
 import {
   APPOINTMENT_SESSION_LABEL,
@@ -125,41 +125,12 @@ export default function AppointmentModal({
   const [fechaValue, setFechaValue] = useState(toDateInputValue(appointment.fecha_inicio))
   const [horaInicioValue, setHoraInicioValue] = useState(toTimeInputValue(appointment.fecha_inicio))
   const [duracion, setDuracion] = useState(initialDuration || DEFAULT_APPOINTMENT_DURATION_MINUTES)
-  const [notas, setNotas] = useState(appointment.notas ?? '')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [deudaCount, setDeudaCount] = useState<number | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [existingNote, setExistingNote] = useState<{
-    id: string
-    isDraft: boolean
-    signedAt: string | null
-  } | null | 'loading'>('loading')
   const selectedConsultorio = consultorios.find((consultorio) => consultorio.id === consultorioIdEdit) ?? null
-  useEffect(() => {
-    if (appointment.event_type !== 'patient') {
-      setExistingNote(null)
-      return
-    }
-    supabase
-      .from('session_notes')
-      .select('id, is_draft, signed_at')
-      .eq('appointment_id', appointment.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          setExistingNote({
-            id: data.id as string,
-            isDraft: data.is_draft as boolean,
-            signedAt: data.signed_at as string | null,
-          })
-        } else {
-          setExistingNote(null)
-        }
-      })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appointment.id])
 
   // Deuda del paciente — sesiones realizadas sin pagar (excluye la cita actual)
   useEffect(() => {
@@ -205,8 +176,7 @@ export default function AppointmentModal({
     category.trim() !== (appointment.category ?? '') ||
     color !== (appointment.color ?? null) ||
     (nuevaInicio?.toISOString() ?? '') !== currentStart.toISOString() ||
-    (nuevaFin?.toISOString() ?? '') !== currentEnd.toISOString() ||
-    (notas.trim() || '') !== (appointment.notas ?? '')
+    (nuevaFin?.toISOString() ?? '') !== currentEnd.toISOString()
 
   const isSaveBlocked = saving || !hasChanges || !!scheduleError || !!conflicto
 
@@ -228,7 +198,6 @@ export default function AppointmentModal({
         color,
         fecha_inicio:  nuevaInicio.toISOString(),
         fecha_fin:     nuevaFin.toISOString(),
-        notas:         notas.trim() || null,
       })
 
       if (error) throw error
@@ -263,7 +232,7 @@ export default function AppointmentModal({
       <div>
 
         {/* ── Header ── */}
-        <div className="flex items-start justify-between p-4">
+        <div className="flex items-start justify-between px-3.5 pt-3 pb-2">
           <div>
             <SectionHeader label="Cita" className="mb-1" />
             <div className="flex items-center gap-2 flex-wrap">
@@ -296,15 +265,20 @@ export default function AppointmentModal({
               {fechaFormateada}
             </p>
           </div>
-          <Button variant="subtle" onClick={onClose} aria-label="Cerrar" className="p-2">
+          <Button
+            variant="subtle"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="flex h-8 w-8 shrink-0 items-center justify-center"
+          >
             <X size={16} />
           </Button>
         </div>
 
-        <div className="px-4 pb-4 space-y-3">
+        <div className="px-3.5 pb-3 space-y-2.5">
           {/* ── Reagendar ── */}
           <div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-3">
               <label className="space-y-1">
                 <span className="section-kicker">
                   Fecha
@@ -393,7 +367,7 @@ export default function AppointmentModal({
           {appointment.event_type === 'general' ? (
             <>
               <div>
-                <SectionHeader label="Título" className="mb-2.5" />
+                <SectionHeader label="Título" className="mb-2" />
                 <span className="lumi-control-shell">
                   <span className="lumi-control-icon" aria-hidden="true">
                     <Type size={14} />
@@ -408,7 +382,7 @@ export default function AppointmentModal({
                 </span>
               </div>
               <div>
-                <SectionHeader label="Categoría" className="mb-2.5" />
+                <SectionHeader label="Categoría" className="mb-2" />
                 <span className="lumi-control-shell">
                   <span className="lumi-control-icon" aria-hidden="true">
                     <Tag size={14} />
@@ -423,7 +397,7 @@ export default function AppointmentModal({
                 </span>
               </div>
               <div>
-                <SectionHeader label="Color" className="mb-2.5" />
+                <SectionHeader label="Color" className="mb-2" />
                 <div className="grid grid-cols-5 gap-1.5">
                   {GENERAL_EVENT_COLOR_PRESETS.map((preset) => {
                     const isActive = color === preset.value
@@ -449,22 +423,7 @@ export default function AppointmentModal({
           ) : (
             <>
               <div>
-                <span className="lumi-control-shell">
-                  <span className="lumi-control-icon" aria-hidden="true">
-                    <Type size={14} />
-                  </span>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="lumi-control-field w-full"
-                    placeholder="Alias para esta cita (opcional)"
-                  />
-                </span>
-              </div>
-
-              <div>
-                <SectionHeader label="Consultorio" className="mb-2.5" />
+                <SectionHeader label="Consultorio" className="mb-2" />
                 {consultorios.length > 0 ? (
                   <div className="space-y-2">
                     <span className="lumi-control-shell">
@@ -511,7 +470,7 @@ export default function AppointmentModal({
               </div>
 
               <div>
-                <SectionHeader label="Estado" className="mb-2.5" />
+                <SectionHeader label="Estado" className="mb-2" />
                 <div className="grid grid-cols-2 gap-1.5">
                   {APPOINTMENT_SESSION_STATES.map((value) => {
                     const isActive = estadoSesion === value
@@ -520,7 +479,7 @@ export default function AppointmentModal({
                       <button
                         key={value}
                         onClick={() => setEstadoSesion(value as typeof estadoSesion)}
-                        className="py-2.5 px-3 rounded-[14px] text-[14px] font-medium transition-all"
+                        className="py-2 px-3 rounded-[14px] text-[13px] font-medium transition-all"
                         style={isActive ? {
                           background: s!.bg,
                           color: s!.color,
@@ -535,7 +494,7 @@ export default function AppointmentModal({
               </div>
 
               <div>
-                <SectionHeader label="Estado del pago" className="mb-2.5" />
+                <SectionHeader label="Estado del pago" className="mb-2" />
                 <div className="grid grid-cols-2 gap-1.5">
                   {(['pendiente', 'pagado'] as const).map((value) => {
                     const isActive = estadoPago === value
@@ -545,7 +504,7 @@ export default function AppointmentModal({
                       <button
                         key={value}
                         onClick={() => setEstadoPago(value)}
-                        className="py-2.5 px-3 rounded-[14px] text-[14px] font-medium transition-all"
+                        className="py-2 px-3 rounded-[14px] text-[13px] font-medium transition-all"
                         style={isActive ? {
                           background: s!.bg,
                           color: s!.color,
@@ -561,60 +520,20 @@ export default function AppointmentModal({
             </>
           )}
 
-          {/* ── Notas ── */}
-          <div>
-            <SectionHeader label="Notas" className="mb-2.5" />
-            <textarea
-              value={notas}
-              onChange={(e) => setNotas(e.target.value)}
-              placeholder="Observaciones, contexto…"
-              rows={2}
-              className="w-full rounded-[14px] px-3.5 py-3 text-[14px] resize-none"
-              style={{
-                background: 'rgba(255,255,255,0.52)',
-                border: '1px solid var(--border-glass-white)',
-                color: 'var(--ink-cool-strong)',
-                outline: 'none',
-              }}
-            />
-          </div>
-
           {/* ── Acciones secundarias ── */}
-          <div className="flex gap-2 pt-1">
-            {appointment.patient_id && appointment.event_type === 'patient' && (
-              <Button
-                variant="subtle"
-                onClick={() => router.push(`/pacientes/${appointment.patient_id}`)}
-                className="flex-1 gap-2 py-3 text-[14px]"
-              >
-                <FileText size={15} />
-                Historia clínica
-              </Button>
-            )}
-
-            {appointment.event_type === 'patient' && existingNote !== 'loading' && (
-              <Button
-                variant="subtle"
-                onClick={() => router.push(`/citas/${appointment.id}`)}
-                className="flex-1 gap-2 py-3 text-[14px]"
-              >
-                <NotebookPen size={15} />
-                {existingNote ? 'Ver nota' : 'Nueva nota'}
-              </Button>
-            )}
-
-            {appointment.patient && resolveWhatsApp(appointment.patient) && appointment.event_type === 'patient' && (
+          {appointment.patient && resolveWhatsApp(appointment.patient) && appointment.event_type === 'patient' && (
+            <div className="flex justify-end">
               <a
                 href={linkRecordatorioCita(appointment.patient, appointment, settings)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-action flex-1 gap-2 py-3 text-[14px]"
+                className="btn-action w-full gap-1.5 px-3 py-1.5 text-[12px] sm:w-auto"
               >
-                <MessageCircle size={15} />
+                <MessageCircle size={12} />
                 WhatsApp
               </a>
-            )}
-          </div>
+            </div>
+          )}
 
           {saveError && (
             <p className="text-[13px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
@@ -627,7 +546,7 @@ export default function AppointmentModal({
             variant="action"
             onClick={guardarCambios}
             disabled={isSaveBlocked}
-            className="w-full py-2.5 text-[14px]"
+            className="w-full py-1.5 text-[12px]"
           >
             {saving ? 'Guardando…' : conflicto ? 'Corrige el conflicto para guardar' : 'Guardar'}
           </Button>
@@ -636,7 +555,7 @@ export default function AppointmentModal({
           {!confirmDelete ? (
             <button
               onClick={() => setConfirmDelete(true)}
-              className="w-full text-center text-[13px] py-2 transition-all flex items-center justify-center gap-1"
+              className="flex w-full items-center justify-center gap-1.5 py-1.5 text-center text-[12px] transition-all"
               style={{ color: 'var(--ink-cool-faint)' }}
             >
               <Trash2 size={11} />
@@ -644,16 +563,16 @@ export default function AppointmentModal({
             </button>
           ) : (
             <div
-              className="rounded-[14px] p-3 space-y-2"
+              className="space-y-1.5 rounded-[14px] p-2.5"
               style={{ background: 'var(--state-cancel-bg)' }}
             >
-              <p className="text-[13px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
+              <p className="text-[12px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
                 ¿Eliminar? No se puede deshacer.
               </p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setConfirmDelete(false)}
-                  className="flex-1 py-2 rounded-[10px] text-[13px] font-medium"
+                  className="flex-1 rounded-[10px] py-1.5 text-[12px] font-medium"
                   style={{ background: 'rgba(255,255,255,0.6)', color: 'var(--ink-cool)' }}
                 >
                   Cancelar
@@ -661,7 +580,7 @@ export default function AppointmentModal({
                 <button
                   onClick={eliminarCita}
                   disabled={deleting}
-                  className="flex-1 py-2 rounded-[10px] text-[13px] font-medium"
+                  className="flex-1 rounded-[10px] py-1.5 text-[12px] font-medium"
                   style={{ background: 'var(--state-cancel-text)', color: 'white' }}
                 >
                   {deleting ? 'Eliminando…' : 'Sí, eliminar'}
