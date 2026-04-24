@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, MessageCircle, AlertTriangle, Trash2, CalendarDays, Clock3, ChevronDown, MapPin, Tag, Type } from 'lucide-react'
+import { X, MessageCircle, AlertTriangle, Trash2, CalendarDays, Clock3, ChevronDown, MapPin, Tag, Type, NotebookPen } from 'lucide-react'
 import { Appointment, Consultorio } from '@/types'
 import {
   APPOINTMENT_SESSION_LABEL,
@@ -130,7 +130,35 @@ export default function AppointmentModal({
   const [deudaCount, setDeudaCount] = useState<number | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [existingNote, setExistingNote] = useState<{
+    id: string
+    isDraft: boolean
+    signedAt: string | null
+  } | null | 'loading'>('loading')
   const selectedConsultorio = consultorios.find((consultorio) => consultorio.id === consultorioIdEdit) ?? null
+  useEffect(() => {
+    if (appointment.event_type !== 'patient') {
+      setExistingNote(null)
+      return
+    }
+    supabase
+      .from('session_notes')
+      .select('id, is_draft, signed_at')
+      .eq('appointment_id', appointment.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setExistingNote({
+            id: data.id as string,
+            isDraft: data.is_draft as boolean,
+            signedAt: data.signed_at as string | null,
+          })
+        } else {
+          setExistingNote(null)
+        }
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointment.id])
 
   // Deuda del paciente — sesiones realizadas sin pagar (excluye la cita actual)
   useEffect(() => {
@@ -521,19 +549,30 @@ export default function AppointmentModal({
           )}
 
           {/* ── Acciones secundarias ── */}
-          {appointment.patient && resolveWhatsApp(appointment.patient) && appointment.event_type === 'patient' && (
-            <div className="flex justify-end">
+          <div className="flex gap-2">
+            {appointment.event_type === 'patient' && existingNote !== 'loading' && (
+              <Button
+                variant="subtle"
+                onClick={() => router.push(`/citas/${appointment.id}`)}
+                className="flex-1 gap-1.5 px-3 py-1.5 text-[12px]"
+              >
+                <NotebookPen size={12} />
+                {existingNote ? 'Ver nota' : 'Nueva nota'}
+              </Button>
+            )}
+
+            {appointment.patient && resolveWhatsApp(appointment.patient) && appointment.event_type === 'patient' && (
               <a
                 href={linkRecordatorioCita(appointment.patient, appointment, settings)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-action w-full gap-1.5 px-3 py-1.5 text-[12px] sm:w-auto"
+                className="btn-action flex-1 gap-1.5 px-3 py-1.5 text-[12px]"
               >
                 <MessageCircle size={12} />
                 WhatsApp
               </a>
-            </div>
-          )}
+            )}
+          </div>
 
           {saveError && (
             <p className="text-[13px] text-center" style={{ color: 'var(--state-cancel-text)' }}>
