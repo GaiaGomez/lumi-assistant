@@ -44,3 +44,4 @@ next-env.d.ts
 .vscode/
 .vscode/mcp.json
 .claude/
+.vscode/settings.json
