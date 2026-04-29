@@ -161,7 +161,7 @@ A seed script creates realistic sample data for testing and portfolio review.
 
 - **10 patients** with realistic profiles (names, contact info, clinical notes)
 - **25+ appointments** spanning past, present, and future dates—designed to populate the dashboard with actionable pending items (unpaid sessions, missing notes, patients due for follow-up)
-- **4 consultorios** (online, in-person locations, retreat sessions)
+- **3 consultorios** (online, in-person locations, retreat sessions)
 - **3 clinical profiles** with detailed backgrounds and therapeutic objectives
 - **4 session notes** (mix of published and draft notes, with canvas drawings)
 - **Settings** (profile, working hours, WhatsApp templates)
