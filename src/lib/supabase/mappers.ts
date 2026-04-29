@@ -1,5 +1,5 @@
 import type { Appointment, Consultorio, Patient, PatientClinicalProfile } from '@/types'
-import { normalizeAppointmentRecurrenceRule } from '@/lib/appointment-recurrence'
+import { normalizeAppointmentRecurrenceRule } from '@/lib/appointments/recurrence'
 
 export const APPOINTMENT_SELECT = 'id, patient_id, consultorio_id, user_id, event_type, title, category, color, recurrence_group_id, recurrence_rule, fecha_inicio, fecha_fin, estado_sesion, estado_pago, notas, modalidad, created_at, updated_at, patient:patients(*), consultorio:consultorios(*)'
 

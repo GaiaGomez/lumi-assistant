@@ -4,7 +4,7 @@ import {
   buildAppointmentDisplayTitle,
   normalizeAppointmentRecurrenceRule,
   serializeAppointmentRecurrenceRule,
-} from '@/lib/appointment-recurrence'
+} from '@/lib/appointments/recurrence'
 import type { AppointmentRecurrenceRule } from '@/types'
 
 // All starts are at noon UTC so addDays/getDay() are timezone-safe

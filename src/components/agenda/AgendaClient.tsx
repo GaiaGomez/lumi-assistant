@@ -20,13 +20,13 @@ import {
   isAppointmentConfirmed,
   isAppointmentPaid,
   resolveAppointmentVisualConfig,
-} from '@/lib/appointment-ui'
+} from '@/lib/appointments/ui'
 import {
   buildConsultorioFilterOptions,
   resolveAppointmentConsultorioFilterKey,
 } from '@/lib/consultorios'
 import { type SettingsMap } from '@/lib/settings'
-import { FESTIVOS_CO } from './festivos'
+import { FESTIVOS_CO } from '@/lib/festivos'
 import ConsultorioFilterBar from './ConsultorioFilterBar'
 
 moment.locale('es')

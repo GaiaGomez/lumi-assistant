@@ -147,6 +147,40 @@ create table if not exists clinical_notes (
   updated_at     timestamptz default now()
 );
 
+-- TABLA: session_notes (ACTIVA — reemplaza clinical_notes para notas nuevas)
+-- Una o más notas por sesión. Texto libre durante la consulta + 4 campos
+-- estructurados para la nota formal. clinical_notes se conserva solo para
+-- datos históricos; no insertar en ella.
+--
+-- appointment_id es opcional y no único: permite notas sin cita y múltiples
+-- notas por cita.
+create table if not exists session_notes (
+  id               uuid primary key default gen_random_uuid(),
+  appointment_id   uuid references appointments(id) on delete cascade,
+  patient_id       uuid references patients(id) on delete cascade,
+  psychologist_id  uuid references auth.users(id) on delete cascade not null,
+
+  -- Modo sesión (texto libre durante la consulta)
+  quick_note       text,
+
+  -- Modo nota formal (4 preguntas, mapean a DAP internamente)
+  como_llego       text,
+  que_trabajaron   text,
+  como_va_proceso  text,
+  que_sigue        text,
+
+  -- Canvas privado del terapeuta (nunca se exporta al paciente)
+  canvas_paths     jsonb,
+  canvas_url       text,
+
+  -- Control
+  session_number   int,
+  is_draft         boolean default true,
+  signed_at        timestamptz,
+  created_at       timestamptz default now(),
+  updated_at       timestamptz default now()
+);
+
 -- FUNCIÓN: actualizar updated_at automáticamente al modificar una nota
 create or replace function update_updated_at_column()
 returns trigger as $$
@@ -155,6 +189,10 @@ begin
   return new;
 end;
 $$ language plpgsql;
+
+create trigger update_session_notes_updated_at
+  before update on session_notes
+  for each row execute function update_updated_at_column();
 
 create trigger update_clinical_notes_updated_at
   before update on clinical_notes
@@ -186,6 +224,7 @@ alter table patients        enable row level security;
 alter table patient_clinical_profiles enable row level security;
 alter table appointments    enable row level security;
 alter table clinical_notes  enable row level security;
+alter table session_notes   enable row level security;
 alter table settings        enable row level security;
 alter table consultorios    enable row level security;
 
@@ -207,11 +246,17 @@ create policy "appointments: solo el dueño puede crear" on appointments for ins
 create policy "appointments: solo el dueño puede editar" on appointments for update using (auth.uid() = user_id);
 create policy "appointments: solo el dueño puede borrar" on appointments for delete using (auth.uid() = user_id);
 
--- Políticas para clinical_notes
+-- Políticas para clinical_notes (legacy)
 create policy "notes: solo el dueño puede ver"   on clinical_notes for select using (auth.uid() = user_id);
 create policy "notes: solo el dueño puede crear" on clinical_notes for insert with check (auth.uid() = user_id);
 create policy "notes: solo el dueño puede editar" on clinical_notes for update using (auth.uid() = user_id);
 create policy "notes: solo el dueño puede borrar" on clinical_notes for delete using (auth.uid() = user_id);
+
+-- Políticas para session_notes (activa)
+create policy "session_notes: solo el psicólogo puede ver"   on session_notes for select using (auth.uid() = psychologist_id);
+create policy "session_notes: solo el psicólogo puede crear" on session_notes for insert with check (auth.uid() = psychologist_id);
+create policy "session_notes: solo el psicólogo puede editar" on session_notes for update using (auth.uid() = psychologist_id);
+create policy "session_notes: solo el psicólogo puede borrar" on session_notes for delete using (auth.uid() = psychologist_id);
 
 -- Políticas para settings
 create policy "settings: solo el dueño puede ver"   on settings for select using (auth.uid() = user_id);

@@ -31,8 +31,8 @@ import {
   getClinicalAlertLabel,
   INFORMED_CONSENT_OPTIONS,
   resolveClinicalAlertKeys,
-} from '@/lib/patient-clinical-profile'
-import { upsertPatientClinicalProfile } from '@/lib/patient-clinical-profile.client'
+} from '@/lib/patients/clinical-profile'
+import { upsertPatientClinicalProfile } from '@/lib/patients/clinical-profile.client'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import EmptyState from '@/components/ui/EmptyState'

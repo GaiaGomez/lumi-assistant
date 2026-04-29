@@ -28,10 +28,10 @@ import {
   isAppointmentConfirmed,
   isAppointmentPaid,
   resolveAppointmentVisualConfig,
-} from '@/lib/appointment-ui'
+} from '@/lib/appointments/ui'
 import { buildAppointmentDisplayTitle, getAppointmentEnd } from '@/lib/appointments'
 import type { SettingsMap } from '@/lib/settings'
-import { FESTIVOS_CO } from './festivos'
+import { FESTIVOS_CO } from '@/lib/festivos'
 
 interface MobileAgendaProps {
   appointments: Appointment[]

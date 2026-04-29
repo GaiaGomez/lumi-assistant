@@ -32,7 +32,7 @@ import {
   findAppointmentConflict,
   getAppointmentScheduleError,
 } from '@/lib/appointments'
-import { createAppointments } from '@/lib/appointment-updates'
+import { createAppointments } from '@/lib/appointments/updates'
 import { resolveConsultorioDisplayConfig } from '@/lib/consultorios'
 import { mapPatientRows } from '@/lib/supabase/mappers'
 import { createClient } from '@/lib/supabase/client'

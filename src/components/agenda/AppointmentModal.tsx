@@ -11,7 +11,7 @@ import { Appointment, Consultorio } from '@/types'
 import {
   APPOINTMENT_SESSION_LABEL,
   APPOINTMENT_SESSION_STATES,
-} from '@/lib/appointment-status'
+} from '@/lib/appointments/status'
 import {
   formatInBogota,
   toBogotaDateInputValue,
@@ -19,7 +19,7 @@ import {
 } from '@/lib/datetime'
 import {
   GENERAL_EVENT_COLOR_PRESETS,
-} from '@/lib/appointment-ui'
+} from '@/lib/appointments/ui'
 import {
   resolveAppointmentConsultorioSelectionId,
   resolveConsultorioDisplayConfig,
@@ -34,7 +34,7 @@ import {
   getAppointmentEndFromDuration,
   getAppointmentScheduleError,
 } from '@/lib/appointments'
-import { deleteAppointmentById, updateAppointmentById } from '@/lib/appointment-updates'
+import { deleteAppointmentById, updateAppointmentById } from '@/lib/appointments/updates'
 import { type SettingsMap } from '@/lib/settings'
 import { createClient } from '@/lib/supabase/client'
 import { linkRecordatorioCita, resolveWhatsApp } from '@/lib/whatsapp'

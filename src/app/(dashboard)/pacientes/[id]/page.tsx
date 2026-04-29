@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { formatDateTimeFull } from '@/lib/format'
 import { fetchSettings } from '@/lib/settings'
-import { getPatientClinicalProfile } from '@/lib/patient-clinical-profile.server'
+import { getPatientClinicalProfile } from '@/lib/patients/clinical-profile.server'
 import {
   getNextAppointment,
   getLastPastAppointment,

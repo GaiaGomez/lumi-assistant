@@ -4,13 +4,13 @@ import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Appointment } from '@/types'
 import { createClient } from '@/lib/supabase/client'
-import { updateAppointmentById } from '@/lib/appointment-updates'
+import { updateAppointmentById } from '@/lib/appointments/updates'
 import {
   APPOINTMENT_PAYMENT_LABEL,
   APPOINTMENT_PAYMENT_STATES,
   APPOINTMENT_SESSION_LABEL,
   APPOINTMENT_SESSION_STATES,
-} from '@/lib/appointment-status'
+} from '@/lib/appointments/status'
 
 interface AppointmentQuickStateEditorProps {
   appointmentId: string
