@@ -13,6 +13,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [demoLoading, setDemoLoading] = useState(false)
+  const [demoError, setDemoError] = useState<string | null>(null)
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -29,6 +31,28 @@ export default function LoginPage() {
 
     router.push('/agenda')
     router.refresh()
+  }
+
+  async function handleDemoLogin() {
+    setDemoLoading(true)
+    setDemoError(null)
+
+    try {
+      const response = await fetch('/api/demo-login', { method: 'POST' })
+      const data = await response.json()
+
+      if (!response.ok) {
+        setDemoError('Demo access is currently unavailable.')
+        setDemoLoading(false)
+        return
+      }
+
+      router.push('/agenda')
+      router.refresh()
+    } catch {
+      setDemoError('Demo access is currently unavailable.')
+      setDemoLoading(false)
+    }
   }
 
   return (
@@ -104,6 +128,30 @@ export default function LoginPage() {
               {loading ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
+
+          <div className="border-t border-t-[var(--border-glass-white)] pt-4 mt-4">
+            {demoError && (
+              <div
+                className="rounded-[12px] px-3.5 py-3 text-[13px] mb-3"
+                style={{ background: 'var(--state-cancel-bg)', color: 'var(--state-cancel-text)' }}
+              >
+                {demoError}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleDemoLogin}
+              disabled={demoLoading}
+              className="btn-subtle w-full py-3 text-[13px] tracking-[0.06em] uppercase disabled:opacity-50"
+            >
+              {demoLoading ? 'Cargando...' : 'Ver demo'}
+            </button>
+
+            <p className="text-center text-[12px] mt-3" style={{ color: 'var(--ink-cool-soft)' }}>
+              Explora Lumi con datos ficticios. Sin datos reales de pacientes.
+            </p>
+          </div>
         </div>
 
         <p className="text-center text-[11px] mt-6" style={{ color: 'var(--ink-cool-faint)' }}>
