@@ -7,9 +7,6 @@ import {
   isSameInstant,
 } from '@/lib/dates/datetime'
 
-// Bogotá is UTC-5 (permanent — Colombia has no DST).
-// "10:00 Bogotá" = "15:00 UTC".
-const BOGOTA_UTC_OFFSET_MS = 5 * 60 * 60 * 1000
 
 describe('parseDateTimeInBogota', () => {
   it('parses a naive local datetime string as Bogotá time (UTC-5)', () => {

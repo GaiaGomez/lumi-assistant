@@ -1,4 +1,5 @@
 'use client'
+
 export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
@@ -39,7 +40,6 @@ export default function LoginPage() {
 
     try {
       const response = await fetch('/api/demo-login', { method: 'POST' })
-      const data = await response.json()
 
       if (!response.ok) {
         setDemoError('Demo access is currently unavailable.')
@@ -67,7 +67,6 @@ export default function LoginPage() {
       }}
     >
       <div className="w-full max-w-[400px]">
-
         {/* Marca */}
         <div className="text-center mb-8">
           <p className="section-kicker mb-2">Consultorio privado</p>
@@ -76,11 +75,11 @@ export default function LoginPage() {
         </div>
 
         {/* Card de login */}
-        <div
-          className="glass-cool rounded-[22px] p-6 space-y-4"
-        >
+        <div className="glass-cool rounded-[22px] p-6 space-y-4">
           <div>
-            <h2 className="editorial-panel-title text-[1.05rem] mb-0.5">Bienvenida de nuevo</h2>
+            <h2 className="editorial-panel-title text-[1.05rem] mb-0.5">
+              Bienvenida de nuevo
+            </h2>
             <p className="text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>
               Ingresa con tu cuenta para continuar.
             </p>
@@ -114,7 +113,10 @@ export default function LoginPage() {
             {error && (
               <div
                 className="rounded-[12px] px-3.5 py-3 text-[13px]"
-                style={{ background: 'var(--state-cancel-bg)', color: 'var(--state-cancel-text)' }}
+                style={{
+                  background: 'var(--state-cancel-bg)',
+                  color: 'var(--state-cancel-text)',
+                }}
               >
                 {error}
               </div>
@@ -133,7 +135,10 @@ export default function LoginPage() {
             {demoError && (
               <div
                 className="rounded-[12px] px-3.5 py-3 text-[13px] mb-3"
-                style={{ background: 'var(--state-cancel-bg)', color: 'var(--state-cancel-text)' }}
+                style={{
+                  background: 'var(--state-cancel-bg)',
+                  color: 'var(--state-cancel-text)',
+                }}
               >
                 {demoError}
               </div>

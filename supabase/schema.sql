@@ -1,24 +1,52 @@
--- TABLA: patients
--- Guarda la información básica de cada paciente
+-- ============================================================
+-- LUMI — DATABASE SCHEMA
+-- ============================================================
+-- Modelo actual:
+--   - patients
+--   - patient_clinical_profiles
+--   - appointments
+--   - consultorios
+--   - session_notes
+--   - settings
+--   - canvas-notes storage bucket
+--
+-- Notas:
+--   - session_notes es la tabla activa para notas de sesión.
+--   - El canvas se guarda en session_notes con canvas_paths/canvas_url.
+--   - Cada usuario solo accede a sus propios datos mediante RLS.
+-- ============================================================
+
+create extension if not exists pgcrypto;
+
+-- ============================================================
+-- TABLE: patients
+-- Información básica de cada paciente
+-- ============================================================
+
 create table if not exists patients (
-  id           uuid default gen_random_uuid() primary key,
-  user_id      uuid references auth.users(id) on delete cascade not null,
-  nombre       text not null,
-  apellido     text not null,
-  telefono     text,
-  whatsapp     text,  -- formato: 573001234567 (sin + ni espacios)
-  email        text,
-  fecha_inicio date,  -- fecha de la primera sesión
+  id              uuid default gen_random_uuid() primary key,
+  user_id         uuid references auth.users(id) on delete cascade not null,
+  nombre          text not null,
+  apellido        text not null,
+  telefono        text,
+  whatsapp        text, -- formato recomendado: 573001234567, sin + ni espacios
+  email           text,
+  fecha_inicio    date, -- fecha de la primera sesión
   notas_generales text,
-  created_at   timestamptz default now()
+  created_at      timestamptz default now()
 );
 
--- TABLA: patient_clinical_profiles
--- Perfil clínico estable del paciente. No reemplaza las notas por sesión.
+-- ============================================================
+-- TABLE: patient_clinical_profiles
+-- Perfil clínico estable del paciente.
+-- No reemplaza las notas por sesión.
+-- ============================================================
+
 create table if not exists patient_clinical_profiles (
   id                             uuid default gen_random_uuid() primary key,
   patient_id                     uuid references patients(id) on delete cascade not null,
   psychologist_id                uuid references auth.users(id) on delete cascade not null,
+
   documento                      text,
   birth_date                     date,
   genero                         text,
@@ -27,16 +55,19 @@ create table if not exists patient_clinical_profiles (
   direccion                      text,
   ciudad                         text,
   eps                            text,
+
   emergency_contact_name         text,
   emergency_contact_relationship text,
   emergency_contact_phone        text,
   emergency_contact_authorized   boolean,
   emergency_contact_notes        text,
+
   medication                     text,
   allergies                      text,
   medical_conditions             text,
   diagnoses                      text,
   previous_treatments            text,
+
   consultation_reason            text,
   therapeutic_objective          text,
   session_frequency              text,
@@ -44,11 +75,15 @@ create table if not exists patient_clinical_profiles (
   process_status                 text,
   support_network                text,
   clinical_alerts                text[] default '{}'::text[],
+
   informed_consent_status        text
                                  check (informed_consent_status in ('pending', 'signed', 'not_required')),
+
   administrative_notes           text,
+
   created_at                     timestamptz default now(),
   updated_at                     timestamptz default now(),
+
   unique (patient_id)
 );
 
@@ -58,118 +93,108 @@ create index if not exists patient_clinical_profiles_psychologist_idx
 create index if not exists patient_clinical_profiles_patient_psychologist_idx
   on patient_clinical_profiles(patient_id, psychologist_id);
 
--- TABLA: appointments
--- Guarda cada cita del consultorio o eventos generales del calendario
-create table if not exists appointments (
-  id               uuid default gen_random_uuid() primary key,
-  patient_id       uuid references patients(id) on delete cascade,
-  user_id          uuid references auth.users(id) on delete cascade not null,
-  event_type       text default 'patient'
-                   check (event_type in ('patient', 'general')),
-  title            text,
-  category         text,
-  color            text,
-  recurrence_group_id uuid,
-  recurrence_rule  jsonb,
-  fecha_inicio     timestamptz not null,
-  fecha_fin        timestamptz,
-  estado_sesion    text default 'pendiente'
-                   check (estado_sesion in ('pendiente', 'confirmada', 'realizada', 'cancelo')),
-  estado_pago      text default 'pendiente'
-                   check (estado_pago in ('pendiente', 'pagado')),
-  notas            text,
-  modalidad        text check (modalidad in ('online', 'medellin', 'retiro')),
-  created_at       timestamptz default now(),
-  updated_at       timestamptz default now()
-);
+-- ============================================================
+-- TABLE: consultorios
+-- Entidad editable por usuario para representar lugares,
+-- modalidades o sedes reales.
+-- ============================================================
 
-
--- TABLA: settings
--- Configuración key-value del consultorio por usuario.
--- Se usa hoy para plantillas y link de agenda, y deja base para Ajustes.
-create table if not exists settings (
-  id           uuid default gen_random_uuid() primary key,
-  user_id      uuid references auth.users(id) on delete cascade not null,
-  key          text not null,
-  value        text not null,
-  created_at   timestamptz default now(),
-  updated_at   timestamptz default now(),
-  unique (user_id, key)
-);
-
--- TABLA: consultorios
--- Entidad editable por usuario para representar lugares o modalidades reales.
 create table if not exists consultorios (
-  id                 uuid default gen_random_uuid() primary key,
-  user_id            uuid references auth.users(id) on delete cascade not null,
-  nombre             text not null,
-  color              text not null default '#9488B0',
-  icono              text not null default 'map-pin',
+  id                  uuid default gen_random_uuid() primary key,
+  user_id             uuid references auth.users(id) on delete cascade not null,
+  nombre              text not null,
+  color               text not null default '#9488B0',
+  icono               text not null default 'map-pin',
   dato_principal_tipo text
-                     check (dato_principal_tipo in ('direccion', 'enlace', 'nota')),
-  dato_principal     text,
-  legacy_key         text
-                     check (legacy_key in ('online', 'medellin', 'retiro')),
-  created_at         timestamptz default now(),
-  updated_at         timestamptz default now()
+                      check (dato_principal_tipo in ('direccion', 'enlace', 'nota')),
+  dato_principal      text,
+  legacy_key          text
+                      check (legacy_key in ('online', 'medellin', 'retiro')),
+  created_at          timestamptz default now(),
+  updated_at          timestamptz default now()
 );
 
 create unique index if not exists consultorios_user_legacy_key_idx
   on consultorios(user_id, legacy_key)
   where legacy_key is not null;
 
-alter table appointments
-  add column if not exists consultorio_id uuid references consultorios(id) on delete set null;
+-- ============================================================
+-- TABLE: appointments
+-- Citas del consultorio y eventos generales del calendario
+-- ============================================================
+
+create table if not exists appointments (
+  id                  uuid default gen_random_uuid() primary key,
+  patient_id          uuid references patients(id) on delete cascade,
+  user_id             uuid references auth.users(id) on delete cascade not null,
+
+  event_type          text default 'patient'
+                      check (event_type in ('patient', 'general')),
+
+  title               text,
+  category            text,
+  color               text,
+
+  recurrence_group_id uuid,
+  recurrence_rule     jsonb,
+
+  fecha_inicio        timestamptz not null,
+  fecha_fin           timestamptz,
+
+  estado_sesion       text default 'pendiente'
+                      check (estado_sesion in ('pendiente', 'confirmada', 'realizada', 'cancelo')),
+
+  estado_pago         text default 'pendiente'
+                      check (estado_pago in ('pendiente', 'pagado')),
+
+  notas               text,
+
+  modalidad           text check (modalidad in ('online', 'medellin', 'retiro')),
+  consultorio_id      uuid references consultorios(id) on delete set null,
+
+  created_at          timestamptz default now(),
+  updated_at          timestamptz default now()
+);
 
 create index if not exists appointments_consultorio_id_idx
   on appointments(consultorio_id);
 
--- TABLA: clinical_notes
--- Una nota clínica por sesión. Tiene texto escrito con teclado Y/O imagen del canvas
---
--- TRES CAPAS DE DATOS:
--- 1. Manuscrito: canvas_url + canvas_paths (imagen y trazos originales)
--- 2. Transcripción: transcription_text (IA lee canvas; usuario puede editar)
--- 3. Nota publicada: template_data (DAP final, la fuente de verdad. IA nunca la toca)
--- La IA sugiere con structured_note_json, pero template_data es lo que se guarda/publica.
---
-create table if not exists clinical_notes (
-  id             uuid default gen_random_uuid() primary key,
-  patient_id     uuid references patients(id) on delete cascade not null,
-  appointment_id uuid references appointments(id) on delete set null,
-  user_id        uuid references auth.users(id) on delete cascade not null,
-  texto          text,       -- notas escritas con teclado
-  canvas_url     text,       -- path privado del canvas en Storage (o URL legacy hasta migrarlo)
-  canvas_paths   jsonb,      -- trazos serializados para permitir edicion real del canvas
-  template_kind  text check (template_kind in ('dap')),
-  template_data  jsonb,      -- estructura clinica de progreso (DAP) — FUENTE DE VERDAD, nunca modificada por IA
-  created_at     timestamptz default now(),
-  updated_at     timestamptz default now()
-);
+create index if not exists appointments_user_fecha_inicio_idx
+  on appointments(user_id, fecha_inicio);
 
--- TABLA: session_notes (ACTIVA — reemplaza clinical_notes para notas nuevas)
--- Una o más notas por sesión. Texto libre durante la consulta + 4 campos
--- estructurados para la nota formal. clinical_notes se conserva solo para
--- datos históricos; no insertar en ella.
+create index if not exists appointments_patient_id_idx
+  on appointments(patient_id);
+
+-- ============================================================
+-- TABLE: session_notes
+-- Tabla activa para notas de sesión.
 --
--- appointment_id es opcional y no único: permite notas sin cita y múltiples
--- notas por cita.
+-- Soporta:
+--   - Texto libre durante la sesión
+--   - Nota formal con 4 campos
+--   - Canvas privado del terapeuta
+--
+-- appointment_id es opcional y no único:
+-- permite notas sin cita y múltiples notas por cita.
+-- ============================================================
+
 create table if not exists session_notes (
   id               uuid primary key default gen_random_uuid(),
+
   appointment_id   uuid references appointments(id) on delete cascade,
   patient_id       uuid references patients(id) on delete cascade,
   psychologist_id  uuid references auth.users(id) on delete cascade not null,
 
-  -- Modo sesión (texto libre durante la consulta)
+  -- Modo sesión: texto libre durante la consulta
   quick_note       text,
 
-  -- Modo nota formal (4 preguntas, mapean a DAP internamente)
+  -- Modo nota formal: 4 preguntas que mapean internamente a DAP
   como_llego       text,
   que_trabajaron   text,
   como_va_proceso  text,
   que_sigue        text,
 
-  -- Canvas privado del terapeuta (nunca se exporta al paciente)
+  -- Canvas privado del terapeuta
   canvas_paths     jsonb,
   canvas_url       text,
 
@@ -177,11 +202,44 @@ create table if not exists session_notes (
   session_number   int,
   is_draft         boolean default true,
   signed_at        timestamptz,
+
   created_at       timestamptz default now(),
   updated_at       timestamptz default now()
 );
 
--- FUNCIÓN: actualizar updated_at automáticamente al modificar una nota
+create index if not exists session_notes_psychologist_idx
+  on session_notes(psychologist_id);
+
+create index if not exists session_notes_patient_idx
+  on session_notes(patient_id);
+
+create index if not exists session_notes_appointment_idx
+  on session_notes(appointment_id);
+
+-- ============================================================
+-- TABLE: settings
+-- Configuración key-value del consultorio por usuario.
+-- ============================================================
+
+create table if not exists settings (
+  id          uuid default gen_random_uuid() primary key,
+  user_id     uuid references auth.users(id) on delete cascade not null,
+  key         text not null,
+  value       text not null,
+  created_at  timestamptz default now(),
+  updated_at  timestamptz default now(),
+
+  unique (user_id, key)
+);
+
+create index if not exists settings_user_id_idx
+  on settings(user_id);
+
+-- ============================================================
+-- FUNCTION: update_updated_at_column
+-- Actualiza updated_at automáticamente al modificar filas.
+-- ============================================================
+
 create or replace function update_updated_at_column()
 returns trigger as $$
 begin
@@ -190,96 +248,210 @@ begin
 end;
 $$ language plpgsql;
 
-create trigger update_session_notes_updated_at
-  before update on session_notes
-  for each row execute function update_updated_at_column();
+-- ============================================================
+-- TRIGGERS
+-- Idempotentes: se eliminan antes de volver a crearse.
+-- ============================================================
 
-create trigger update_clinical_notes_updated_at
-  before update on clinical_notes
-  for each row execute function update_updated_at_column();
-
-create trigger update_appointments_updated_at
-  before update on appointments
-  for each row execute function update_updated_at_column();
-
-create trigger update_settings_updated_at
-  before update on settings
-  for each row execute function update_updated_at_column();
-
-create trigger update_consultorios_updated_at
-  before update on consultorios
-  for each row execute function update_updated_at_column();
-
+drop trigger if exists update_patient_clinical_profiles_updated_at on patient_clinical_profiles;
 create trigger update_patient_clinical_profiles_updated_at
   before update on patient_clinical_profiles
   for each row execute function update_updated_at_column();
 
+drop trigger if exists update_consultorios_updated_at on consultorios;
+create trigger update_consultorios_updated_at
+  before update on consultorios
+  for each row execute function update_updated_at_column();
+
+drop trigger if exists update_appointments_updated_at on appointments;
+create trigger update_appointments_updated_at
+  before update on appointments
+  for each row execute function update_updated_at_column();
+
+drop trigger if exists update_session_notes_updated_at on session_notes;
+create trigger update_session_notes_updated_at
+  before update on session_notes
+  for each row execute function update_updated_at_column();
+
+drop trigger if exists update_settings_updated_at on settings;
+create trigger update_settings_updated_at
+  before update on settings
+  for each row execute function update_updated_at_column();
+
 -- ============================================================
--- ROW LEVEL SECURITY (RLS) — MUY IMPORTANTE
--- Cada usuario solo puede ver y modificar SUS propios datos
--- Sin esto, cualquier usuario autenticado podría ver los pacientes de Lu
+-- ROW LEVEL SECURITY
+-- Cada usuario solo puede ver y modificar sus propios datos.
 -- ============================================================
 
-alter table patients        enable row level security;
+alter table patients enable row level security;
 alter table patient_clinical_profiles enable row level security;
-alter table appointments    enable row level security;
-alter table clinical_notes  enable row level security;
-alter table session_notes   enable row level security;
-alter table settings        enable row level security;
-alter table consultorios    enable row level security;
-
--- Políticas para patients
-create policy "patients: solo el dueño puede ver"   on patients for select using (auth.uid() = user_id);
-create policy "patients: solo el dueño puede crear" on patients for insert with check (auth.uid() = user_id);
-create policy "patients: solo el dueño puede editar" on patients for update using (auth.uid() = user_id);
-create policy "patients: solo el dueño puede borrar" on patients for delete using (auth.uid() = user_id);
-
--- Políticas para patient_clinical_profiles
-create policy "patient_clinical_profiles: solo el dueño puede ver" on patient_clinical_profiles for select using (auth.uid() = psychologist_id);
-create policy "patient_clinical_profiles: solo el dueño puede crear" on patient_clinical_profiles for insert with check (auth.uid() = psychologist_id);
-create policy "patient_clinical_profiles: solo el dueño puede editar" on patient_clinical_profiles for update using (auth.uid() = psychologist_id);
-create policy "patient_clinical_profiles: solo el dueño puede borrar" on patient_clinical_profiles for delete using (auth.uid() = psychologist_id);
-
--- Políticas para appointments
-create policy "appointments: solo el dueño puede ver"   on appointments for select using (auth.uid() = user_id);
-create policy "appointments: solo el dueño puede crear" on appointments for insert with check (auth.uid() = user_id);
-create policy "appointments: solo el dueño puede editar" on appointments for update using (auth.uid() = user_id);
-create policy "appointments: solo el dueño puede borrar" on appointments for delete using (auth.uid() = user_id);
-
--- Políticas para clinical_notes (legacy)
-create policy "notes: solo el dueño puede ver"   on clinical_notes for select using (auth.uid() = user_id);
-create policy "notes: solo el dueño puede crear" on clinical_notes for insert with check (auth.uid() = user_id);
-create policy "notes: solo el dueño puede editar" on clinical_notes for update using (auth.uid() = user_id);
-create policy "notes: solo el dueño puede borrar" on clinical_notes for delete using (auth.uid() = user_id);
-
--- Políticas para session_notes (activa)
-create policy "session_notes: solo el psicólogo puede ver"   on session_notes for select using (auth.uid() = psychologist_id);
-create policy "session_notes: solo el psicólogo puede crear" on session_notes for insert with check (auth.uid() = psychologist_id);
-create policy "session_notes: solo el psicólogo puede editar" on session_notes for update using (auth.uid() = psychologist_id);
-create policy "session_notes: solo el psicólogo puede borrar" on session_notes for delete using (auth.uid() = psychologist_id);
-
--- Políticas para settings
-create policy "settings: solo el dueño puede ver"   on settings for select using (auth.uid() = user_id);
-create policy "settings: solo el dueño puede crear" on settings for insert with check (auth.uid() = user_id);
-create policy "settings: solo el dueño puede editar" on settings for update using (auth.uid() = user_id);
-create policy "settings: solo el dueño puede borrar" on settings for delete using (auth.uid() = user_id);
-
--- Políticas para consultorios
-create policy "consultorios: solo el dueño puede ver" on consultorios for select using (auth.uid() = user_id);
-create policy "consultorios: solo el dueño puede crear" on consultorios for insert with check (auth.uid() = user_id);
-create policy "consultorios: solo el dueño puede editar" on consultorios for update using (auth.uid() = user_id);
-create policy "consultorios: solo el dueño puede borrar" on consultorios for delete using (auth.uid() = user_id);
+alter table appointments enable row level security;
+alter table consultorios enable row level security;
+alter table session_notes enable row level security;
+alter table settings enable row level security;
 
 -- ============================================================
--- STORAGE BUCKET — para guardar las imágenes del canvas
--- Regla actual: bucket privado, sin lectura pública.
--- La app guarda solo el path y lee con signed URLs temporales.
+-- RLS POLICIES: patients
+-- ============================================================
+
+drop policy if exists "patients: solo el dueño puede ver" on patients;
+create policy "patients: solo el dueño puede ver"
+  on patients for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "patients: solo el dueño puede crear" on patients;
+create policy "patients: solo el dueño puede crear"
+  on patients for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "patients: solo el dueño puede editar" on patients;
+create policy "patients: solo el dueño puede editar"
+  on patients for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "patients: solo el dueño puede borrar" on patients;
+create policy "patients: solo el dueño puede borrar"
+  on patients for delete
+  using (auth.uid() = user_id);
+
+-- ============================================================
+-- RLS POLICIES: patient_clinical_profiles
+-- ============================================================
+
+drop policy if exists "patient_clinical_profiles: solo el dueño puede ver" on patient_clinical_profiles;
+create policy "patient_clinical_profiles: solo el dueño puede ver"
+  on patient_clinical_profiles for select
+  using (auth.uid() = psychologist_id);
+
+drop policy if exists "patient_clinical_profiles: solo el dueño puede crear" on patient_clinical_profiles;
+create policy "patient_clinical_profiles: solo el dueño puede crear"
+  on patient_clinical_profiles for insert
+  with check (auth.uid() = psychologist_id);
+
+drop policy if exists "patient_clinical_profiles: solo el dueño puede editar" on patient_clinical_profiles;
+create policy "patient_clinical_profiles: solo el dueño puede editar"
+  on patient_clinical_profiles for update
+  using (auth.uid() = psychologist_id);
+
+drop policy if exists "patient_clinical_profiles: solo el dueño puede borrar" on patient_clinical_profiles;
+create policy "patient_clinical_profiles: solo el dueño puede borrar"
+  on patient_clinical_profiles for delete
+  using (auth.uid() = psychologist_id);
+
+-- ============================================================
+-- RLS POLICIES: appointments
+-- ============================================================
+
+drop policy if exists "appointments: solo el dueño puede ver" on appointments;
+create policy "appointments: solo el dueño puede ver"
+  on appointments for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "appointments: solo el dueño puede crear" on appointments;
+create policy "appointments: solo el dueño puede crear"
+  on appointments for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "appointments: solo el dueño puede editar" on appointments;
+create policy "appointments: solo el dueño puede editar"
+  on appointments for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "appointments: solo el dueño puede borrar" on appointments;
+create policy "appointments: solo el dueño puede borrar"
+  on appointments for delete
+  using (auth.uid() = user_id);
+
+-- ============================================================
+-- RLS POLICIES: consultorios
+-- ============================================================
+
+drop policy if exists "consultorios: solo el dueño puede ver" on consultorios;
+create policy "consultorios: solo el dueño puede ver"
+  on consultorios for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "consultorios: solo el dueño puede crear" on consultorios;
+create policy "consultorios: solo el dueño puede crear"
+  on consultorios for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "consultorios: solo el dueño puede editar" on consultorios;
+create policy "consultorios: solo el dueño puede editar"
+  on consultorios for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "consultorios: solo el dueño puede borrar" on consultorios;
+create policy "consultorios: solo el dueño puede borrar"
+  on consultorios for delete
+  using (auth.uid() = user_id);
+
+-- ============================================================
+-- RLS POLICIES: session_notes
+-- ============================================================
+
+drop policy if exists "session_notes: solo el psicólogo puede ver" on session_notes;
+create policy "session_notes: solo el psicólogo puede ver"
+  on session_notes for select
+  using (auth.uid() = psychologist_id);
+
+drop policy if exists "session_notes: solo el psicólogo puede crear" on session_notes;
+create policy "session_notes: solo el psicólogo puede crear"
+  on session_notes for insert
+  with check (auth.uid() = psychologist_id);
+
+drop policy if exists "session_notes: solo el psicólogo puede editar" on session_notes;
+create policy "session_notes: solo el psicólogo puede editar"
+  on session_notes for update
+  using (auth.uid() = psychologist_id);
+
+drop policy if exists "session_notes: solo el psicólogo puede borrar" on session_notes;
+create policy "session_notes: solo el psicólogo puede borrar"
+  on session_notes for delete
+  using (auth.uid() = psychologist_id);
+
+-- ============================================================
+-- RLS POLICIES: settings
+-- ============================================================
+
+drop policy if exists "settings: solo el dueño puede ver" on settings;
+create policy "settings: solo el dueño puede ver"
+  on settings for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "settings: solo el dueño puede crear" on settings;
+create policy "settings: solo el dueño puede crear"
+  on settings for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "settings: solo el dueño puede editar" on settings;
+create policy "settings: solo el dueño puede editar"
+  on settings for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "settings: solo el dueño puede borrar" on settings;
+create policy "settings: solo el dueño puede borrar"
+  on settings for delete
+  using (auth.uid() = user_id);
+
+-- ============================================================
+-- STORAGE BUCKET: canvas-notes
+-- Bucket privado para imágenes del canvas.
+-- La app guarda el path y lee con signed URLs temporales.
 -- ============================================================
 
 insert into storage.buckets (id, name, public)
 values ('canvas-notes', 'canvas-notes', false)
-on conflict do nothing;
+on conflict (id) do nothing;
 
+-- ============================================================
+-- STORAGE POLICIES: canvas-notes
+-- El primer folder del path debe ser el auth.uid().
+-- Ejemplo:
+--   {user_id}/{note_id}/canvas.png
+-- ============================================================
+
+drop policy if exists "canvas: solo el dueño puede subir" on storage.objects;
 create policy "canvas: solo el dueño puede subir"
   on storage.objects for insert
   with check (
@@ -287,6 +459,7 @@ create policy "canvas: solo el dueño puede subir"
     and auth.uid()::text = (storage.foldername(name))[1]
   );
 
+drop policy if exists "canvas: solo el dueño puede ver" on storage.objects;
 create policy "canvas: solo el dueño puede ver"
   on storage.objects for select
   using (
@@ -294,6 +467,7 @@ create policy "canvas: solo el dueño puede ver"
     and auth.uid()::text = (storage.foldername(name))[1]
   );
 
+drop policy if exists "canvas: solo el dueño puede borrar" on storage.objects;
 create policy "canvas: solo el dueño puede borrar"
   on storage.objects for delete
   using (
@@ -301,6 +475,7 @@ create policy "canvas: solo el dueño puede borrar"
     and auth.uid()::text = (storage.foldername(name))[1]
   );
 
+drop policy if exists "canvas: solo el dueño puede actualizar" on storage.objects;
 create policy "canvas: solo el dueño puede actualizar"
   on storage.objects for update
   using (
