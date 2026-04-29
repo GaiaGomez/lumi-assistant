@@ -100,7 +100,7 @@ src/
 
 The schema covers: patients, appointments (with recurrence), session notes (text + canvas), clinical profiles, consultorios (practice rooms), settings with WhatsApp templates, and canvas storage paths.
 
-Full schema: [`src/lib/supabase/schema.sql`](src/lib/supabase/schema.sql)
+Full schema: [`supabase/schema.sql`](supabase/schema.sql)
 
 ### Tests
 
@@ -137,18 +137,66 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 NEXT_PUBLIC_BOOKING_URL=
 ```
 
-For a fresh database, apply [`src/lib/supabase/schema.sql`](src/lib/supabase/schema.sql). Existing projects may need manual migrations from [`src/lib/supabase/`](src/lib/supabase/).
+For a fresh database, apply [`supabase/schema.sql`](supabase/schema.sql). Existing projects may need manual migrations from the `supabase/` directory.
 
 Full setup notes: [`SETUP.md`](SETUP.md)
 
 ### Demo Data
 
-A seed script creates realistic sample data (patients, appointments, clinical profiles, session notes, settings) for testing and portfolio review:
+A seed script creates realistic sample data for testing and portfolio review.
 
-1. Open the Supabase SQL Editor.
-2. Paste the contents of [`src/lib/supabase/seed_demo.sql`](src/lib/supabase/seed_demo.sql).
-3. Replace the placeholder email with the demo account email.
-4. Run the script.
+**Prerequisites:**
+- A demo user account must exist in Supabase Auth first. Create one in the Supabase dashboard before proceeding.
+
+**Steps:**
+
+1. In Supabase, go to the **SQL Editor**.
+2. Open [`supabase/seed_demo.sql`](supabase/seed_demo.sql) and copy its full contents.
+3. Paste into the SQL Editor.
+4. Replace the email placeholder `lu@tudominio.com` (line 67) with your actual demo user email (e.g., `demo@example.com`).
+5. Run the script.
+6. Log in to Lumi with the demo account credentials.
+
+**What the seed creates:**
+
+- **10 patients** with realistic profiles (names, contact info, clinical notes)
+- **25+ appointments** spanning past, present, and future dates—designed to populate the dashboard with actionable pending items (unpaid sessions, missing notes, patients due for follow-up)
+- **4 consultorios** (online, in-person locations, retreat sessions)
+- **3 clinical profiles** with detailed backgrounds and therapeutic objectives
+- **4 session notes** (mix of published and draft notes, with canvas drawings)
+- **Settings** (profile, working hours, WhatsApp templates)
+
+All dates are relative to `CURRENT_DATE`, so demo data is always fresh—recent appointments, upcoming sessions, and realistic follow-up timelines generate automatically.
+
+**Verify the demo data loaded correctly:**
+
+After running the seed, paste these queries into the SQL Editor to confirm:
+
+```sql
+-- Check patients
+SELECT p.nombre, p.apellido, p.email
+FROM patients p
+JOIN auth.users u ON u.id = p.user_id
+WHERE u.email = 'demo@example.com';
+
+-- Check appointments
+SELECT COUNT(*) AS appointments_count
+FROM appointments a
+JOIN auth.users u ON u.id = a.user_id
+WHERE u.email = 'demo@example.com';
+
+-- Check session notes
+SELECT COUNT(*) AS session_notes_count
+FROM session_notes sn
+JOIN auth.users u ON u.id = sn.psychologist_id
+WHERE u.email = 'demo@example.com';
+
+-- Check consultorios
+SELECT c.nombre, c.legacy_key
+FROM consultorios c
+JOIN auth.users u ON u.id = c.user_id
+WHERE u.email = 'demo@example.com';
+```
 
 ---
 
