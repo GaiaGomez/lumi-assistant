@@ -21,16 +21,12 @@ Completa estas variables:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-CRON_SECRET=
 NEXT_PUBLIC_BOOKING_URL=
 ```
 
 Qué hace cada una:
 - `NEXT_PUBLIC_SUPABASE_URL`: URL del proyecto Supabase
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: clave pública usada por SSR y client components
-- `SUPABASE_SERVICE_ROLE_KEY`: usada por el cron server-side
-- `CRON_SECRET`: token esperado por `src/app/api/cron/recordatorio/route.ts`
 - `NEXT_PUBLIC_BOOKING_URL`: valor por defecto para `booking_url` en settings
 
 ## 3. Crear el proyecto en Supabase
@@ -118,7 +114,7 @@ Si necesitas datos demo para probar agenda y paciente:
 - `/configuracion`: plantillas de WhatsApp, agenda y consultorios
 - `/historias`: hoy redirige a pacientes; las notas se crean desde el perfil del paciente
 
-## 10. Cosas que esta guía no asume
+## 10. Notas de despliegue
 
-No estoy documentando como ya implementado:
-- envíos automáticos reales por cron
+- El build puede depender de acceso a internet por `next/font` y la fuente Geist
+- No hay cron jobs activos en este proyecto

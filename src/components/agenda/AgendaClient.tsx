@@ -574,6 +574,8 @@ export default function AgendaClient({
             onSelectSlot={handleSelectSlot}
             eventPropGetter={eventPropGetter}
             dayPropGetter={dayPropGetter}
+            // react-big-calendar v1.x doesn't type custom component overrides for dateHeader/header;
+            // `as any` is the documented workaround until upstream fixes the generic constraints.
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             components={{ event: calendarEventComponent, dateHeader: CabechaFecha, header: ColumnaHeader } as any}
             min={calMin}
@@ -625,6 +627,8 @@ export default function AgendaClient({
                 onSelectSlot={handleSelectSlot}
                 eventPropGetter={eventPropGetter}
                 dayPropGetter={dayPropGetter}
+                // react-big-calendar v1.x doesn't type custom component overrides for dateHeader/header;
+                // `as any` is the documented workaround until upstream fixes the generic constraints.
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 components={{ event: calendarEventComponent, dateHeader: CabechaFecha, header: ColumnaHeader } as any}
                 min={new Date(0, 0, 0, 8, 0)}

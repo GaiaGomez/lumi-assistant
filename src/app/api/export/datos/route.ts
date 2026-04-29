@@ -18,7 +18,7 @@ export async function GET() {
     consultoriosResult,
     patientsResult,
     appointmentsResult,
-    clinicalNotesResult,
+    sessionNotesResult,
     settings,
   ] = await Promise.all([
     supabase
@@ -37,9 +37,9 @@ export async function GET() {
       .eq('user_id', user.id)
       .order('fecha_inicio', { ascending: true }),
     supabase
-      .from('clinical_notes')
+      .from('session_notes')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('psychologist_id', user.id)
       .order('created_at', { ascending: true }),
     fetchSettings(supabase, user.id),
   ])
@@ -48,7 +48,7 @@ export async function GET() {
     consultoriosResult,
     patientsResult,
     appointmentsResult,
-    clinicalNotesResult,
+    sessionNotesResult,
   ].find((result) => result.error)
 
   if (failedResult?.error) {
@@ -62,7 +62,7 @@ export async function GET() {
 
   const payload = {
     exported_at: generatedAt.toISOString(),
-    format: 'lumi-data-export/v1',
+    format: 'lumi-data-export/v2',
     account: {
       id: user.id,
       email: user.email ?? null,
@@ -73,18 +73,19 @@ export async function GET() {
       consultorios: consultoriosResult.data?.length ?? 0,
       patients: patientsResult.data?.length ?? 0,
       appointments: appointmentsResult.data?.length ?? 0,
-      clinical_notes: clinicalNotesResult.data?.length ?? 0,
+      session_notes: sessionNotesResult.data?.length ?? 0,
     },
     notes: [
       'La exportación incluye los datos estructurados de Lumi en formato JSON.',
       'Los archivos binarios del canvas no se embeben; las notas conservan la referencia guardada en canvas_url.',
+      'session_notes contiene las notas clínicas por sesión (formato activo desde v2).',
     ],
     data: {
       settings,
       consultorios: consultoriosResult.data ?? [],
       patients: patientsResult.data ?? [],
       appointments: appointmentsResult.data ?? [],
-      clinical_notes: clinicalNotesResult.data ?? [],
+      session_notes: sessionNotesResult.data ?? [],
     },
   }
 

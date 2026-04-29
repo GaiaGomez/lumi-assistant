@@ -2,7 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type RefObject } from 'react'
 import { getStroke } from 'perfect-freehand'
-import { Eraser, Redo2, Trash2, Undo2 } from 'lucide-react'
+import { Eraser, Redo2, Trash2, Undo2, X } from 'lucide-react'
 import type { ClinicalCanvasPath } from '@/types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -341,7 +341,8 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
   const [strokeColor, setStrokeColor] = useState(COLOR_OPTIONS[0].value)
   const [canvasHeight, setCanvasHeight] = useState(initialHeight)
   const [backgroundStyle, setBackgroundStyle] = useState<BackgroundStyle>('plain')
-  const [penMode, setPenMode] = useState<boolean>(false)
+  const [penMode, setPenMode] = useState<boolean>(() => readPenDetected() || isStylusTabletEnvironment())
+  const [confirmClear, setConfirmClear] = useState(false)
 
   // ── Committed strokes (React renders, updated only on pointer-up) ───────────
   const [completedStrokes, setCompletedStrokes] = useState<InternalStroke[]>(
@@ -359,10 +360,6 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
 
   const lastDataUrlRef = useRef<string>('')
   const pngDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    setPenMode(readPenDetected() || isStylusTabletEnvironment())
-  }, [])
 
   useEffect(() => {
     return () => {
@@ -758,15 +755,37 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(functi
           >
             <Redo2 size={14} />
           </button>
-          <button
-            type="button"
-            onClick={handleClear}
-            className="flex h-7 w-7 items-center justify-center rounded-full shrink-0"
-            style={{ color: 'var(--state-cancel-text)' }}
-            aria-label="Eliminar dibujo"
-          >
-            <Trash2 size={14} />
-          </button>
+          {confirmClear ? (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => { handleClear(); setConfirmClear(false) }}
+                className="rounded-full px-2.5 py-1 text-[11px] font-medium shrink-0"
+                style={{ background: 'var(--state-cancel-bg)', color: 'var(--state-cancel-text)' }}
+              >
+                Eliminar
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmClear(false)}
+                className="flex h-7 w-7 items-center justify-center rounded-full shrink-0"
+                style={{ color: 'var(--ink-cool-muted)' }}
+                aria-label="Cancelar"
+              >
+                <X size={13} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmClear(true)}
+              className="flex h-7 w-7 items-center justify-center rounded-full shrink-0"
+              style={{ color: 'var(--state-cancel-text)' }}
+              aria-label="Eliminar dibujo"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
         </div>
 
         {/* Pen mode indicator */}

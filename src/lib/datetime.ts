@@ -1,5 +1,6 @@
 export const LUMI_TIME_ZONE = 'America/Bogota'
 
+// Colombia does not observe DST; UTC-5 is permanent year-round
 const BOGOTA_UTC_OFFSET_HOURS = 5
 const ISO_WITH_TIME_ZONE_RE = /(Z|[+-]\d{2}:\d{2})$/i
 const LOCAL_DATE_TIME_RE =

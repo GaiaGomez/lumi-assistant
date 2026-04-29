@@ -15,7 +15,6 @@ export async function upsertPatientClinicalProfile(
   if (!user) throw new Error('No autenticado')
 
   const normalized = normalizePatientClinicalProfilePayload(payload)
-  console.log('[clinical-profile] saving', { patient_id: patientId, ...normalized })
 
   const { data, error } = await supabase
     .from('patient_clinical_profiles')
@@ -31,11 +30,6 @@ export async function upsertPatientClinicalProfile(
     .select('*')
     .single()
 
-  if (error) {
-    console.error('[clinical-profile] save error', error)
-    throw new Error(error.message)
-  }
-
-  console.log('[clinical-profile] saved', data)
+  if (error) throw new Error(error.message)
   return mapPatientClinicalProfileRow(data)
 }
