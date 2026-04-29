@@ -27,6 +27,7 @@ import {
 } from '@/lib/consultorios'
 import { type SettingsMap } from '@/lib/settings'
 import { FESTIVOS_CO } from './festivos'
+import ConsultorioFilterBar from './ConsultorioFilterBar'
 
 moment.locale('es')
 moment.tz.setDefault('America/Bogota')
@@ -487,76 +488,23 @@ export default function AgendaClient({
 
       {/* ── Filtros de consultorio — desktop ── */}
       <div className="hidden lg:flex items-center gap-2 px-1">
-        {consultorioFilterOptions.map((option) => {
-          const Icon = option.Icon
-          const activo = filtrosActivos.has(option.key)
-          return (
-            <button
-              key={option.key}
-              onClick={() => toggleFiltro(option.key)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all"
-              style={activo ? {
-                background: option.bg,
-                color: 'white',
-                border: `1px solid ${option.bg}`,
-                boxShadow: `0 2px 8px ${option.bg}44`,
-              } : {
-                background: 'rgba(255,255,255,0.38)',
-                color: 'var(--ink-cool-muted)',
-                border: '1px solid transparent',
-              }}
-            >
-              {Icon && <Icon size={10} style={{ color: activo ? 'white' : option.bg }} />}
-              {option.label}
-            </button>
-          )
-        })}
-        {filtrosActivos.size > 0 && (
-          <button
-            onClick={() => setFiltrosActivos(new Set())}
-            className="text-[12px] px-2 py-1 rounded-full transition-all"
-            style={{ color: 'var(--ink-cool-faint)', background: 'transparent' }}
-          >
-            Ver todas
-          </button>
-        )}
+        <ConsultorioFilterBar
+          options={consultorioFilterOptions}
+          filtrosActivos={filtrosActivos}
+          onToggle={toggleFiltro}
+          onClear={() => setFiltrosActivos(new Set())}
+        />
       </div>
 
       {/* ── Filtros de consultorio — mobile + tablet ── */}
       <div className="flex lg:hidden items-center gap-1.5 sm:gap-2 px-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-        {consultorioFilterOptions.map((option) => {
-          const Icon = option.Icon
-          const activo = filtrosActivos.has(option.key)
-          return (
-            <button
-              key={option.key}
-              onClick={() => toggleFiltro(option.key)}
-              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1.5 rounded-full text-[11px] sm:text-[12px] font-medium transition-all shrink-0"
-              style={activo ? {
-                background: option.bg,
-                color: 'white',
-                border: `1px solid ${option.bg}`,
-                boxShadow: `0 2px 8px ${option.bg}44`,
-              } : {
-                background: 'rgba(255,255,255,0.38)',
-                color: 'var(--ink-cool-muted)',
-                border: '1px solid transparent',
-              }}
-            >
-              {Icon && <Icon size={10} style={{ color: activo ? 'white' : option.bg }} />}
-              {option.label}
-            </button>
-          )
-        })}
-        {filtrosActivos.size > 0 && (
-          <button
-            onClick={() => setFiltrosActivos(new Set())}
-            className="text-[11px] sm:text-[12px] px-2 py-0.5 sm:py-1 rounded-full shrink-0"
-            style={{ color: 'var(--ink-cool-faint)', background: 'transparent' }}
-          >
-            Ver todas
-          </button>
-        )}
+        <ConsultorioFilterBar
+          options={consultorioFilterOptions}
+          filtrosActivos={filtrosActivos}
+          onToggle={toggleFiltro}
+          onClear={() => setFiltrosActivos(new Set())}
+          compact
+        />
       </div>
 
       {/* ── Calendario desktop ── */}

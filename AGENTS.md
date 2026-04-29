@@ -9,3 +9,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 Before writing any UI code, read `UI_RULES.md` at the repo root.
 All new screens, cards, buttons, forms and modals must follow those rules exactly.
 Do not invent inline styles, ad-hoc Tailwind classes, or new color values — use the tokens and components defined there.
+
+# Database: two notes tables — which is active
+
+`clinical_notes` — legacy table defined in `schema.sql`. Used only by the data-export API (for historical compatibility). Do NOT write new code that inserts into this table.
+
+`session_notes` — active table (added in `migration_session_notes.sql`). All new clinical note logic goes here. Managed via `src/lib/notes/actions.ts`. The schema is in `migration_session_notes.sql`.
+
+If you need to query notes, always use `session_notes`.

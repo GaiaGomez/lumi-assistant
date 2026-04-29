@@ -68,14 +68,6 @@ const inactiveToggle = {
   border: '1px solid transparent',
 }
 
-function toDateInputValue(isoString: string): string {
-  return toBogotaDateInputValue(isoString)
-}
-
-function toTimeInputValue(isoString: string): string {
-  return toBogotaTimeInputValue(isoString)
-}
-
 function formatSchedule(date: Date): string {
   return formatInBogota(date, {
     weekday: 'long',
@@ -122,8 +114,8 @@ export default function AppointmentModal({
     15,
     Math.round((getAppointmentEnd(appointment).getTime() - new Date(appointment.fecha_inicio).getTime()) / 60000)
   )
-  const [fechaValue, setFechaValue] = useState(toDateInputValue(appointment.fecha_inicio))
-  const [horaInicioValue, setHoraInicioValue] = useState(toTimeInputValue(appointment.fecha_inicio))
+  const [fechaValue, setFechaValue] = useState(toBogotaDateInputValue(appointment.fecha_inicio))
+  const [horaInicioValue, setHoraInicioValue] = useState(toBogotaTimeInputValue(appointment.fecha_inicio))
   const [duracion, setDuracion] = useState(initialDuration || DEFAULT_APPOINTMENT_DURATION_MINUTES)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)

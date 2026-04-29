@@ -33,11 +33,6 @@ function optionalConsultorio(value: unknown): Consultorio | undefined {
   return mapConsultorioRow(value)
 }
 
-function optionalAppointment(value: unknown): Appointment | undefined {
-  if (!value) return undefined
-  return mapAppointmentRow(value)
-}
-
 export function mapConsultorioRow(row: unknown): Consultorio {
   const record = expectRecord(row, 'consultorio')
   return {

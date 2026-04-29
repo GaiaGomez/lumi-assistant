@@ -1,6 +1,19 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+function requireEnv(key: string): string {
+  const value = process.env[key as keyof NodeJS.ProcessEnv]
+  if (!value) {
+    throw new Error(
+      `Falta variable de entorno requerida: ${key}. Verifica que esté definida en .env.local`
+    )
+  }
+  return value
+}
+
+const SUPABASE_URL = requireEnv('NEXT_PUBLIC_SUPABASE_URL')
+const SUPABASE_ANON_KEY = requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+
 const PUBLIC_ROUTES = ['/login']
 const INTERNAL_PREFIXES = ['/_next', '/favicon', '/api']
 const PUBLIC_FILE_PATHS = ['/manifest.json', '/robots.txt', '/sitemap.xml', '/sw.js']
@@ -24,8 +37,8 @@ export async function proxy(request: NextRequest) {
   })
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll() {

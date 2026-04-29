@@ -164,6 +164,8 @@ export default function AppointmentQuickStateEditor({
   }
 
   const disabled = !!savingField || isRefreshing
+  const isBusy = !!savingField || isRefreshing
+
   if (compact) {
     return (
       <div className="space-y-1.5">
@@ -215,6 +217,11 @@ export default function AppointmentQuickStateEditor({
           </div>
         </div>
 
+        {isBusy && !error && (
+          <p className="text-[11px]" style={{ color: 'var(--ink-cool-faint)' }}>
+            Guardando...
+          </p>
+        )}
         {error && (
           <p className="text-[12px]" style={{ color: 'var(--state-cancel-text)' }}>
             {error}
@@ -270,6 +277,11 @@ export default function AppointmentQuickStateEditor({
         </div>
       </div>
 
+      {isBusy && !error && (
+        <p className="text-[11px]" style={{ color: 'var(--ink-cool-faint)' }}>
+          Guardando...
+        </p>
+      )}
       {error && (
         <p className="text-[12px]" style={{ color: 'var(--state-cancel-text)' }}>
           {error}

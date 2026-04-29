@@ -40,6 +40,10 @@ import {
   resolveAgendaAppointmentDurationMinutes,
   type SettingsMap,
 } from '@/lib/settings'
+import {
+  toBogotaDateInputValue,
+  toBogotaTimeInputValue,
+} from '@/lib/datetime'
 import ModalShell from '@/components/ui/ModalShell'
 import Button from '@/components/ui/Button'
 import SectionHeader from '@/components/ui/SectionHeader'
@@ -83,16 +87,6 @@ const inactiveToggle = {
   background: 'rgba(255,255,255,0.42)',
   color: 'var(--ink-cool-muted)',
   border: '1px solid transparent',
-}
-
-function toDateInputValue(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate())
-}
-
-function toTimeInputValue(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return pad(date.getHours()) + ':' + pad(date.getMinutes())
 }
 
 function addMinutes(date: Date, minutes: number) {
@@ -140,9 +134,9 @@ export default function NewAppointmentModal({
   const [showDropdown, setShowDropdown] = useState(false)
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [title, setTitle] = useState('')
-  const [fechaValue, setFechaValue] = useState(toDateInputValue(defaultStart))
-  const [horaInicioValue, setHoraInicioValue] = useState(toTimeInputValue(defaultStart))
-  const [horaFinValue, setHoraFinValue] = useState(toTimeInputValue(defaultEnd))
+  const [fechaValue, setFechaValue] = useState(toBogotaDateInputValue(defaultStart))
+  const [horaInicioValue, setHoraInicioValue] = useState(toBogotaTimeInputValue(defaultStart))
+  const [horaFinValue, setHoraFinValue] = useState(toBogotaTimeInputValue(defaultEnd))
   const [horaFinTouched, setHoraFinTouched] = useState(false)
   const [recurrencePreset, setRecurrencePreset] = useState<AppointmentRecurrencePreset>('none')
   const [recurrenceUntilDate, setRecurrenceUntilDate] = useState('')
@@ -180,7 +174,7 @@ export default function NewAppointmentModal({
     const nextStart = buildLocalAppointmentStart(fechaValue, horaInicioValue)
     if (!nextStart) return
 
-    setHoraFinValue(toTimeInputValue(addMinutes(nextStart, defaultDurationMinutes)))
+    setHoraFinValue(toBogotaTimeInputValue(addMinutes(nextStart, defaultDurationMinutes)))
   }, [defaultDurationMinutes, fechaValue, horaFinTouched, horaInicioValue])
 
   useEffect(() => {
