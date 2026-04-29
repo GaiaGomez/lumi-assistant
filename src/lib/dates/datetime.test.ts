@@ -5,7 +5,7 @@ import {
   toBogotaDateInputValue,
   toBogotaTimeInputValue,
   isSameInstant,
-} from '@/lib/datetime'
+} from '@/lib/dates/datetime'
 
 // Bogotá is UTC-5 (permanent — Colombia has no DST).
 // "10:00 Bogotá" = "15:00 UTC".

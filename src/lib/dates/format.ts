@@ -3,7 +3,7 @@
 // Centraliza los formatos que estaban repetidos en múltiples páginas
 // ============================================================
 
-import { formatInBogota, getBogotaDateParts } from '@/lib/datetime'
+import { formatInBogota, getBogotaDateParts } from './datetime'
 
 /**
  * Formato completo: día de semana + fecha corta + hora.

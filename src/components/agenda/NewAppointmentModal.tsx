@@ -43,7 +43,7 @@ import {
 import {
   toBogotaDateInputValue,
   toBogotaTimeInputValue,
-} from '@/lib/datetime'
+} from '@/lib/dates/datetime'
 import ModalShell from '@/components/ui/ModalShell'
 import Button from '@/components/ui/Button'
 import SectionHeader from '@/components/ui/SectionHeader'

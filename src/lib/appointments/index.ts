@@ -5,7 +5,7 @@
 // ============================================================
 
 import type { Appointment } from '@/types'
-import { buildBogotaDateTime } from '@/lib/datetime'
+import { buildBogotaDateTime } from '@/lib/dates/datetime'
 export {
   buildAppointmentDisplayTitle,
   buildRecurringAppointmentWindows,

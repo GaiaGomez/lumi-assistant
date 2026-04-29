@@ -16,7 +16,7 @@ import {
   formatInBogota,
   toBogotaDateInputValue,
   toBogotaTimeInputValue,
-} from '@/lib/datetime'
+} from '@/lib/dates/datetime'
 import {
   GENERAL_EVENT_COLOR_PRESETS,
 } from '@/lib/appointments/ui'

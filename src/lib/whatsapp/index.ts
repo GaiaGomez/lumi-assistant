@@ -9,7 +9,7 @@
 // ============================================================
 
 import { Patient, Appointment } from '@/types'
-import { formatInBogota } from '@/lib/datetime'
+import { formatInBogota } from '@/lib/dates/datetime'
 import { appendFirma, type SettingsMap } from '@/lib/settings'
 
 export type AppointmentReminderLead = '1d' | '2h'

@@ -31,7 +31,7 @@ import {
 } from '@/lib/appointments/ui'
 import { buildAppointmentDisplayTitle, getAppointmentEnd } from '@/lib/appointments'
 import type { SettingsMap } from '@/lib/settings'
-import { FESTIVOS_CO } from '@/lib/festivos'
+import { FESTIVOS_CO } from '@/lib/dates/festivos'
 
 interface MobileAgendaProps {
   appointments: Appointment[]

@@ -26,7 +26,7 @@ import {
   resolveAppointmentConsultorioFilterKey,
 } from '@/lib/consultorios'
 import { type SettingsMap } from '@/lib/settings'
-import { FESTIVOS_CO } from '@/lib/festivos'
+import { FESTIVOS_CO } from '@/lib/dates/festivos'
 import ConsultorioFilterBar from './ConsultorioFilterBar'
 
 moment.locale('es')

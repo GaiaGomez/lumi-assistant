@@ -1,5 +1,5 @@
 import type { Appointment, Patient } from '@/types'
-import { formatDateTimeFull } from '@/lib/format'
+import { formatDateTimeFull } from '@/lib/dates/format'
 import {
   appointmentNeedsConfirmation,
   getDaysInactive,

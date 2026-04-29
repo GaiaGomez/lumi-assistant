@@ -8,7 +8,7 @@ import { APPOINTMENT_SELECT, mapAppointmentRow } from '@/lib/supabase/mappers'
 import { getOrCreateNoteForAppointment } from '@/lib/notes/actions'
 import SessionNote from '@/components/notes/SessionNote'
 import PageBlobs from '@/components/ui/PageBlobs'
-import { formatDateTimeFull } from '@/lib/format'
+import { formatDateTimeFull } from '@/lib/dates/format'
 
 interface Props {
   params: Promise<{ id: string }>
