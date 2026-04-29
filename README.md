@@ -12,13 +12,19 @@ Built end to end as a solo project, covering product scope, data modeling, front
 
 ## Preview
 
-Screenshots and product walkthrough are available in the [case study](docs/case-study.md).
+A quick look at the core Lumi workflows: agenda management, patient records, clinical notes, canvas notes, and operational follow-up.
 
-<!-- Add screenshots here when ready:
-![Lumi agenda view](public/screenshots/agenda.png)
+![Lumi weekly agenda](public/screenshots/agenda-week.png)
+
 ![Lumi patient profile](public/screenshots/patient-profile.png)
+
 ![Lumi session notes](public/screenshots/session-notes.png)
--->
+
+![Lumi canvas note](public/screenshots/canvas-note.png)
+
+![Lumi pending actions](public/screenshots/pending-actions.png)
+
+![Lumi patients list](public/screenshots/patients-list.png)
 
 ---
 
