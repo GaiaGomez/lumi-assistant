@@ -48,7 +48,6 @@ export const SETTINGS_KEYS = [
   'pacientes_dias_reactivar',      // "60" (días para mostrar "Reactivar")
 
   // ── Historial clínico ─────────────────────────────────────
-  'historial_plantilla_base',  // Texto markdown de plantilla por defecto
   'historial_vista',           // "compacta"/"expandida"
 ] as const
 
@@ -105,8 +104,7 @@ export const DEFAULT_SETTINGS: SettingsMap = {
   pacientes_dias_reactivar:     '60',
 
   // Historial
-  historial_plantilla_base: '',
-  historial_vista:          'expandida',
+  historial_vista: 'expandida',
 }
 
 /**
