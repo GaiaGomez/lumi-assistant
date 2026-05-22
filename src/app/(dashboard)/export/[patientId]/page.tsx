@@ -59,7 +59,11 @@ export default async function ExportPage({ params }: Props) {
   // Solo notas firmadas, orden cronológico ascendente
   const signedNotes = allNotes
     .filter((n) => n.status === 'signed')
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    .sort((a, b) => {
+      const dateA = a.sessionDate ?? a.createdAt
+      const dateB = b.sessionDate ?? b.createdAt
+      return new Date(dateA).getTime() - new Date(dateB).getTime()
+    })
 
   // Firma profesional (signed URL temporal)
   let signatureUrl: string | null = null

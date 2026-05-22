@@ -30,6 +30,7 @@ function mapRow(row: SessionNoteRow): SessionNote {
     therapeuticPlan: (row.therapeutic_plan as string | null) ?? null,
     sessionModality: (row.session_modality as SessionNote['sessionModality']) ?? 'no_especificada',
     sessionDurationMinutes: (row.session_duration_minutes as number | null) ?? null,
+    sessionDate: (row.appointments as { fecha_inicio: string } | null)?.fecha_inicio ?? null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   }
@@ -244,7 +245,7 @@ export async function getPatientNotes(patientId: string): Promise<SessionNote[]>
 
   const { data } = await supabase
     .from('session_notes')
-    .select('*')
+    .select('*, appointments(fecha_inicio)')
     .eq('patient_id', patientId)
     .eq('psychologist_id', user.id)
     .order('created_at', { ascending: false })

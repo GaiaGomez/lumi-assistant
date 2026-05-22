@@ -172,6 +172,7 @@ export type SessionNote = {
   therapeuticPlan: string | null
   sessionModality: 'virtual' | 'presencial' | 'no_especificada'
   sessionDurationMinutes: number | null
+  sessionDate: string | null  // fecha_inicio de la cita vinculada, si existe
   createdAt: string
   updatedAt: string
 }
