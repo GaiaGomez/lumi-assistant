@@ -61,6 +61,7 @@ export interface PatientClinicalProfile {
   consent_file_path: string | null
   data_processing_authorization_status: 'pending' | 'authorized' | null
   data_processing_authorized_at: string | null
+  consent_recorded_source: 'first_session' | 'manual' | null
   administrative_notes: string | null
   created_at: string
   updated_at: string
@@ -164,6 +165,13 @@ export type SessionNote = {
   status: NoteStatus
   signedAt: string | null
   signedBy: string | null
+  sessionTopic: string | null
+  clinicalObservations: string | null
+  interventions: string | null
+  clinicalEvolution: string | null
+  therapeuticPlan: string | null
+  sessionModality: 'virtual' | 'presencial' | 'no_especificada'
+  sessionDurationMinutes: number | null
   createdAt: string
   updatedAt: string
 }

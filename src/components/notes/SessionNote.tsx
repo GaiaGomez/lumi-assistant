@@ -32,11 +32,21 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
   const [comoVaProceso, setComoVaProceso] = useState('')
   const [queSigue, setQueSigue] = useState('')
 
+  // Nuevos campos clínicos formales
+  const [sessionTopic, setSessionTopic] = useState('')
+  const [clinicalObservations, setClinicalObservations] = useState('')
+  const [interventions, setInterventions] = useState('')
+  const [clinicalEvolution, setClinicalEvolution] = useState('')
+  const [therapeuticPlan, setTherapeuticPlan] = useState('')
+  const [sessionModality, setSessionModality] = useState<'virtual' | 'presencial' | 'no_especificada'>('no_especificada')
+  const [sessionDurationMinutes, setSessionDurationMinutes] = useState('')
+
   const [isSaving, setIsSaving] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
   const [showCanvas, setShowCanvas] = useState(false)
   const [canvasPaths, setCanvasPaths] = useState<ClinicalCanvasPath[] | null>(null)
   const [quickNoteExpanded, setQuickNoteExpanded] = useState(false)
+  const [legacyExpanded, setLegacyExpanded] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [confirmSign, setConfirmSign] = useState(false)
@@ -68,12 +78,24 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
       setQueTrabajaron(loaded.queTrabajaron ?? '')
       setComoVaProceso(loaded.comoVaProceso ?? '')
       setQueSigue(loaded.queSigue ?? '')
+      setSessionTopic(loaded.sessionTopic ?? '')
+      setClinicalObservations(loaded.clinicalObservations ?? '')
+      setInterventions(loaded.interventions ?? '')
+      setClinicalEvolution(loaded.clinicalEvolution ?? '')
+      setTherapeuticPlan(loaded.therapeuticPlan ?? '')
+      setSessionModality(loaded.sessionModality ?? 'no_especificada')
+      setSessionDurationMinutes(loaded.sessionDurationMinutes?.toString() ?? '')
       setCanvasPaths(loaded.canvasPaths)
     })
   }, [noteId])
 
   function scheduleAutosave(
-    data: Partial<Pick<SessionNoteType, 'quickNote' | 'comoLlego' | 'queTrabajaron' | 'comoVaProceso' | 'queSigue' | 'canvasPaths' | 'canvasUrl'>>
+    data: Partial<Pick<SessionNoteType,
+      | 'quickNote' | 'comoLlego' | 'queTrabajaron' | 'comoVaProceso' | 'queSigue'
+      | 'canvasPaths' | 'canvasUrl'
+      | 'sessionTopic' | 'clinicalObservations' | 'interventions' | 'clinicalEvolution' | 'therapeuticPlan'
+      | 'sessionModality' | 'sessionDurationMinutes'
+    >>
   ) {
     if (isSigned) return
     setIsSaving(true)
@@ -112,6 +134,39 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
       comoVaProceso: field === 'comoVaProceso' ? value : comoVaProceso,
       queSigue: field === 'queSigue' ? value : queSigue,
     })
+  }
+
+  function handleClinicalFieldChange(
+    field: 'sessionTopic' | 'clinicalObservations' | 'interventions' | 'clinicalEvolution' | 'therapeuticPlan',
+    value: string
+  ) {
+    if (isSigned) return
+    if (field === 'sessionTopic') setSessionTopic(value)
+    else if (field === 'clinicalObservations') setClinicalObservations(value)
+    else if (field === 'interventions') setInterventions(value)
+    else if (field === 'clinicalEvolution') setClinicalEvolution(value)
+    else if (field === 'therapeuticPlan') setTherapeuticPlan(value)
+
+    scheduleAutosave({
+      sessionTopic: field === 'sessionTopic' ? value : sessionTopic,
+      clinicalObservations: field === 'clinicalObservations' ? value : clinicalObservations,
+      interventions: field === 'interventions' ? value : interventions,
+      clinicalEvolution: field === 'clinicalEvolution' ? value : clinicalEvolution,
+      therapeuticPlan: field === 'therapeuticPlan' ? value : therapeuticPlan,
+    })
+  }
+
+  function handleModalityChange(value: 'virtual' | 'presencial' | 'no_especificada') {
+    if (isSigned) return
+    setSessionModality(value)
+    scheduleAutosave({ sessionModality: value })
+  }
+
+  function handleDurationChange(value: string) {
+    if (isSigned) return
+    setSessionDurationMinutes(value)
+    const mins = value === '' ? null : Number.parseInt(value, 10)
+    scheduleAutosave({ sessionDurationMinutes: Number.isNaN(mins as number) ? null : mins })
   }
 
   const handleCanvasChange = useCallback(
@@ -365,6 +420,116 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
 
         {mode === 'formal' && (
           <div className="space-y-4">
+            {/* ── Metadatos de sesión ── */}
+            <div className="flex flex-wrap items-end gap-3">
+              <label className="flex-1 min-w-[140px] space-y-1.5">
+                <span className="section-kicker">Modalidad</span>
+                <select
+                  value={sessionModality}
+                  disabled={isSigned}
+                  onChange={(e) => handleModalityChange(e.target.value as typeof sessionModality)}
+                  className="w-full rounded-[14px] px-3.5 py-2.5 text-[14px] focus:outline-none"
+                  style={{ cursor: isSigned ? 'default' : undefined }}
+                >
+                  <option value="no_especificada">No especificada</option>
+                  <option value="virtual">Virtual</option>
+                  <option value="presencial">Presencial</option>
+                </select>
+              </label>
+              <label className="w-[130px] space-y-1.5">
+                <span className="section-kicker">Duración (min)</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={480}
+                  value={sessionDurationMinutes}
+                  readOnly={isSigned}
+                  onChange={(e) => handleDurationChange(e.target.value)}
+                  placeholder="—"
+                  className="w-full rounded-[14px] px-3.5 py-2.5 text-[14px] focus:outline-none"
+                  style={{ cursor: isSigned ? 'default' : undefined }}
+                />
+              </label>
+            </div>
+
+            {/* ── Tema de sesión ── */}
+            <label className="block space-y-1.5">
+              <span className="section-kicker">Tema de sesión</span>
+              <input
+                type="text"
+                value={sessionTopic}
+                readOnly={isSigned}
+                onChange={(e) => { if (!isSigned) handleClinicalFieldChange('sessionTopic', e.target.value) }}
+                placeholder={isSigned ? '' : 'Ej: Duelo, regulación emocional, límites...'}
+                className="w-full rounded-[14px] px-3.5 py-2.5 text-[14px] focus:outline-none"
+                style={{ cursor: isSigned ? 'default' : undefined }}
+              />
+            </label>
+
+            {/* ── Campos clínicos ── */}
+            {([
+              { key: 'clinicalObservations' as const, label: 'Observaciones clínicas', placeholder: 'Estado del paciente, presentación, cambios observados...' },
+              { key: 'interventions' as const, label: 'Intervenciones', placeholder: 'Técnicas usadas, recursos, respuesta del paciente...' },
+              { key: 'clinicalEvolution' as const, label: 'Evolución clínica', placeholder: 'Avances, obstáculos, lectura del proceso...' },
+              { key: 'therapeuticPlan' as const, label: 'Plan terapéutico', placeholder: 'Acuerdos, tareas, objetivo para la próxima sesión...' },
+            ] as const).map(({ key, label, placeholder }) => {
+              const value = key === 'clinicalObservations' ? clinicalObservations
+                : key === 'interventions' ? interventions
+                : key === 'clinicalEvolution' ? clinicalEvolution
+                : therapeuticPlan
+              return (
+                <label key={key} className="block space-y-1.5">
+                  <span className="section-kicker">{label}</span>
+                  <textarea
+                    value={value}
+                    readOnly={isSigned}
+                    onChange={(e) => {
+                      if (isSigned) return
+                      e.target.style.height = 'auto'
+                      e.target.style.height = `${e.target.scrollHeight}px`
+                      handleClinicalFieldChange(key, e.target.value)
+                    }}
+                    placeholder={isSigned ? '' : placeholder}
+                    rows={3}
+                    className="w-full resize-none overflow-hidden rounded-[14px] px-3.5 py-3 text-[14px] leading-relaxed focus:outline-none"
+                    style={{ cursor: isSigned ? 'default' : undefined }}
+                  />
+                </label>
+              )
+            })}
+
+            {/* ── Campos anteriores (solo lectura, backward compat) ── */}
+            {(comoLlego || queTrabajaron || comoVaProceso || queSigue) && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setLegacyExpanded((v) => !v)}
+                  className="flex w-full items-center justify-between"
+                >
+                  <SectionHeader label="Campos anteriores" />
+                  <span className="text-[11px]" style={{ color: 'var(--ink-cool-faint)' }}>
+                    {legacyExpanded ? 'Ocultar' : 'Ver'}
+                  </span>
+                </button>
+                {legacyExpanded && (
+                  <div
+                    className="mt-1.5 rounded-[14px] px-3.5 py-3 space-y-3"
+                    style={{ background: 'rgba(255,255,255,0.28)', border: '1px solid var(--border-glass-white)' }}
+                  >
+                    {formalFields.map(({ key, label, value }) => value ? (
+                      <div key={key}>
+                        <p className="section-kicker mb-1" style={{ opacity: 0.7 }}>{label}</p>
+                        <p className="text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--ink-cool-soft)' }}>
+                          {value}
+                        </p>
+                      </div>
+                    ) : null)}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Notas de sesión (durante) ── */}
             {quickNote.trim() !== '' && (
               <div>
                 <button
@@ -372,7 +537,7 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
                   onClick={() => setQuickNoteExpanded((v) => !v)}
                   className="flex w-full items-center justify-between"
                 >
-                  <SectionHeader label="Notas de sesión" />
+                  <SectionHeader label="Notas durante la sesión" />
                   <span className="text-[11px]" style={{ color: 'var(--ink-cool-faint)' }}>
                     {quickNoteExpanded ? 'Ocultar' : 'Ver'}
                   </span>
@@ -380,41 +545,15 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
                 {quickNoteExpanded && (
                   <div
                     className="mt-1.5 rounded-[14px] px-3.5 py-3"
-                    style={{
-                      background: 'rgba(255,255,255,0.38)',
-                      border: '1px solid var(--border-glass-white)',
-                    }}
+                    style={{ background: 'rgba(255,255,255,0.38)', border: '1px solid var(--border-glass-white)' }}
                   >
-                    <p
-                      className="text-[13px] italic leading-relaxed whitespace-pre-wrap"
-                      style={{ color: 'var(--ink-cool-soft)' }}
-                    >
+                    <p className="text-[13px] italic leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--ink-cool-soft)' }}>
                       {quickNote}
                     </p>
                   </div>
                 )}
               </div>
             )}
-
-            {formalFields.map(({ key, label, placeholder, value }) => (
-              <label key={key} className="block space-y-1.5">
-                <span className="section-kicker">{label}</span>
-                <textarea
-                  value={value}
-                  readOnly={isSigned}
-                  onChange={(e) => {
-                    if (isSigned) return
-                    e.target.style.height = 'auto'
-                    e.target.style.height = `${e.target.scrollHeight}px`
-                    handleFormalFieldChange(key, e.target.value)
-                  }}
-                  placeholder={isSigned ? '' : placeholder}
-                  rows={3}
-                  className="w-full resize-none overflow-hidden rounded-[14px] px-3.5 py-3 text-[14px] leading-relaxed focus:outline-none"
-                  style={{ cursor: isSigned ? 'default' : undefined }}
-                />
-              </label>
-            ))}
           </div>
         )}
       </div>
@@ -513,44 +652,68 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
       )}
 
       {/* ── Confirmar firma ── */}
-      {confirmSign && (
-        <ModalShell onClose={() => setConfirmSign(false)} maxWidth="max-w-sm">
-          <div className="flex items-start justify-between p-4">
-            <div>
-              <SectionHeader label="Nota clínica" className="mb-1" />
-              <h2 className="editorial-panel-title text-[1.05rem]">¿Firmar esta nota?</h2>
-            </div>
-            <Button variant="subtle" onClick={() => setConfirmSign(false)} className="p-2">
-              <X size={16} />
-            </Button>
-          </div>
-          <div className="px-4 pb-4 space-y-3">
-            <p className="text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>
-              Al firmar, la nota queda cerrada y ya no se puede editar ni eliminar. Esta acción es irreversible.
-            </p>
-            {signError && (
-              <p className="text-[13px]" style={{ color: 'var(--state-cancel-text)' }}>
-                {signError}
-              </p>
-            )}
-            <div className="flex justify-end gap-2">
-              <Button variant="subtle" onClick={() => setConfirmSign(false)}>
-                Cancelar
+      {confirmSign && (() => {
+        const missingFields: string[] = []
+        if (sessionModality === 'no_especificada') missingFields.push('modalidad')
+        if (!sessionDurationMinutes.trim()) missingFields.push('duración')
+        if (!sessionTopic.trim()) missingFields.push('tema de sesión')
+        const hasClinicalField = !!(clinicalObservations.trim() || interventions.trim() || clinicalEvolution.trim() || therapeuticPlan.trim())
+        if (!hasClinicalField) missingFields.push('al menos un campo clínico')
+        return (
+          <ModalShell onClose={() => setConfirmSign(false)} maxWidth="max-w-sm">
+            <div className="flex items-start justify-between p-4">
+              <div>
+                <SectionHeader label="Nota clínica" className="mb-1" />
+                <h2 className="editorial-panel-title text-[1.05rem]">¿Firmar esta nota?</h2>
+              </div>
+              <Button variant="subtle" onClick={() => setConfirmSign(false)} className="p-2">
+                <X size={16} />
               </Button>
-              <button
-                type="button"
-                disabled={isSigning}
-                onClick={handleSign}
-                className="rounded-full px-4 py-1.5 text-[13px] flex items-center gap-1.5"
-                style={{ background: 'rgba(107,175,141,0.18)', color: '#2d6b4d' }}
-              >
-                <Lock size={12} />
-                {isSigning ? 'Firmando...' : 'Sí, firmar'}
-              </button>
             </div>
-          </div>
-        </ModalShell>
-      )}
+            <div className="px-4 pb-4 space-y-3">
+              <p className="text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>
+                Al firmar, la nota queda cerrada y ya no se puede editar ni eliminar. Esta acción es irreversible.
+              </p>
+              {missingFields.length > 0 && (
+                <div
+                  className="rounded-[12px] px-3 py-2.5"
+                  style={{ background: 'rgba(212,168,75,0.10)', border: '1px solid rgba(212,168,75,0.22)' }}
+                >
+                  <p className="text-[12px] font-medium mb-1" style={{ color: '#8a6a1a' }}>
+                    Campos incompletos en nota formal:
+                  </p>
+                  <p className="text-[12px]" style={{ color: '#7a5a10' }}>
+                    {missingFields.join(', ')}
+                  </p>
+                  <p className="text-[11px] mt-1" style={{ color: '#a08030' }}>
+                    Puedes firmar igualmente, pero el reporte quedará incompleto.
+                  </p>
+                </div>
+              )}
+              {signError && (
+                <p className="text-[13px]" style={{ color: 'var(--state-cancel-text)' }}>
+                  {signError}
+                </p>
+              )}
+              <div className="flex justify-end gap-2">
+                <Button variant="subtle" onClick={() => setConfirmSign(false)}>
+                  Cancelar
+                </Button>
+                <button
+                  type="button"
+                  disabled={isSigning}
+                  onClick={handleSign}
+                  className="rounded-full px-4 py-1.5 text-[13px] flex items-center gap-1.5"
+                  style={{ background: 'rgba(107,175,141,0.18)', color: '#2d6b4d' }}
+                >
+                  <Lock size={12} />
+                  {isSigning ? 'Firmando...' : 'Sí, firmar'}
+                </button>
+              </div>
+            </div>
+          </ModalShell>
+        )
+      })()}
 
       {/* ── Confirmar eliminación ── */}
       {confirmDelete && (

@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
-import { AlertCircle, Check, Eye, EyeOff, KeyRound, Mail, Save } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { AlertCircle, Check, Eye, EyeOff, ImagePlus, KeyRound, Mail, Save, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { createClient } from '@/lib/supabase/client'
-import { upsertSettingValue } from '@/lib/settings'
+import { upsertSettingValue, type SettingsMap } from '@/lib/settings'
+import { uploadProfessionalSignature, deleteProfessionalSignature, getProfessionalSignatureUrl } from '@/lib/profile/signature'
 import { getAvatarLabel, type ProfileIdentity } from '@/lib/profile'
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
@@ -15,15 +16,45 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 interface ProfileClientProps {
   userId: string
   identity: ProfileIdentity
+  settings: SettingsMap
 }
 
-export default function ProfileClient({ userId, identity }: ProfileClientProps) {
+export default function ProfileClient({ userId, identity, settings }: ProfileClientProps) {
   const router = useRouter()
   const [displayName, setDisplayName] = useState(identity.displayName)
   const [workspaceName, setWorkspaceName] = useState(identity.workspaceName)
   const [email, setEmail] = useState(identity.email)
   const [currentAuthEmail, setCurrentAuthEmail] = useState(identity.email)
   const [pendingEmail, setPendingEmail] = useState(identity.pendingEmail)
+
+  // Datos profesionales
+  const [professionalFullName, setProfessionalFullName] = useState(settings.professional_full_name)
+  const [professionalTitle, setProfessionalTitle] = useState(settings.professional_title)
+  const [professionalLicense, setProfessionalLicense] = useState(settings.professional_license)
+  const [professionalEmail, setProfessionalEmail] = useState(settings.professional_email)
+  const [professionalPhone, setProfessionalPhone] = useState(settings.professional_phone)
+  const [professionalCity, setProfessionalCity] = useState(settings.professional_city)
+  const [professionalSaveState, setProfessionalSaveState] = useState<SaveState>('idle')
+  const [professionalError, setProfessionalError] = useState('')
+
+  // Firma profesional
+  const [signaturePath, setSignaturePath] = useState(settings.professional_signature_path)
+  const [signaturePreviewUrl, setSignaturePreviewUrl] = useState<string | null>(null)
+  const [signatureLoaded, setSignatureLoaded] = useState(false)
+  const [signatureSaving, setSignatureSaving] = useState(false)
+  const [signatureError, setSignatureError] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!signaturePath || signatureLoaded) return
+    const supabase = createClient()
+    getProfessionalSignatureUrl(supabase, signaturePath)
+      .then((url) => {
+        setSignaturePreviewUrl(url)
+        setSignatureLoaded(true)
+      })
+      .catch(() => { /* preview not critical */ })
+  }, [signaturePath, signatureLoaded])
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
@@ -146,6 +177,66 @@ export default function ProfileClient({ userId, identity }: ProfileClientProps) 
           : message
       )
       if (profileSaved) router.refresh()
+    }
+  }
+
+  async function handleProfessionalSave() {
+    setProfessionalSaveState('saving')
+    setProfessionalError('')
+    try {
+      const supabase = createClient()
+      await Promise.all([
+        upsertSettingValue(supabase, userId, 'professional_full_name', professionalFullName.trim()),
+        upsertSettingValue(supabase, userId, 'professional_title', professionalTitle.trim()),
+        upsertSettingValue(supabase, userId, 'professional_license', professionalLicense.trim()),
+        upsertSettingValue(supabase, userId, 'professional_email', professionalEmail.trim()),
+        upsertSettingValue(supabase, userId, 'professional_phone', professionalPhone.trim()),
+        upsertSettingValue(supabase, userId, 'professional_city', professionalCity.trim()),
+      ])
+      setProfessionalSaveState('saved')
+      router.refresh()
+      window.setTimeout(() => setProfessionalSaveState('idle'), 2500)
+    } catch (err) {
+      setProfessionalSaveState('error')
+      setProfessionalError(err instanceof Error ? err.message : 'No se pudo guardar los datos profesionales.')
+    }
+  }
+
+  async function handleSignatureUpload(file: File) {
+    setSignatureSaving(true)
+    setSignatureError('')
+    try {
+      const supabase = createClient()
+      const path = await uploadProfessionalSignature(supabase, userId, file)
+      await upsertSettingValue(supabase, userId, 'professional_signature_path', path)
+      const url = await getProfessionalSignatureUrl(supabase, path)
+      setSignaturePath(path)
+      setSignaturePreviewUrl(url)
+      setSignatureLoaded(true)
+      router.refresh()
+    } catch (err) {
+      setSignatureError(err instanceof Error ? err.message : 'No se pudo subir la firma.')
+    } finally {
+      setSignatureSaving(false)
+    }
+  }
+
+  async function handleSignatureDelete() {
+    if (!signaturePath) return
+    setSignatureSaving(true)
+    setSignatureError('')
+    try {
+      const supabase = createClient()
+      await deleteProfessionalSignature(supabase, signaturePath)
+      await upsertSettingValue(supabase, userId, 'professional_signature_path', '')
+      setSignaturePath('')
+      setSignaturePreviewUrl(null)
+      setSignatureLoaded(false)
+      router.refresh()
+    } catch (err) {
+      setSignatureError(err instanceof Error ? err.message : 'No se pudo eliminar la firma.')
+    } finally {
+      setSignatureSaving(false)
     }
   }
 
@@ -307,6 +398,168 @@ export default function ProfileClient({ userId, identity }: ProfileClientProps) 
               {saveState === 'saving' ? 'Guardando…' : 'Guardar'}
             </Button>
           </div>
+        </div>
+      </Card>
+
+      {/* ── Datos profesionales ── */}
+      <Card className="p-3 sm:p-4">
+        <div className="space-y-3">
+          <div>
+            <p className="section-kicker mb-0.5">Datos profesionales</p>
+            <p className="text-[13px]" style={{ color: 'var(--ink-cool-faint)' }}>
+              Aparecen en el encabezado del reporte de sesiones.
+            </p>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <Input
+              label="Nombre completo"
+              value={professionalFullName}
+              onChange={(e) => setProfessionalFullName(e.target.value)}
+              placeholder="Ej: Valentina Ríos Arango"
+            />
+            <Input
+              label="Título / cargo"
+              value={professionalTitle}
+              onChange={(e) => setProfessionalTitle(e.target.value)}
+              placeholder="Ej: Psicóloga Clínica"
+            />
+            <Input
+              label="Tarjeta profesional"
+              value={professionalLicense}
+              onChange={(e) => setProfessionalLicense(e.target.value)}
+              placeholder="Ej: TP 12345-A"
+            />
+            <Input
+              label="Correo profesional"
+              type="email"
+              value={professionalEmail}
+              onChange={(e) => setProfessionalEmail(e.target.value)}
+              placeholder="correo@consultorio.com"
+            />
+            <Input
+              label="Teléfono (opcional)"
+              value={professionalPhone}
+              onChange={(e) => setProfessionalPhone(e.target.value)}
+              placeholder="+57 300 000 0000"
+            />
+            <Input
+              label="Ciudad (opcional)"
+              value={professionalCity}
+              onChange={(e) => setProfessionalCity(e.target.value)}
+              placeholder="Medellín"
+            />
+          </div>
+
+          <div
+            className="flex flex-col gap-2 border-t pt-3 sm:flex-row sm:items-center sm:justify-between"
+            style={{ borderColor: 'var(--border-glass-muted)' }}
+          >
+            <div className="min-h-[20px]">
+              {professionalSaveState === 'saved' && (
+                <span className="flex items-center gap-1.5 text-[13px]" style={{ color: 'var(--state-success-text)' }}>
+                  <Check size={14} />
+                  Datos guardados.
+                </span>
+              )}
+              {professionalSaveState === 'error' && (
+                <span className="flex items-center gap-1.5 text-[13px]" style={{ color: 'var(--state-cancel-text)' }}>
+                  <AlertCircle size={14} />
+                  {professionalError}
+                </span>
+              )}
+            </div>
+            <Button
+              variant="action"
+              onClick={handleProfessionalSave}
+              disabled={professionalSaveState === 'saving'}
+              className="px-4 py-2 text-[13px] inline-flex items-center gap-2"
+            >
+              <Save size={14} />
+              {professionalSaveState === 'saving' ? 'Guardando…' : 'Guardar'}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* ── Firma profesional ── */}
+      <Card className="p-3 sm:p-4">
+        <div className="space-y-3">
+          <div>
+            <p className="section-kicker mb-0.5">Firma profesional</p>
+            <p className="text-[13px]" style={{ color: 'var(--ink-cool-faint)' }}>
+              Imagen PNG, JPG o WebP de tu firma escaneada. Aparece al pie del reporte de sesiones.
+            </p>
+          </div>
+
+          {signaturePath ? (
+            <div className="flex items-start gap-4">
+              {signaturePreviewUrl ? (
+                <img
+                  src={signaturePreviewUrl}
+                  alt="Firma profesional"
+                  className="max-h-[80px] rounded-[10px] border object-contain"
+                  style={{ borderColor: 'var(--border-glass-muted)', background: 'white' }}
+                />
+              ) : (
+                <div
+                  className="flex h-[80px] w-[160px] items-center justify-center rounded-[10px]"
+                  style={{ background: 'rgba(255,255,255,0.24)', border: '1px solid var(--border-glass-white)', color: 'var(--ink-cool-faint)' }}
+                >
+                  <p className="text-[12px]">Cargando…</p>
+                </div>
+              )}
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={signatureSaving}
+                  className="btn-subtle px-3 py-1.5 text-[12px] flex items-center gap-1.5"
+                >
+                  <ImagePlus size={13} />
+                  Reemplazar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSignatureDelete}
+                  disabled={signatureSaving}
+                  className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px]"
+                  style={{ background: 'rgba(176,124,132,0.10)', color: 'var(--state-cancel-text)' }}
+                >
+                  <Trash2 size={13} />
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={signatureSaving}
+              className="btn-subtle flex items-center gap-2 px-4 py-2 text-[13px]"
+            >
+              <ImagePlus size={14} />
+              {signatureSaving ? 'Subiendo…' : 'Subir firma'}
+            </button>
+          )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".png,.jpg,.jpeg,.webp"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) handleSignatureUpload(file)
+              e.target.value = ''
+            }}
+          />
+
+          {signatureError && (
+            <p className="text-[13px]" style={{ color: 'var(--state-cancel-text)' }}>
+              {signatureError}
+            </p>
+          )}
         </div>
       </Card>
 

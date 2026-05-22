@@ -23,6 +23,13 @@ function mapRow(row: SessionNoteRow): SessionNote {
     status: (row.status as SessionNote['status']) ?? 'draft',
     signedAt: (row.signed_at as string | null) ?? null,
     signedBy: (row.signed_by as string | null) ?? null,
+    sessionTopic: (row.session_topic as string | null) ?? null,
+    clinicalObservations: (row.clinical_observations as string | null) ?? null,
+    interventions: (row.interventions as string | null) ?? null,
+    clinicalEvolution: (row.clinical_evolution as string | null) ?? null,
+    therapeuticPlan: (row.therapeutic_plan as string | null) ?? null,
+    sessionModality: (row.session_modality as SessionNote['sessionModality']) ?? 'no_especificada',
+    sessionDurationMinutes: (row.session_duration_minutes as number | null) ?? null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   }
@@ -104,7 +111,12 @@ export async function getOrCreateNoteForAppointment(
 // Rechaza si la nota ya está firmada (doble protección: RLS también bloquea).
 export async function updateSessionNote(
   noteId: string,
-  data: Partial<Pick<SessionNote, 'quickNote' | 'comoLlego' | 'queTrabajaron' | 'comoVaProceso' | 'queSigue' | 'canvasPaths' | 'canvasUrl'>>
+  data: Partial<Pick<SessionNote,
+    | 'quickNote' | 'comoLlego' | 'queTrabajaron' | 'comoVaProceso' | 'queSigue'
+    | 'canvasPaths' | 'canvasUrl'
+    | 'sessionTopic' | 'clinicalObservations' | 'interventions' | 'clinicalEvolution' | 'therapeuticPlan'
+    | 'sessionModality' | 'sessionDurationMinutes'
+  >>
 ): Promise<SessionNote> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -130,6 +142,13 @@ export async function updateSessionNote(
   if (data.queSigue !== undefined) payload.que_sigue = data.queSigue
   if (data.canvasPaths !== undefined) payload.canvas_paths = data.canvasPaths
   if (data.canvasUrl !== undefined) payload.canvas_url = data.canvasUrl
+  if (data.sessionTopic !== undefined) payload.session_topic = data.sessionTopic
+  if (data.clinicalObservations !== undefined) payload.clinical_observations = data.clinicalObservations
+  if (data.interventions !== undefined) payload.interventions = data.interventions
+  if (data.clinicalEvolution !== undefined) payload.clinical_evolution = data.clinicalEvolution
+  if (data.therapeuticPlan !== undefined) payload.therapeutic_plan = data.therapeuticPlan
+  if (data.sessionModality !== undefined) payload.session_modality = data.sessionModality
+  if (data.sessionDurationMinutes !== undefined) payload.session_duration_minutes = data.sessionDurationMinutes
 
   const { data: row, error } = await supabase
     .from('session_notes')

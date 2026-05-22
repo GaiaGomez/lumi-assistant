@@ -28,7 +28,7 @@ export default async function ProfilePage() {
           subtitle="Edita la identidad que Lumi muestra en tu espacio de trabajo."
         />
 
-        <ProfileClient userId={user.id} identity={identity} />
+        <ProfileClient userId={user.id} identity={identity} settings={settings} />
       </div>
     </div>
   )

@@ -7,7 +7,7 @@ Lumi usa Supabase como backend. Las siguientes medidas están implementadas:
 - **RLS activo** en todas las tablas clínicas: `patients`, `patient_clinical_profiles`, `appointments`, `session_notes`, `settings`, `consultorios`.
 - Cada usuario solo accede a sus propios datos (scoped por `user_id` / `psychologist_id` = `auth.uid()`).
 - **Notas firmadas bloqueadas**: `session_notes` con `status = 'signed'` no pueden editarse ni eliminarse (bloqueado en RLS + en la server action).
-- **Storage privado**: el bucket `canvas-notes` es privado; los archivos solo son accesibles por el usuario dueño vía signed URLs temporales.
+- **Storage privado**: los buckets `canvas-notes` y `professional-signatures` son privados; los archivos solo son accesibles por el usuario dueño vía signed URLs temporales.
 - **No se usa `service_role`** en ningún cliente del navegador.
 - **No hay `console.log`** con datos clínicos en el código fuente.
 
@@ -66,5 +66,6 @@ El archivo `.env.local` está en `.gitignore` y nunca debe comitearse.
 ## Archivos clínicos en Storage
 
 - El bucket `canvas-notes` es privado.
+- El bucket `professional-signatures` es privado; path: `{user_id}/signature.{ext}`. Solo el dueño puede subir, ver, actualizar y borrar su firma (RLS en storage.objects).
 - Si en el futuro se agrega almacenamiento de consentimientos (`consent_file_path`), crear un bucket separado privado y aplicar políticas RLS equivalentes.
 - **Nunca configurar un bucket clínico como público.**

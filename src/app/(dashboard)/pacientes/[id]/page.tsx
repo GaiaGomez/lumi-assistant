@@ -16,6 +16,7 @@ import {
   mapPatientRow,
 } from '@/lib/supabase/mappers'
 import { getPatientNotes } from '@/lib/notes/actions'
+import { maybeAutoRegisterConsents } from '@/lib/patients/clinical-profile.server'
 import PageBlobs from '@/components/ui/PageBlobs'
 import EmptyState from '@/components/ui/EmptyState'
 import PatientClinicalProfileTab from '@/components/pacientes/PatientClinicalProfileTab'
@@ -60,6 +61,19 @@ export default async function PatientProfilePage({ params, searchParams }: Props
 
   if (!patient) notFound()
 
+  // Auto-register consents on first attended session (only if still pending)
+  const firstRealizada = (appointments ?? [])
+    .filter((a) => a.estado_sesion === 'realizada')
+    .sort((a, b) => new Date(a.fecha_inicio).getTime() - new Date(b.fecha_inicio).getTime())[0]
+
+  let resolvedClinicalProfile = clinicalProfile
+  if (firstRealizada) {
+    const changed = await maybeAutoRegisterConsents(id, firstRealizada.fecha_inicio)
+    if (changed) {
+      resolvedClinicalProfile = await getPatientClinicalProfile(id)
+    }
+  }
+
   const p = mapPatientRow(patient)
   const patientAppointments = mapAppointmentRows(appointments)
 
@@ -102,7 +116,7 @@ export default async function PatientProfilePage({ params, searchParams }: Props
       </div>
 
       {activeTab === 'clinical-profile' ? (
-        <PatientClinicalProfileTab patient={p} initialProfile={clinicalProfile} />
+        <PatientClinicalProfileTab patient={p} initialProfile={resolvedClinicalProfile} />
       ) : (
         <>
           <PatientTopMosaic

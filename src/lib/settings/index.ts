@@ -49,6 +49,15 @@ export const SETTINGS_KEYS = [
 
   // ── Historial clínico ─────────────────────────────────────
   'historial_vista',           // "compacta"/"expandida"
+
+  // ── Datos profesionales ───────────────────────────────────
+  'professional_full_name',       // Nombre completo para encabezado de reporte
+  'professional_title',           // Título / cargo (ej: "Psicóloga Clínica")
+  'professional_license',         // Tarjeta profesional / registro
+  'professional_email',           // Correo profesional para el reporte
+  'professional_phone',           // Teléfono profesional (opcional)
+  'professional_city',            // Ciudad (opcional)
+  'professional_signature_path',  // Path en bucket professional-signatures (opcional)
 ] as const
 
 export type SettingsKey = (typeof SETTINGS_KEYS)[number]
@@ -105,6 +114,15 @@ export const DEFAULT_SETTINGS: SettingsMap = {
 
   // Historial
   historial_vista: 'expandida',
+
+  // Datos profesionales
+  professional_full_name: '',
+  professional_title: '',
+  professional_license: '',
+  professional_email: '',
+  professional_phone: '',
+  professional_city: '',
+  professional_signature_path: '',
 }
 
 /**

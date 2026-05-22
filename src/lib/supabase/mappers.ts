@@ -121,6 +121,7 @@ export function mapPatientClinicalProfileRow(row: unknown): PatientClinicalProfi
     consent_file_path: optionalString(record.consent_file_path),
     data_processing_authorization_status: optionalString(record.data_processing_authorization_status) as PatientClinicalProfile['data_processing_authorization_status'],
     data_processing_authorized_at: optionalString(record.data_processing_authorized_at),
+    consent_recorded_source: optionalString(record.consent_recorded_source) as PatientClinicalProfile['consent_recorded_source'],
     administrative_notes: optionalString(record.administrative_notes),
     created_at: expectString(record.created_at, 'patient_clinical_profile.created_at'),
     updated_at: expectString(record.updated_at, 'patient_clinical_profile.updated_at'),

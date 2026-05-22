@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation'
 import {
   CalendarDays,
   ClipboardList,
-  Database,
   FileCheck,
   HeartPulse,
   IdCard,
@@ -602,121 +601,97 @@ export default function PatientClinicalProfileTab({
           </div>
         </BlockCard>
 
-        {/* ── Consentimiento informado ── */}
+        {/* ── Consentimientos (compacto) ── */}
         <Card className="p-3">
-          <div className="mb-2 flex items-start justify-between gap-3">
-            <div className="flex items-start gap-2.5">
-              <span
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-                style={{ background: 'rgba(255,255,255,0.46)', color: 'var(--ink-cool-soft)' }}
-              >
-                <FileCheck size={15} />
-              </span>
-              <div>
-                <SectionHeader label="Legal" className="mb-0.5" />
-                <h2 className="editorial-panel-title text-[1.05rem]">Consentimiento informado</h2>
-              </div>
+          <div className="mb-2 flex items-center gap-2.5">
+            <span
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+              style={{ background: 'rgba(255,255,255,0.46)', color: 'var(--ink-cool-soft)' }}
+            >
+              <FileCheck size={15} />
+            </span>
+            <div>
+              <SectionHeader label="Legal" className="mb-0.5" />
+              <h2 className="editorial-panel-title text-[1.05rem]">Consentimientos</h2>
             </div>
-            {profile?.informed_consent_status !== 'signed' && (
-              <button
-                type="button"
-                onClick={handleMarkConsentSigned}
-                disabled={consentSigning}
-                className="btn-subtle shrink-0 px-3 py-1.5 text-[12px] flex items-center gap-1"
-              >
-                {consentSigning ? <Loader2 size={12} className="animate-spin" /> : null}
-                Marcar firmado
-              </button>
-            )}
           </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <FieldItem
-              label="Estado"
-              value={
-                profile?.informed_consent_status === 'signed'
-                  ? 'Firmado'
-                  : profile?.informed_consent_status === 'not_required'
-                  ? 'No aplica'
-                  : 'Pendiente'
-              }
-            />
-            {profile?.informed_consent_signed_at && (
-              <FieldItem
-                label="Fecha de firma"
-                value={new Date(profile.informed_consent_signed_at).toLocaleDateString('es-CO', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              />
-            )}
-            {profile?.consent_version && (
-              <FieldItem label="Versión" value={profile.consent_version} />
-            )}
-          </div>
-          {consentError && (
-            <p className="mt-2 text-[12px]" style={{ color: 'var(--state-cancel-text)' }}>
-              {consentError}
-            </p>
-          )}
-        </Card>
 
-        {/* ── Autorización tratamiento de datos ── */}
-        <Card className="p-3">
-          <div className="mb-2 flex items-start justify-between gap-3">
-            <div className="flex items-start gap-2.5">
-              <span
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-                style={{ background: 'rgba(255,255,255,0.46)', color: 'var(--ink-cool-soft)' }}
-              >
-                <Database size={15} />
-              </span>
-              <div>
-                <SectionHeader label="Legal" className="mb-0.5" />
-                <h2 className="editorial-panel-title text-[1.05rem]">Autorización datos</h2>
+          <div className="space-y-2">
+            {/* Consentimiento informado */}
+            <div
+              className="flex items-center justify-between gap-3 rounded-[12px] px-3 py-2"
+              style={{ background: 'rgba(255,255,255,0.32)', border: '1px solid var(--border-glass-white)' }}
+            >
+              <div className="min-w-0">
+                <p className="card-label" style={{ color: 'var(--ink-cool-faint)' }}>Consentimiento informado</p>
+                {profile?.informed_consent_status === 'signed' ? (
+                  <p className="text-[13px] leading-snug" style={{ color: 'var(--ink-cool-strong)' }}>
+                    <span className="status-badge status-badge--success mr-1.5">Firmado</span>
+                    {profile.informed_consent_signed_at && (
+                      <span style={{ color: 'var(--ink-cool-faint)' }}>
+                        {new Date(profile.informed_consent_signed_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </span>
+                    )}
+                    {profile.consent_recorded_source === 'first_session' && (
+                      <span className="ml-1.5 text-[11px]" style={{ color: 'var(--ink-cool-faint)' }}>· 1ª sesión</span>
+                    )}
+                  </p>
+                ) : (
+                  <span className="status-badge status-badge--pending">Pendiente</span>
+                )}
               </div>
+              {profile?.informed_consent_status !== 'signed' && (
+                <button
+                  type="button"
+                  onClick={handleMarkConsentSigned}
+                  disabled={consentSigning}
+                  className="btn-subtle shrink-0 px-3 py-1.5 text-[12px] flex items-center gap-1"
+                >
+                  {consentSigning ? <Loader2 size={12} className="animate-spin" /> : null}
+                  Marcar firmado
+                </button>
+              )}
             </div>
-            {profile?.data_processing_authorization_status !== 'authorized' && (
-              <button
-                type="button"
-                onClick={handleMarkDataProcessingAuthorized}
-                disabled={dataSigning}
-                className="btn-subtle shrink-0 px-3 py-1.5 text-[12px] flex items-center gap-1"
-              >
-                {dataSigning ? <Loader2 size={12} className="animate-spin" /> : null}
-                Marcar autorizado
-              </button>
+            {consentError && (
+              <p className="px-1 text-[12px]" style={{ color: 'var(--state-cancel-text)' }}>{consentError}</p>
+            )}
+
+            {/* Autorización tratamiento de datos */}
+            <div
+              className="flex items-center justify-between gap-3 rounded-[12px] px-3 py-2"
+              style={{ background: 'rgba(255,255,255,0.32)', border: '1px solid var(--border-glass-white)' }}
+            >
+              <div className="min-w-0">
+                <p className="card-label" style={{ color: 'var(--ink-cool-faint)' }}>Autorización de datos</p>
+                {profile?.data_processing_authorization_status === 'authorized' ? (
+                  <p className="text-[13px] leading-snug" style={{ color: 'var(--ink-cool-strong)' }}>
+                    <span className="status-badge status-badge--success mr-1.5">Autorizado</span>
+                    {profile.data_processing_authorized_at && (
+                      <span style={{ color: 'var(--ink-cool-faint)' }}>
+                        {new Date(profile.data_processing_authorized_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </span>
+                    )}
+                  </p>
+                ) : (
+                  <span className="status-badge status-badge--pending">Pendiente</span>
+                )}
+              </div>
+              {profile?.data_processing_authorization_status !== 'authorized' && (
+                <button
+                  type="button"
+                  onClick={handleMarkDataProcessingAuthorized}
+                  disabled={dataSigning}
+                  className="btn-subtle shrink-0 px-3 py-1.5 text-[12px] flex items-center gap-1"
+                >
+                  {dataSigning ? <Loader2 size={12} className="animate-spin" /> : null}
+                  Marcar autorizado
+                </button>
+              )}
+            </div>
+            {dataError && (
+              <p className="px-1 text-[12px]" style={{ color: 'var(--state-cancel-text)' }}>{dataError}</p>
             )}
           </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <FieldItem
-              label="Estado"
-              value={
-                profile?.data_processing_authorization_status === 'authorized'
-                  ? 'Autorizado'
-                  : 'Pendiente'
-              }
-            />
-            {profile?.data_processing_authorized_at && (
-              <FieldItem
-                label="Fecha autorización"
-                value={new Date(profile.data_processing_authorized_at).toLocaleDateString('es-CO', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              />
-            )}
-          </div>
-          {dataError && (
-            <p className="mt-2 text-[12px]" style={{ color: 'var(--state-cancel-text)' }}>
-              {dataError}
-            </p>
-          )}
         </Card>
       </div>
 
