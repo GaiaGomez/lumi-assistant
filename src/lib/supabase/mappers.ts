@@ -116,6 +116,11 @@ export function mapPatientClinicalProfileRow(row: unknown): PatientClinicalProfi
       ? record.clinical_alerts.filter((value): value is string => typeof value === 'string') as PatientClinicalProfile['clinical_alerts']
       : null,
     informed_consent_status: optionalString(record.informed_consent_status) as PatientClinicalProfile['informed_consent_status'],
+    informed_consent_signed_at: optionalString(record.informed_consent_signed_at),
+    consent_version: optionalString(record.consent_version),
+    consent_file_path: optionalString(record.consent_file_path),
+    data_processing_authorization_status: optionalString(record.data_processing_authorization_status) as PatientClinicalProfile['data_processing_authorization_status'],
+    data_processing_authorized_at: optionalString(record.data_processing_authorized_at),
     administrative_notes: optionalString(record.administrative_notes),
     created_at: expectString(record.created_at, 'patient_clinical_profile.created_at'),
     updated_at: expectString(record.updated_at, 'patient_clinical_profile.updated_at'),

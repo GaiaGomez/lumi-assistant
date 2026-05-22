@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { getSessionNoteById, updateSessionNote, deleteSessionNote } from '@/lib/notes/actions'
+import { getSessionNoteById, updateSessionNote, deleteSessionNote, signSessionNote } from '@/lib/notes/actions'
 import { createClient } from '@/lib/supabase/client'
 import { uploadNoteCanvas } from '@/lib/notes/storage'
 import DrawingCanvas, { type DrawingCanvasHandle } from '@/components/notes/DrawingCanvas'
@@ -11,7 +11,7 @@ import ModalShell from '@/components/ui/ModalShell'
 import SectionHeader from '@/components/ui/SectionHeader'
 import Button from '@/components/ui/Button'
 import type { ClinicalCanvasPath, SessionNote as SessionNoteType } from '@/types'
-import { ChevronDown, X } from 'lucide-react'
+import { ChevronDown, Lock, X } from 'lucide-react'
 
 type NoteMode = 'session' | 'formal'
 
@@ -39,13 +39,17 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
   const [quickNoteExpanded, setQuickNoteExpanded] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [confirmSign, setConfirmSign] = useState(false)
+  const [isSigning, setIsSigning] = useState(false)
+  const [signError, setSignError] = useState<string | null>(null)
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const canvasRef = useRef<DrawingCanvasHandle>(null)
   const canvasSnapshotRef = useRef<{ dataUrl: string; paths: ClinicalCanvasPath[] } | null>(null)
   const canvasScrollRef = useRef<HTMLDivElement>(null)
 
-  // Lock body scroll while canvas is open so the app doesn't scroll behind
+  const isSigned = note?.status === 'signed'
+
   useEffect(() => {
     if (showCanvas) {
       document.body.style.overflow = 'hidden'
@@ -71,6 +75,7 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
   function scheduleAutosave(
     data: Partial<Pick<SessionNoteType, 'quickNote' | 'comoLlego' | 'queTrabajaron' | 'comoVaProceso' | 'queSigue' | 'canvasPaths' | 'canvasUrl'>>
   ) {
+    if (isSigned) return
     setIsSaving(true)
     setIsSaved(false)
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -86,6 +91,7 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
   }
 
   function handleQuickNoteChange(value: string) {
+    if (isSigned) return
     setQuickNote(value)
     scheduleAutosave({ quickNote: value })
   }
@@ -94,6 +100,7 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
     field: 'comoLlego' | 'queTrabajaron' | 'comoVaProceso' | 'queSigue',
     value: string
   ) {
+    if (isSigned) return
     if (field === 'comoLlego') setComoLlego(value)
     else if (field === 'queTrabajaron') setQueTrabajaron(value)
     else if (field === 'comoVaProceso') setComoVaProceso(value)
@@ -115,6 +122,11 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
   )
 
   async function handleCanvasClose() {
+    if (isSigned) {
+      setShowCanvas(false)
+      return
+    }
+
     if (canvasRef.current) {
       await canvasRef.current.flushPng()
     }
@@ -155,6 +167,20 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
     }
   }
 
+  async function handleSign() {
+    setIsSigning(true)
+    setSignError(null)
+    try {
+      const updated = await signSessionNote(noteId)
+      setNote(updated)
+      setConfirmSign(false)
+    } catch (err) {
+      setSignError(err instanceof Error ? err.message : 'No se pudo firmar la nota')
+    } finally {
+      setIsSigning(false)
+    }
+  }
+
   if (!note) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -192,6 +218,16 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
     },
   ] as const
 
+  const signedDate = note.signedAt
+    ? new Date(note.signedAt).toLocaleDateString('es-CO', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null
+
   return (
     <div className="flex flex-col">
       {/* ── Header sticky ── */}
@@ -208,9 +244,16 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
         <div className="flex items-center justify-between">
           <div>
             <p className="section-kicker mb-0.5">{patientName}</p>
-            <p className="text-[14px] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
-              Sesión #{note.sessionNumber ?? '—'}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-[14px] font-medium" style={{ color: 'var(--ink-cool-strong)' }}>
+                Sesión #{note.sessionNumber ?? '—'}
+              </p>
+              {isSigned ? (
+                <span className="status-badge status-badge--success">Firmada</span>
+              ) : (
+                <span className="status-badge status-badge--pending">Borrador</span>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {isSaving && (
@@ -227,16 +270,35 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
                 title="Guardado"
               />
             )}
-            <button
-              type="button"
-              onClick={() => setConfirmDelete(true)}
-              className="rounded-full px-3 py-1.5 text-[11px]"
-              style={{ background: 'rgba(176,124,132,0.12)', color: 'var(--state-cancel-text)' }}
-            >
-              Eliminar nota
-            </button>
+            {!isSigned && (
+              <button
+                type="button"
+                onClick={() => setConfirmSign(true)}
+                className="rounded-full px-3 py-1.5 text-[11px] flex items-center gap-1"
+                style={{ background: 'rgba(107,175,141,0.14)', color: '#3a7a5a' }}
+              >
+                <Lock size={10} />
+                Firmar nota
+              </button>
+            )}
+            {!isSigned && (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                className="rounded-full px-3 py-1.5 text-[11px]"
+                style={{ background: 'rgba(176,124,132,0.12)', color: 'var(--state-cancel-text)' }}
+              >
+                Eliminar nota
+              </button>
+            )}
           </div>
         </div>
+
+        {isSigned && signedDate && (
+          <p className="text-[12px]" style={{ color: 'var(--ink-cool-faint)' }}>
+            Firmada el {signedDate}
+          </p>
+        )}
 
         <div
           className="inline-flex self-start rounded-full p-0.5"
@@ -271,7 +333,7 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
             className="shrink-0 flex items-center gap-1 rounded-full px-3.5 py-1.5 text-[13px] transition-all"
             style={{ color: 'var(--ink-cool-soft)' }}
           >
-            Canvas
+            Apunte
             {canvasPaths && canvasPaths.length > 0 && (
               <span
                 className="h-1.5 w-1.5 rounded-full"
@@ -289,14 +351,15 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
             <textarea
               value={quickNote}
               onChange={(e) => handleQuickNoteChange(e.target.value)}
-              placeholder="Escribe lo que quieras mientras escuchas..."
+              readOnly={isSigned}
+              placeholder={isSigned ? '' : 'Escribe lo que quieras mientras escuchas...'}
               className="min-h-[60vh] w-full resize-none bg-transparent text-[15px] leading-relaxed focus:outline-none"
               style={{
                 fontFamily: 'Iowan Old Style, Georgia, serif',
                 color: 'var(--ink-cool-strong)',
+                cursor: isSigned ? 'default' : undefined,
               }}
             />
-
           </div>
         )}
 
@@ -338,29 +401,31 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
                 <span className="section-kicker">{label}</span>
                 <textarea
                   value={value}
+                  readOnly={isSigned}
                   onChange={(e) => {
+                    if (isSigned) return
                     e.target.style.height = 'auto'
                     e.target.style.height = `${e.target.scrollHeight}px`
                     handleFormalFieldChange(key, e.target.value)
                   }}
-                  placeholder={placeholder}
+                  placeholder={isSigned ? '' : placeholder}
                   rows={3}
                   className="w-full resize-none overflow-hidden rounded-[14px] px-3.5 py-3 text-[14px] leading-relaxed focus:outline-none"
+                  style={{ cursor: isSigned ? 'default' : undefined }}
                 />
               </label>
             ))}
-
           </div>
         )}
       </div>
 
-      {/* ── Canvas — fullscreen portal, mounted at document.body to escape layout stacking context ── */}
+      {/* ── Canvas — fullscreen portal ── */}
       {showCanvas && createPortal(
         <div
           className="fixed inset-0 flex flex-col"
           style={{ zIndex: 9999, background: '#FAF7F4' }}
         >
-          {/* Context bar — patient + session + status + close */}
+          {/* Context bar */}
           <div
             className="flex shrink-0 items-center gap-3 px-4"
             style={{
@@ -383,6 +448,15 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
                 style={{ color: 'var(--ink-cool-faint)' }}
               >
                 · Sesión #{note.sessionNumber ?? '—'}
+              </span>
+              <span
+                className="text-[11px] shrink-0 rounded-full px-2 py-0.5"
+                style={{
+                  background: 'rgba(160,150,175,0.10)',
+                  color: 'var(--ink-cool-faint)',
+                }}
+              >
+                Apunte privado · no exportable
               </span>
             </div>
 
@@ -417,7 +491,7 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
           </div>
 
           {/* Scrollable canvas area */}
-          <div ref={canvasScrollRef} className="flex-1 overflow-auto">
+          <div ref={canvasScrollRef} className="relative flex-1 overflow-auto">
             <DrawingCanvas
               ref={canvasRef}
               initialPaths={canvasPaths}
@@ -425,9 +499,57 @@ export default function SessionNote({ noteId, patientName, patientId }: SessionN
               initialHeight={900}
               scrollContainerRef={canvasScrollRef}
             />
+            {/* Overlay que bloquea interacción cuando la nota está firmada */}
+            {isSigned && (
+              <div
+                className="absolute inset-0"
+                style={{ zIndex: 10, cursor: 'default' }}
+                aria-hidden="true"
+              />
+            )}
           </div>
         </div>,
         document.body
+      )}
+
+      {/* ── Confirmar firma ── */}
+      {confirmSign && (
+        <ModalShell onClose={() => setConfirmSign(false)} maxWidth="max-w-sm">
+          <div className="flex items-start justify-between p-4">
+            <div>
+              <SectionHeader label="Nota clínica" className="mb-1" />
+              <h2 className="editorial-panel-title text-[1.05rem]">¿Firmar esta nota?</h2>
+            </div>
+            <Button variant="subtle" onClick={() => setConfirmSign(false)} className="p-2">
+              <X size={16} />
+            </Button>
+          </div>
+          <div className="px-4 pb-4 space-y-3">
+            <p className="text-[13px]" style={{ color: 'var(--ink-cool-soft)' }}>
+              Al firmar, la nota queda cerrada y ya no se puede editar ni eliminar. Esta acción es irreversible.
+            </p>
+            {signError && (
+              <p className="text-[13px]" style={{ color: 'var(--state-cancel-text)' }}>
+                {signError}
+              </p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="subtle" onClick={() => setConfirmSign(false)}>
+                Cancelar
+              </Button>
+              <button
+                type="button"
+                disabled={isSigning}
+                onClick={handleSign}
+                className="rounded-full px-4 py-1.5 text-[13px] flex items-center gap-1.5"
+                style={{ background: 'rgba(107,175,141,0.18)', color: '#2d6b4d' }}
+              >
+                <Lock size={12} />
+                {isSigning ? 'Firmando...' : 'Sí, firmar'}
+              </button>
+            </div>
+          </div>
+        </ModalShell>
       )}
 
       {/* ── Confirmar eliminación ── */}

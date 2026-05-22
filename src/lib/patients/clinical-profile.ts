@@ -65,6 +65,11 @@ function sanitizePayload(payload: PatientClinicalProfileUpdateInput): Partial<Om
   if ('support_network' in payload) out.support_network = normalizeText(payload.support_network)
   if ('clinical_alerts' in payload) out.clinical_alerts = sanitizeClinicalAlerts(payload.clinical_alerts)
   if ('informed_consent_status' in payload) out.informed_consent_status = payload.informed_consent_status ?? null
+  if ('informed_consent_signed_at' in payload) out.informed_consent_signed_at = payload.informed_consent_signed_at ?? null
+  if ('consent_version' in payload) out.consent_version = normalizeText(payload.consent_version)
+  if ('consent_file_path' in payload) out.consent_file_path = normalizeText(payload.consent_file_path)
+  if ('data_processing_authorization_status' in payload) out.data_processing_authorization_status = payload.data_processing_authorization_status ?? null
+  if ('data_processing_authorized_at' in payload) out.data_processing_authorized_at = payload.data_processing_authorized_at ?? null
   if ('administrative_notes' in payload) out.administrative_notes = normalizeText(payload.administrative_notes)
 
   return out

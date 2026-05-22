@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation'
 import {
   CalendarDays,
   ClipboardList,
+  Database,
+  FileCheck,
   HeartPulse,
   IdCard,
   Loader2,
@@ -33,6 +35,7 @@ import {
   resolveClinicalAlertKeys,
 } from '@/lib/patients/clinical-profile'
 import { upsertPatientClinicalProfile } from '@/lib/patients/clinical-profile.client'
+import { markConsentSigned, markDataProcessingAuthorized } from '@/lib/patients/clinical-profile.actions'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import EmptyState from '@/components/ui/EmptyState'
@@ -377,6 +380,10 @@ export default function PatientClinicalProfileTab({
   const [draft, setDraft] = useState<ClinicalProfileDraft>(() => toDraft(initialProfile, patient))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [consentSigning, setConsentSigning] = useState(false)
+  const [consentError, setConsentError] = useState<string | null>(null)
+  const [dataSigning, setDataSigning] = useState(false)
+  const [dataError, setDataError] = useState<string | null>(null)
 
   const alertKeys = resolveClinicalAlertKeys(patient, profile)
   const personalEmpty = isBlockEmpty('personal', profile, patient)
@@ -428,6 +435,34 @@ export default function PatientClinicalProfileTab({
       setError(saveError instanceof Error ? saveError.message : 'No se pudo guardar la ficha clínica.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleMarkConsentSigned() {
+    setConsentSigning(true)
+    setConsentError(null)
+    try {
+      const next = await markConsentSigned(patient.id)
+      setProfile(next)
+      router.refresh()
+    } catch (err) {
+      setConsentError(err instanceof Error ? err.message : 'No se pudo registrar el consentimiento')
+    } finally {
+      setConsentSigning(false)
+    }
+  }
+
+  async function handleMarkDataProcessingAuthorized() {
+    setDataSigning(true)
+    setDataError(null)
+    try {
+      const next = await markDataProcessingAuthorized(patient.id)
+      setProfile(next)
+      router.refresh()
+    } catch (err) {
+      setDataError(err instanceof Error ? err.message : 'No se pudo registrar la autorización')
+    } finally {
+      setDataSigning(false)
     }
   }
 
@@ -566,6 +601,123 @@ export default function PatientClinicalProfileTab({
             </div>
           </div>
         </BlockCard>
+
+        {/* ── Consentimiento informado ── */}
+        <Card className="p-3">
+          <div className="mb-2 flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2.5">
+              <span
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                style={{ background: 'rgba(255,255,255,0.46)', color: 'var(--ink-cool-soft)' }}
+              >
+                <FileCheck size={15} />
+              </span>
+              <div>
+                <SectionHeader label="Legal" className="mb-0.5" />
+                <h2 className="editorial-panel-title text-[1.05rem]">Consentimiento informado</h2>
+              </div>
+            </div>
+            {profile?.informed_consent_status !== 'signed' && (
+              <button
+                type="button"
+                onClick={handleMarkConsentSigned}
+                disabled={consentSigning}
+                className="btn-subtle shrink-0 px-3 py-1.5 text-[12px] flex items-center gap-1"
+              >
+                {consentSigning ? <Loader2 size={12} className="animate-spin" /> : null}
+                Marcar firmado
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <FieldItem
+              label="Estado"
+              value={
+                profile?.informed_consent_status === 'signed'
+                  ? 'Firmado'
+                  : profile?.informed_consent_status === 'not_required'
+                  ? 'No aplica'
+                  : 'Pendiente'
+              }
+            />
+            {profile?.informed_consent_signed_at && (
+              <FieldItem
+                label="Fecha de firma"
+                value={new Date(profile.informed_consent_signed_at).toLocaleDateString('es-CO', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              />
+            )}
+            {profile?.consent_version && (
+              <FieldItem label="Versión" value={profile.consent_version} />
+            )}
+          </div>
+          {consentError && (
+            <p className="mt-2 text-[12px]" style={{ color: 'var(--state-cancel-text)' }}>
+              {consentError}
+            </p>
+          )}
+        </Card>
+
+        {/* ── Autorización tratamiento de datos ── */}
+        <Card className="p-3">
+          <div className="mb-2 flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2.5">
+              <span
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                style={{ background: 'rgba(255,255,255,0.46)', color: 'var(--ink-cool-soft)' }}
+              >
+                <Database size={15} />
+              </span>
+              <div>
+                <SectionHeader label="Legal" className="mb-0.5" />
+                <h2 className="editorial-panel-title text-[1.05rem]">Autorización datos</h2>
+              </div>
+            </div>
+            {profile?.data_processing_authorization_status !== 'authorized' && (
+              <button
+                type="button"
+                onClick={handleMarkDataProcessingAuthorized}
+                disabled={dataSigning}
+                className="btn-subtle shrink-0 px-3 py-1.5 text-[12px] flex items-center gap-1"
+              >
+                {dataSigning ? <Loader2 size={12} className="animate-spin" /> : null}
+                Marcar autorizado
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <FieldItem
+              label="Estado"
+              value={
+                profile?.data_processing_authorization_status === 'authorized'
+                  ? 'Autorizado'
+                  : 'Pendiente'
+              }
+            />
+            {profile?.data_processing_authorized_at && (
+              <FieldItem
+                label="Fecha autorización"
+                value={new Date(profile.data_processing_authorized_at).toLocaleDateString('es-CO', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              />
+            )}
+          </div>
+          {dataError && (
+            <p className="mt-2 text-[12px]" style={{ color: 'var(--state-cancel-text)' }}>
+              {dataError}
+            </p>
+          )}
+        </Card>
       </div>
 
       {editingBlock && typeof document !== 'undefined' && createPortal(

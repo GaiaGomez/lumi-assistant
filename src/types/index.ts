@@ -56,6 +56,11 @@ export interface PatientClinicalProfile {
   support_network: string | null
   clinical_alerts: ClinicalAlertKey[] | null
   informed_consent_status: InformedConsentStatus | null
+  informed_consent_signed_at: string | null
+  consent_version: string | null
+  consent_file_path: string | null
+  data_processing_authorization_status: 'pending' | 'authorized' | null
+  data_processing_authorized_at: string | null
   administrative_notes: string | null
   created_at: string
   updated_at: string
@@ -140,6 +145,8 @@ export interface Appointment {
   consultorio?: Consultorio
 }
 
+export type NoteStatus = 'draft' | 'signed'
+
 export type SessionNote = {
   id: string
   appointmentId: string | null
@@ -154,7 +161,9 @@ export type SessionNote = {
   canvasUrl: string | null
   sessionNumber: number | null
   isDraft: boolean
+  status: NoteStatus
   signedAt: string | null
+  signedBy: string | null
   createdAt: string
   updatedAt: string
 }

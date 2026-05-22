@@ -93,6 +93,12 @@ export default async function PatientProfilePage({ params, searchParams }: Props
         >
           Ficha clínica
         </Link>
+        <Link
+          href={`/export/${id}`}
+          className="btn-subtle px-3 py-1.5 text-[12px]"
+        >
+          Exportar PDF
+        </Link>
       </div>
 
       {activeTab === 'clinical-profile' ? (

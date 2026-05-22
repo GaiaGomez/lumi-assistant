@@ -20,7 +20,9 @@ function mapRow(row: SessionNoteRow): SessionNote {
     canvasUrl: (row.canvas_url as string | null) ?? null,
     sessionNumber: (row.session_number as number | null) ?? null,
     isDraft: row.is_draft === true,
+    status: (row.status as SessionNote['status']) ?? 'draft',
     signedAt: (row.signed_at as string | null) ?? null,
+    signedBy: (row.signed_by as string | null) ?? null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   }
@@ -99,6 +101,7 @@ export async function getOrCreateNoteForAppointment(
 }
 
 // Actualiza solo los campos provistos — el componente llama esto en autosave.
+// Rechaza si la nota ya está firmada (doble protección: RLS también bloquea).
 export async function updateSessionNote(
   noteId: string,
   data: Partial<Pick<SessionNote, 'quickNote' | 'comoLlego' | 'queTrabajaron' | 'comoVaProceso' | 'queSigue' | 'canvasPaths' | 'canvasUrl'>>
@@ -106,6 +109,18 @@ export async function updateSessionNote(
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('No autenticado')
+
+  // Verificar que la nota existe y no está firmada antes de actualizar.
+  const { data: current } = await supabase
+    .from('session_notes')
+    .select('status')
+    .eq('id', noteId)
+    .eq('psychologist_id', user.id)
+    .maybeSingle()
+
+  if (current?.status === 'signed') {
+    throw new Error('No se puede editar una nota firmada')
+  }
 
   const payload: Record<string, unknown> = {}
   if (data.quickNote !== undefined) payload.quick_note = data.quickNote
@@ -119,6 +134,40 @@ export async function updateSessionNote(
   const { data: row, error } = await supabase
     .from('session_notes')
     .update(payload)
+    .eq('id', noteId)
+    .eq('psychologist_id', user.id)
+    .select()
+    .single()
+
+  if (error) throw new Error(error.message)
+  return mapRow(row as SessionNoteRow)
+}
+
+// Firma la nota: status 'draft' → 'signed'. Irreversible.
+export async function signSessionNote(noteId: string): Promise<SessionNote> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autenticado')
+
+  const { data: current } = await supabase
+    .from('session_notes')
+    .select('status')
+    .eq('id', noteId)
+    .eq('psychologist_id', user.id)
+    .maybeSingle()
+
+  if (!current) throw new Error('Nota no encontrada')
+  if (current.status === 'signed') throw new Error('Esta nota ya está firmada')
+
+  const now = new Date().toISOString()
+  const { data: row, error } = await supabase
+    .from('session_notes')
+    .update({
+      status: 'signed',
+      signed_at: now,
+      signed_by: user.id,
+      is_draft: false,
+    })
     .eq('id', noteId)
     .eq('psychologist_id', user.id)
     .select()
@@ -143,10 +192,22 @@ export async function getSessionNoteById(noteId: string): Promise<SessionNote | 
   return data ? mapRow(data as SessionNoteRow) : null
 }
 
+// Elimina la nota. Rechaza si la nota está firmada (doble protección: RLS también bloquea).
 export async function deleteSessionNote(noteId: string): Promise<void> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('No autenticado')
+
+  const { data: current } = await supabase
+    .from('session_notes')
+    .select('status')
+    .eq('id', noteId)
+    .eq('psychologist_id', user.id)
+    .maybeSingle()
+
+  if (current?.status === 'signed') {
+    throw new Error('No se puede eliminar una nota firmada')
+  }
 
   const { error } = await supabase
     .from('session_notes')
