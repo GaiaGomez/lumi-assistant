@@ -226,6 +226,8 @@ export default async function ExportPage({ params }: Props) {
             Consentimiento informado:{' '}
             {clinicalProfile?.informed_consent_status === 'signed'
               ? `✓ Firmado el ${fmtDate(clinicalProfile.informed_consent_signed_at)}`
+              : clinicalProfile?.informed_consent_status === 'not_required'
+              ? '— No requerido'
               : '— Pendiente'}
           </span>
           <span style={{ margin: '0 1rem' }}>·</span>
