@@ -33,6 +33,11 @@ moment.locale('es')
 moment.tz.setDefault('America/Bogota')
 const localizer = momentLocalizer(moment)
 
+/** Devuelve HOY a la hora h:m en la zona America/Bogota (para min/max del calendario). */
+function horaDeHoy(h: number, m: number): Date {
+  return moment().startOf('day').set({ hour: h, minute: m }).toDate()
+}
+
 function toDateKey(date: Date): string {
   return (
     date.getFullYear() +
@@ -209,14 +214,20 @@ export default function AgendaClient({
   const [filtrosActivos, setFiltrosActivos] = useState<Set<string>>(new Set())
 
   // Derivados de settings
+  // OJO: min/max se construyen con moment (zona America/Bogota, la default de
+  // arriba) y sobre la fecha de HOY. Antes se usaba new Date(0, 0, 0, h, m):
+  // eso crea una fecha del año 1899 en la zona del NAVEGADOR. En 1899 las zonas
+  // horarias usaban "hora solar local" (LMT) con offsets raros (Madrid −0:14:44,
+  // Bogotá −4:56:16), así que fuera de Colombia la grilla arrancaba en "3:18"
+  // en vez de 8:00 y las citas quedaban desalineadas.
   const calMin = useMemo(() => {
     const [h, m] = (settings['agenda_hora_inicio'] ?? '07:00').split(':').map(Number)
-    return new Date(0, 0, 0, h, m)
+    return horaDeHoy(h, m)
   }, [settings])
 
   const calMax = useMemo(() => {
     const [h, m] = (settings['agenda_hora_fin'] ?? '21:00').split(':').map(Number)
-    return new Date(0, 0, 0, h, m)
+    return horaDeHoy(h, m)
   }, [settings])
 
   const calStep = useMemo(() => {
@@ -579,8 +590,8 @@ export default function AgendaClient({
                 // `as any` is the documented workaround until upstream fixes the generic constraints.
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 components={{ event: calendarEventComponent, dateHeader: CabechaFecha, header: ColumnaHeader } as any}
-                min={new Date(0, 0, 0, 8, 0)}
-                max={new Date(0, 0, 0, 21, 0)}
+                min={horaDeHoy(8, 0)}
+                max={horaDeHoy(21, 0)}
                 messages={{
                   today: 'Hoy',
                   previous: '‹',
